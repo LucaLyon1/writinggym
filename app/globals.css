@@ -1317,6 +1317,122 @@ body {
   opacity: 1;
 }
 
+/* ── Tag bar ──────────────────────────────────────────────── */
+.tag-bar {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.tag-pill {
+  padding: 0.3rem 0.7rem;
+  background: var(--paper-warm);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tag-pill:hover {
+  border-color: var(--ink-faint);
+  color: var(--ink-soft);
+}
+
+.tag-pill.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+/* ── Tile tags ─────────────────────────────────────────────── */
+.tile-tags {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+.tile-tag {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  background: var(--paper-warm);
+  border: 1px solid var(--line);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+
+/* ── Browser empty state ───────────────────────────────────── */
+.browser-empty {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink-muted);
+  font-style: italic;
+  padding: 3rem 0;
+  text-align: center;
+}
+
+/* ── Analysis view ─────────────────────────────────────────── */
+.analysis-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.analysis-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 2rem;
+  background: #161412;
+  border-bottom: 1px solid rgba(232,228,220,0.08);
+}
+
+.analysis-topbar-title {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: #9B9488;
+}
+
+.analysis-topbar-title em {
+  font-style: italic;
+  color: #C4BEB6;
+}
+
+.analysis-view .back-btn {
+  background: none;
+  border: 1px solid rgba(232,228,220,0.15);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  color: #6B6560;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.analysis-view .back-btn:hover {
+  color: #E8E4DC;
+  border-color: rgba(232,228,220,0.35);
+}
+
+.analysis-view .gym-category-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #E8C547;
+  background: rgba(232,197,71,0.12);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
 /* Back button + category badge in gym header */
 .gym-header-left {
   display: flex;

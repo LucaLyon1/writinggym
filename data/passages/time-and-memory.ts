@@ -4,6 +4,7 @@ export const timeAndMemoryPassages: Passage[] = [
   {
     id: "baldwin-notes",
     categoryId: "time-and-memory",
+    tags: ["first-person", "juxtaposition", "compression"],
     title: "Notes of a Native Son",
     author: "James Baldwin",
     work: "Notes of a Native Son (1955)",
@@ -31,6 +32,7 @@ export const timeAndMemoryPassages: Passage[] = [
   {
     id: "proust-madeleine",
     categoryId: "time-and-memory",
+    tags: ["first-person", "sensory-detail"],
     title: "In Search of Lost Time",
     author: "Marcel Proust",
     work: "Swann's Way (1913)",
@@ -58,6 +60,7 @@ export const timeAndMemoryPassages: Passage[] = [
   {
     id: "didion-bethlehem",
     categoryId: "time-and-memory",
+    tags: ["first-person", "juxtaposition", "compression"],
     title: "Slouching Towards Bethlehem",
     author: "Joan Didion",
     work: "Slouching Towards Bethlehem (1968)",

@@ -1,4 +1,4 @@
-import { Category } from "./types";
+import { Category, Tag } from "./types";
 
 export const categories: Category[] = [
   {
@@ -44,4 +44,22 @@ export const categories: Category[] = [
     description:
       "The mechanics of unease — what is withheld, what is implied",
   },
+];
+
+export const tags: Tag[] = [
+  { id: "opening", label: "Opening" },
+  { id: "subtext", label: "Subtext" },
+  { id: "withholding", label: "Withholding" },
+  { id: "compression", label: "Compression" },
+  { id: "repetition", label: "Repetition" },
+  { id: "defamiliarization", label: "Defamiliarization" },
+  { id: "power-dynamics", label: "Power Dynamics" },
+  { id: "sensory-detail", label: "Sensory Detail" },
+  { id: "juxtaposition", label: "Juxtaposition" },
+  { id: "restraint", label: "Restraint" },
+  { id: "stream-of-consciousness", label: "Stream of Consciousness" },
+  { id: "irony", label: "Irony" },
+  { id: "symbolism", label: "Symbolism" },
+  { id: "first-person", label: "First Person" },
+  { id: "minimalism", label: "Minimalism" },
 ];

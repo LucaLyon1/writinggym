@@ -4,6 +4,7 @@ export const characterIntroPassages: Passage[] = [
   {
     id: "tolstoy-anna",
     categoryId: "character-intro",
+    tags: ["defamiliarization", "restraint"],
     title: "Anna Karenina",
     author: "Leo Tolstoy",
     work: "Anna Karenina (1878)",
@@ -31,6 +32,7 @@ export const characterIntroPassages: Passage[] = [
   {
     id: "dickens-pip",
     categoryId: "character-intro",
+    tags: ["first-person", "irony", "compression"],
     title: "Great Expectations",
     author: "Charles Dickens",
     work: "Great Expectations (1861)",
@@ -58,6 +60,7 @@ export const characterIntroPassages: Passage[] = [
   {
     id: "austen-darcy",
     categoryId: "character-intro",
+    tags: ["irony", "withholding"],
     title: "Pride and Prejudice",
     author: "Jane Austen",
     work: "Pride and Prejudice (1813)",
@@ -85,6 +88,7 @@ export const characterIntroPassages: Passage[] = [
   {
     id: "mccarthy-judge",
     categoryId: "character-intro",
+    tags: ["defamiliarization", "withholding"],
     title: "Blood Meridian",
     author: "Cormac McCarthy",
     work: "Blood Meridian (1985)",

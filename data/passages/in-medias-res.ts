@@ -4,6 +4,7 @@ export const inMediasResPassages: Passage[] = [
   {
     id: "carver-cathedral",
     categoryId: "in-medias-res",
+    tags: ["first-person", "minimalism", "withholding"],
     title: "Cathedral",
     author: "Raymond Carver",
     work: "Cathedral (1983)",
@@ -31,6 +32,7 @@ export const inMediasResPassages: Passage[] = [
   {
     id: "morrison-beloved",
     categoryId: "in-medias-res",
+    tags: ["defamiliarization", "compression"],
     title: "Beloved",
     author: "Toni Morrison",
     work: "Beloved (1987)",
@@ -58,6 +60,7 @@ export const inMediasResPassages: Passage[] = [
   {
     id: "kafka-trial",
     categoryId: "in-medias-res",
+    tags: ["juxtaposition", "irony"],
     title: "The Trial",
     author: "Franz Kafka",
     work: "The Trial (1925)",
@@ -85,6 +88,7 @@ export const inMediasResPassages: Passage[] = [
   {
     id: "oconnor-good-country",
     categoryId: "in-medias-res",
+    tags: ["withholding", "power-dynamics"],
     title: "A Good Man Is Hard to Find",
     author: "Flannery O'Connor",
     work: "A Good Man Is Hard to Find (1953)",

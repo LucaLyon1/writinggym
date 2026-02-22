@@ -4,6 +4,7 @@ export const interiorityPassages: Passage[] = [
   {
     id: "woolf-dalloway-open",
     categoryId: "interiority",
+    tags: ["stream-of-consciousness", "sensory-detail"],
     title: "Mrs Dalloway",
     author: "Virginia Woolf",
     work: "Mrs Dalloway (1925)",
@@ -31,6 +32,7 @@ export const interiorityPassages: Passage[] = [
   {
     id: "nabokov-speak",
     categoryId: "interiority",
+    tags: ["first-person", "defamiliarization"],
     title: "Speak, Memory",
     author: "Vladimir Nabokov",
     work: "Speak, Memory (1951)",
@@ -58,6 +60,7 @@ export const interiorityPassages: Passage[] = [
   {
     id: "james-ambassador",
     categoryId: "interiority",
+    tags: ["stream-of-consciousness", "restraint"],
     title: "The Ambassadors",
     author: "Henry James",
     work: "The Ambassadors (1903)",

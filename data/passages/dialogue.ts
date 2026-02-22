@@ -4,6 +4,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "hemingway-hills",
     categoryId: "dialogue",
+    tags: ["subtext", "minimalism", "power-dynamics"],
     title: "Hills Like White Elephants",
     author: "Ernest Hemingway",
     work: "Men Without Women (1927)",
@@ -31,6 +32,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "pinter-betrayal",
     categoryId: "dialogue",
+    tags: ["subtext", "minimalism", "restraint"],
     title: "Betrayal",
     author: "Harold Pinter",
     work: "Betrayal (1978)",
@@ -58,6 +60,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "austen-persuasion-dialogue",
     categoryId: "dialogue",
+    tags: ["subtext", "restraint"],
     title: "Persuasion",
     author: "Jane Austen",
     work: "Persuasion (1817)",
@@ -85,6 +88,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "chekhov-three-sisters",
     categoryId: "dialogue",
+    tags: ["subtext", "repetition"],
     title: "Three Sisters",
     author: "Anton Chekhov",
     work: "Three Sisters (1901)",
@@ -112,6 +116,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "mccarthy-no-country",
     categoryId: "dialogue",
+    tags: ["repetition", "power-dynamics", "withholding"],
     title: "No Country for Old Men",
     author: "Cormac McCarthy",
     work: "No Country for Old Men (2005)",
@@ -139,6 +144,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "dostoevsky-karamazov",
     categoryId: "dialogue",
+    tags: ["repetition", "compression"],
     title: "The Brothers Karamazov",
     author: "Fyodor Dostoevsky",
     work: "The Brothers Karamazov (1880)",
@@ -166,6 +172,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "carver-what-we-talk",
     categoryId: "dialogue",
+    tags: ["first-person", "repetition", "minimalism"],
     title: "What We Talk About When We Talk About Love",
     author: "Raymond Carver",
     work: "What We Talk About When We Talk About Love (1981)",
@@ -193,6 +200,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "albee-woolf",
     categoryId: "dialogue",
+    tags: ["juxtaposition", "power-dynamics", "irony"],
     title: "Who's Afraid of Virginia Woolf?",
     author: "Edward Albee",
     work: "Who's Afraid of Virginia Woolf? (1962)",
@@ -220,6 +228,7 @@ export const dialoguePassages: Passage[] = [
   {
     id: "ishiguro-remains",
     categoryId: "dialogue",
+    tags: ["subtext", "restraint", "withholding"],
     title: "The Remains of the Day",
     author: "Kazuo Ishiguro",
     work: "The Remains of the Day (1989)",

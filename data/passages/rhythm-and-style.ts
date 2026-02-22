@@ -4,6 +4,7 @@ export const rhythmAndStylePassages: Passage[] = [
   {
     id: "nabokov-lolita",
     categoryId: "rhythm-and-style",
+    tags: ["first-person", "sensory-detail", "repetition"],
     title: "Lolita",
     author: "Vladimir Nabokov",
     work: "Lolita (1955)",
@@ -31,6 +32,7 @@ export const rhythmAndStylePassages: Passage[] = [
   {
     id: "mccarthy-road",
     categoryId: "rhythm-and-style",
+    tags: ["sensory-detail", "minimalism", "compression"],
     title: "The Road",
     author: "Cormac McCarthy",
     work: "The Road (2006)",
@@ -58,6 +60,7 @@ export const rhythmAndStylePassages: Passage[] = [
   {
     id: "hurston-eyes",
     categoryId: "rhythm-and-style",
+    tags: ["defamiliarization", "juxtaposition"],
     title: "Their Eyes Were Watching God",
     author: "Zora Neale Hurston",
     work: "Their Eyes Were Watching God (1937)",

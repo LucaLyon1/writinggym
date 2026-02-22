@@ -1,5 +1,5 @@
-export type { Category, Passage } from "./types";
-export { categories } from "./categories";
+export type { Category, Passage, Tag } from "./types";
+export { categories, tags } from "./categories";
 
 import { characterIntroPassages } from "./character-intro";
 import { inMediasResPassages } from "./in-medias-res";

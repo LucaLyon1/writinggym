@@ -4,6 +4,7 @@ export const tensionAndDreadPassages: Passage[] = [
   {
     id: "james-turn-screw",
     categoryId: "tension-and-dread",
+    tags: ["withholding", "irony"],
     title: "The Turn of the Screw",
     author: "Henry James",
     work: "The Turn of the Screw (1898)",
@@ -31,6 +32,7 @@ export const tensionAndDreadPassages: Passage[] = [
   {
     id: "oconnor-peacock",
     categoryId: "tension-and-dread",
+    tags: ["symbolism", "juxtaposition"],
     title: "The Displaced Person",
     author: "Flannery O'Connor",
     work: "A Good Man Is Hard to Find (1953)",
@@ -58,6 +60,7 @@ export const tensionAndDreadPassages: Passage[] = [
   {
     id: "shirley-jackson-lottery",
     categoryId: "tension-and-dread",
+    tags: ["irony", "juxtaposition", "withholding"],
     title: "The Lottery",
     author: "Shirley Jackson",
     work: "The New Yorker (1948)",

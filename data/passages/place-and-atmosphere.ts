@@ -4,6 +4,7 @@ export const placeAndAtmospherePassages: Passage[] = [
   {
     id: "leguinn-earthsea",
     categoryId: "place-and-atmosphere",
+    tags: ["opening", "compression", "sensory-detail"],
     title: "A Wizard of Earthsea",
     author: "Ursula K. Le Guin",
     work: "A Wizard of Earthsea (1968)",
@@ -30,6 +31,7 @@ export const placeAndAtmospherePassages: Passage[] = [
   {
     id: "woolf-waves",
     categoryId: "place-and-atmosphere",
+    tags: ["sensory-detail", "defamiliarization"],
     title: "The Waves",
     author: "Virginia Woolf",
     work: "The Waves (1931)",
@@ -57,6 +59,7 @@ export const placeAndAtmospherePassages: Passage[] = [
   {
     id: "chekhov-bishop",
     categoryId: "place-and-atmosphere",
+    tags: ["sensory-detail", "juxtaposition"],
     title: "The Bishop",
     author: "Anton Chekhov",
     work: "The Bishop (1902)",
@@ -84,6 +87,7 @@ export const placeAndAtmospherePassages: Passage[] = [
   {
     id: "garcia-marquez-macondo",
     categoryId: "place-and-atmosphere",
+    tags: ["compression", "juxtaposition", "defamiliarization"],
     title: "One Hundred Years of Solitude",
     author: "Gabriel García Márquez",
     work: "One Hundred Years of Solitude (1967)",
