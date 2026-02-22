@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Writing Gym — Setup
 
-## Getting Started
+## Files to copy into your Next.js project
 
-First, run the development server:
+```
+app/
+  layout.tsx          → replace or merge with your existing layout
+  globals.css         → replace or merge with your existing globals
+  page.tsx            → your home route
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+data/
+  passages.ts         → 8 curated passages with twist prompts
+
+hooks/
+  useSpeech.ts        → Web Speech API hook (TTS)
+
+components/
+  WritingGym.tsx      → main stateful component (the loop)
+  PassageCard.tsx     → displays the passage + context
+  WritingEditor.tsx   → textarea with phase header + word count
+  TwistSelector.tsx   → pill buttons for choosing constraint
+  PlaybackPanel.tsx   → TTS controls
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Notes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- No extra dependencies needed — uses only React + Next.js + browser Web Speech API.
+- TTS works in Chrome, Edge, Safari. Firefox support is partial.
+- Passages start at index 0. "New passage" picks randomly from the rest.
+- The `@/` alias assumes your tsconfig has `paths: { "@/*": ["./*"] }`.
+  If not, replace `@/` with relative paths.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Quick path alias check
 
-## Learn More
+In `tsconfig.json`:
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+## What's built
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Three-phase writing loop:
+1. **Plain rewrite** — strip the passage to its meaning, no style
+2. **Twist** — apply a constraint (3 choices per passage)
+3. **Hear it** — browser reads your text aloud, side-by-side comparison
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+8 passages from: Carver, Didion, Baldwin, Le Guin, Chekhov, Woolf, Nabokov, Morrison.
+Each has 3 hand-authored twist prompts.
