@@ -8,7 +8,7 @@ export function useSpeech() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const speak = useCallback(async (text: string) => {
+  const speak = useCallback(async (text: string, categoryId?: string) => {
     stop();
 
     setLoading(true);
@@ -21,7 +21,7 @@ export function useSpeech() {
       const res = await fetch("/api/speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, categoryId }),
         signal: controller.signal,
       });
 

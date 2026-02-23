@@ -8,7 +8,7 @@ export const dialoguePassages: Passage[] = [
     title: "Hills Like White Elephants",
     author: "Ernest Hemingway",
     work: "Men Without Women (1927)",
-    text: "'They look like white elephants,' she said.\n'I've never seen one,' the man drank his beer.\n'No, you wouldn't have.'\n'I might have,' the man said. 'Just because you say I wouldn't have doesn't prove anything.'",
+    text: "WOMAN: They look like white elephants.\nMAN: I've never seen one.\nNARRATOR: The man drank his beer.\nWOMAN: No, you wouldn't have.\nMAN: I might have. Just because you say I wouldn't have doesn't prove anything.",
     context:
       "Hemingway's dialogue is entirely about what isn't being said. Neither character names the subject of their argument. The white elephants aren't white elephants. Read what the subtext is doing underneath each line.",
     twists: [
@@ -64,7 +64,7 @@ export const dialoguePassages: Passage[] = [
     title: "Persuasion",
     author: "Jane Austen",
     work: "Persuasion (1817)",
-    text: "'You are a good soul,' cried Captain Benwick, 'and I hope your cousin may be half as lucky.' His cousin was gone, and Anne beginning to arrange her thoughts. She was ashamed of herself, quite ashamed of having been able to forget how much had passed between them, how much might still be passing through his mind.",
+    text: "CAPTAIN BENWICK: You are a good soul, and I hope your cousin may be half as lucky.\nNARRATOR: His cousin was gone, and Anne beginning to arrange her thoughts. She was ashamed of herself, quite ashamed of having been able to forget how much had passed between them, how much might still be passing through his mind.",
     context:
       "Austen uses dialogue as the outer shell and interiority as the real action. The compliment lands — and immediately sends Anne inward. Notice how the spoken line and the thought are in completely different registers.",
     twists: [
@@ -92,7 +92,7 @@ export const dialoguePassages: Passage[] = [
     title: "Three Sisters",
     author: "Anton Chekhov",
     work: "Three Sisters (1901)",
-    text: "MASHA: Do you love me?\nVERSHININ: I love you. I love your eyes, the way you move... I dream about them. A splendid, wonderful woman!\nMASHA: When you talk to me like that, for some reason I laugh, though I'm frightened. Don't say it again, I beg you... (Half audibly.) But go on, say it...",
+    text: "MASHA: Do you love me?\nVERSHININ: I love you. I love your eyes, the way you move... I dream about them. A splendid, wonderful woman!\nMASHA: When you talk to me like that, for some reason I laugh, though I'm frightened. Don't say it again, I beg you... [whispering] But go on, say it...",
     context:
       "Chekhov catches the contradiction of desire in real time. Masha says stop and says continue in the same breath. The stage direction — 'half audibly' — makes the reversal physical: the voice drops as the want rises. Dialogue as self-contradiction.",
     twists: [
@@ -120,7 +120,7 @@ export const dialoguePassages: Passage[] = [
     title: "No Country for Old Men",
     author: "Cormac McCarthy",
     work: "No Country for Old Men (2005)",
-    text: "What's the most you ever lost on a coin toss?\nSir?\nThe most. You ever lost. On a coin toss.\nI don't know. I couldn't say.\nCall it.\nCall it?\nYes.\nFor what?\nJust call it.\nWell. We need to know what we're calling it for here.\nYou need to call it. I can't call it for you. It wouldn't be fair.",
+    text: "CHIGURH: What's the most you ever lost on a coin toss?\nOWNER: Sir?\nCHIGURH: The most. You ever lost. On a coin toss.\nOWNER: I don't know. I couldn't say.\nCHIGURH: Call it.\nOWNER: Call it?\nCHIGURH: Yes.\nOWNER: For what?\nCHIGURH: Just call it.\nOWNER: Well. We need to know what we're calling it for here.\nCHIGURH: You need to call it. I can't call it for you. It wouldn't be fair.",
     context:
       "McCarthy writes dialogue as a trap closing. Chigurh's repetition — short, patient, absolute — turns a coin toss into a death sentence. The gas station owner's responses show a man slowly realizing he's not in a normal conversation. The horror is in the politeness.",
     twists: [
@@ -148,7 +148,7 @@ export const dialoguePassages: Passage[] = [
     title: "The Brothers Karamazov",
     author: "Fyodor Dostoevsky",
     work: "The Brothers Karamazov (1880)",
-    text: "'Is there a God, or not?' Ivan asked again with fierce insistence.\n'There is no God.'\n'Alyosha, does God exist?'\n'God does exist.'\n'Ivan, is there immortality of some sort, just a little, just a tiny bit?'\n'There is no immortality either.'\n'None at all?'\n'None at all.'\n'Complete zero?'\n'Complete zero.'",
+    text: "IVAN: Is there a God, or not?\nALYOSHA: There is no God.\nIVAN: Alyosha, does God exist?\nALYOSHA: God does exist.\nIVAN: Ivan, is there immortality of some sort, just a little, just a tiny bit?\nALYOSHA: There is no immortality either.\nIVAN: None at all?\nALYOSHA: None at all.\nIVAN: Complete zero?\nALYOSHA: Complete zero.",
     context:
       "Dostoevsky stages the largest questions human beings can ask as rapid-fire dialogue — almost catechism. The repetition doesn't dilute the enormity; it amplifies it. Each echo strips away another layer of evasion until nothing is left but the bare answer.",
     twists: [
@@ -232,7 +232,7 @@ export const dialoguePassages: Passage[] = [
     title: "The Remains of the Day",
     author: "Kazuo Ishiguro",
     work: "The Remains of the Day (1989)",
-    text: "'Do you think, Mr. Stevens, we could have been happy together? You and I?'\n'I'm sorry, Miss Kenton, I don't quite follow you.'\n'Oh, never mind. It was just a thought. A foolish thought.'",
+    text: "MISS KENTON: Do you think, Mr. Stevens, we could have been happy together? You and I?\nSTEVENS: I'm sorry, Miss Kenton, I don't quite follow you.\nMISS KENTON: Oh, never mind. It was just a thought. A foolish thought.",
     context:
       "Ishiguro compresses an entire unlived life into three exchanges. Miss Kenton reaches across years of repression, and Stevens retreats into incomprehension — real or performed, we can't tell. 'I don't quite follow you' is the most devastating line in the novel. The dialogue is about the impossibility of saying the real thing.",
     twists: [

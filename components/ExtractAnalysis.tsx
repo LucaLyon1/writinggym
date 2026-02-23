@@ -11,6 +11,7 @@ interface ExtractAnalysisProps {
   error: string | null
   passageId?: string
   constraint?: string
+  categoryId?: string
 }
 
 type Phase = 'loading' | 'analyse' | 'write'
@@ -141,13 +142,15 @@ function ReadItButton({
   speaking,
   loading,
   disabled,
+  categoryId,
 }: {
   text: string
-  speak: (t: string) => void
+  speak: (t: string, categoryId?: string) => void
   stop: () => void
   speaking: boolean
   loading: boolean
   disabled?: boolean
+  categoryId?: string
 }) {
   const busy = speaking || loading
   const hasText = text.trim().length > 0
@@ -176,7 +179,7 @@ function ReadItButton({
   return (
     <button
       className="ea-read-btn"
-      onClick={() => speak(text)}
+      onClick={() => speak(text, categoryId)}
       disabled={disabled || !hasText}
     >
       <svg width="12" height="12" viewBox="0 0 14 14" fill="currentColor">
@@ -340,7 +343,7 @@ interface Submission {
   completed_at: string
 }
 
-export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint }: ExtractAnalysisProps) {
+export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId }: ExtractAnalysisProps) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -527,6 +530,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
                 stop={stop}
                 speaking={speaking}
                 loading={speechLoading}
+                categoryId={categoryId}
               />
             </div>
             <AnnotatedText
@@ -575,6 +579,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
               speaking={speaking}
               loading={speechLoading}
               disabled={!userText.trim()}
+              categoryId={categoryId}
             />
             <button
               className="ea-analyze-btn"

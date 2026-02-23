@@ -39,6 +39,7 @@ export function AnalysisView({ passage, onBack }: AnalysisViewProps) {
         error={error}
         passageId={passage.id}
         constraint={constraint}
+        categoryId={passage.categoryId}
       />
     </div>
   )
