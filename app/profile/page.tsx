@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { passages, categories } from '@/data/passages'
 import type { Tables } from '@/types/database.types'
-import { deleteCompletion } from '@/app/actions/completions'
+import { deleteCompletionAction } from '@/app/actions/completions'
 import { CompletionHeatmap } from '@/components/CompletionHeatmap'
 
 type PassageCompletion = Tables<'passage_completions'>
@@ -143,7 +143,7 @@ export default async function ProfilePage() {
                           Try again →
                         </Link>
                       )}
-                      <form action={async (formData: FormData) => { await deleteCompletion(formData) }} className="profile-card-delete-form">
+                      <form action={deleteCompletionAction} className="profile-card-delete-form">
                         <input type="hidden" name="id" value={c.id} />
                         <button type="submit" className="profile-card-delete" title="Delete this submission">
                           Delete

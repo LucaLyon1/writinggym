@@ -33,3 +33,8 @@ export async function deleteCompletion(formData: FormData) {
   revalidatePath('/')
   return { success: true }
 }
+
+/** Wrapper for form action (must return void) */
+export async function deleteCompletionAction(formData: FormData): Promise<void> {
+  await deleteCompletion(formData)
+}
