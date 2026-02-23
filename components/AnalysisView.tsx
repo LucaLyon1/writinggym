@@ -37,6 +37,8 @@ export function AnalysisView({ passage, onBack }: AnalysisViewProps) {
         analysis={analysis}
         isLoading={isLoading}
         error={error}
+        passageId={passage.id}
+        constraint={constraint}
       />
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import type { CraftCategory, ExtractAnalysis as ExtractAnalysisType, Segment } from '@/types/extract'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
@@ -9,6 +9,8 @@ interface ExtractAnalysisProps {
   analysis: ExtractAnalysisType | null
   isLoading: boolean
   error: string | null
+  passageId?: string
+  constraint?: string
 }
 
 type Phase = 'loading' | 'analyse' | 'write'
@@ -235,7 +237,23 @@ function SummarySidebar({
   )
 }
 
-function WriteSidebar({ analysis }: { analysis: ExtractAnalysisType }) {
+function WriteSidebar({
+  analysis,
+  submissions,
+  submissionsLoading,
+  onLoadSubmission,
+  onDeleteSubmission,
+  deletingId,
+  formatDate,
+}: {
+  analysis: ExtractAnalysisType
+  submissions: Submission[]
+  submissionsLoading: boolean
+  onLoadSubmission: (s: Submission) => void
+  onDeleteSubmission: (id: string) => void
+  deletingId: string | null
+  formatDate: (iso: string) => string
+}) {
   const annotatedSegments = analysis.segments.filter((s) => s.annotation)
 
   return (
@@ -264,6 +282,46 @@ function WriteSidebar({ analysis }: { analysis: ExtractAnalysisType }) {
           })}
         </div>
       </div>
+
+      <div className="ea-sidebar-section ea-submissions-section">
+        <h3 className="ea-sidebar-heading">Previous submissions</h3>
+        {submissionsLoading ? (
+          <p className="ea-submissions-loading">Loading…</p>
+        ) : submissions.length === 0 ? (
+          <p className="ea-submissions-empty">No submissions yet. Save your work to see it here.</p>
+        ) : (
+          <ul className="ea-submissions-list">
+            {submissions.map((s) => (
+              <li key={s.id} className="ea-submission-item">
+                <div className="ea-submission-meta">
+                  <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
+                  {s.word_count != null && (
+                    <span className="ea-submission-words">{s.word_count} words</span>
+                  )}
+                </div>
+                <div className="ea-submission-actions">
+                  <button
+                    type="button"
+                    className="ea-submission-load"
+                    onClick={() => onLoadSubmission(s)}
+                  >
+                    Load
+                  </button>
+                  <button
+                    type="button"
+                    className="ea-submission-delete"
+                    onClick={() => onDeleteSubmission(s.id)}
+                    disabled={deletingId === s.id}
+                    title="Delete this submission"
+                  >
+                    {deletingId === s.id ? '…' : 'Delete'}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </aside>
   )
 }
@@ -274,7 +332,15 @@ interface UserFeedback {
   feedback: string
 }
 
-export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisProps) {
+interface Submission {
+  id: string
+  user_text: string | null
+  feedback: UserFeedback | null
+  word_count: number | null
+  completed_at: string
+}
+
+export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint }: ExtractAnalysisProps) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -282,7 +348,55 @@ export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisP
   const [feedback, setFeedback] = useState<UserFeedback | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [submissionsLoading, setSubmissionsLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
+
+  const fetchSubmissions = useCallback(async () => {
+    if (!passageId || !constraint) return
+    setSubmissionsLoading(true)
+    try {
+      const res = await fetch(
+        `/api/completions?passageId=${encodeURIComponent(passageId)}&constraint=${encodeURIComponent(constraint)}`
+      )
+      if (res.ok) {
+        const data = (await res.json()) as Submission[]
+        setSubmissions(data)
+      }
+    } catch {
+      setSubmissions([])
+    } finally {
+      setSubmissionsLoading(false)
+    }
+  }, [passageId, constraint])
+
+  useEffect(() => {
+    if (phase === 'write' && passageId && constraint) {
+      fetchSubmissions()
+    }
+  }, [phase, passageId, constraint, fetchSubmissions])
+
+  function handleLoadSubmission(s: Submission) {
+    setUserText(s.user_text ?? '')
+    setFeedback(s.feedback as UserFeedback | null)
+    setFeedbackError(null)
+  }
+
+  async function handleDeleteSubmission(id: string) {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/completions/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setSubmissions((prev) => prev.filter((s) => s.id !== id))
+      }
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const wordCount = useMemo(() => countWords(userText), [userText])
 
@@ -321,6 +435,48 @@ export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisP
     } finally {
       setFeedbackLoading(false)
     }
+  }
+
+  async function handleSave() {
+    if (!feedback || !passageId || !constraint || !analysis) return
+    setSaveError(null)
+    setSaveLoading(true)
+    setSaveSuccess(false)
+    try {
+      const res = await fetch('/api/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passageId,
+          constraint,
+          userText: userText.trim(),
+          wordCount,
+          feedback,
+        }),
+      })
+      const data = (await res.json()) as { error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed to save')
+      setSaveSuccess(true)
+      fetchSubmissions()
+      setTimeout(() => setSaveSuccess(false), 2000)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaveLoading(false)
+    }
+  }
+
+  const canSave = Boolean(feedback && passageId && constraint)
+  const saveTooltip = !canSave ? 'Get feedback on your writing first' : undefined
+
+  function formatSubmissionDate(iso: string) {
+    return new Date(iso).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
   }
 
   useEffect(() => {
@@ -427,7 +583,18 @@ export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisP
             >
               {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
             </button>
+            <span title={saveTooltip} className="ea-save-wrapper">
+              <button
+                className={`ea-save-btn${saveSuccess ? ' ea-save-saved' : ''}`}
+                onClick={handleSave}
+                disabled={!canSave || saveLoading}
+              >
+                {saveLoading ? 'Saving…' : saveSuccess ? 'Saved' : 'Save'}
+              </button>
+            </span>
           </div>
+
+          {saveError && <p className="ea-feedback-error">{saveError}</p>}
 
           {feedbackLoading && (
             <p className="ea-feedback-loading">Analysing your writing…</p>
@@ -446,7 +613,15 @@ export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisP
             </div>
           )}
         </main>
-        <WriteSidebar analysis={analysis} />
+        <WriteSidebar
+          analysis={analysis}
+          submissions={submissions}
+          submissionsLoading={submissionsLoading}
+          onLoadSubmission={handleLoadSubmission}
+          onDeleteSubmission={handleDeleteSubmission}
+          deletingId={deletingId}
+          formatDate={formatSubmissionDate}
+        />
       </div>
     </div>
   )

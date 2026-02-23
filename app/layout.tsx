@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthNav } from "@/components/auth/AuthNav";
 
 export const metadata: Metadata = {
-  title: "The Writing Gym",
-  description: "Train your feel for writing. Read, rewrite, twist, and listen.",
+  title: "Proselab",
+  description:
+    "Train your voice. Study passages with AI craft analysis, write your own version, get feedback, and track your progress.",
 };
 
 export default function RootLayout({
@@ -13,7 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="light">
-      <body>{children}</body>
+      <body>
+        <header className="auth-header">
+          <AuthNav />
+        </header>
+        {children}
+      </body>
     </html>
   );
 }

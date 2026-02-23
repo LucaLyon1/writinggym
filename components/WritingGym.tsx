@@ -64,7 +64,7 @@ export function WritingGym() {
         </div>
         <div className="gym-logo">
           <span className="gym-logo-mark">✦</span>
-          <span className="gym-logo-text">The Writing Gym</span>
+          <span className="gym-logo-text">Proselab</span>
         </div>
       </header>
 

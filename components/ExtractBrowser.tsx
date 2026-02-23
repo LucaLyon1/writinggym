@@ -60,7 +60,7 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
     <div className="browser-root">
       <header className="browser-header">
         <h1 className="gym-logo">
-          <span className="gym-logo-mark">✦</span> Rewrite
+          <span className="gym-logo-mark">✦</span> Proselab
         </h1>
         <p className="browser-tagline">
           Pick an extract. Study the craft. Write your own.

@@ -30,7 +30,7 @@ export function PassageBrowser({ onSelect }: Props) {
             <header className="browser-header">
                 <div className="browser-logo">
                     <span className="gym-logo-mark">✦</span>
-                    <span className="gym-logo-text">The Writing Gym</span>
+                    <span className="gym-logo-text">Proselab</span>
                 </div>
                 <p className="browser-tagline">
                     Choose a passage. Train your ear.

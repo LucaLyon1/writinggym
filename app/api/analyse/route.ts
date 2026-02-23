@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ExtractAnalysis } from '@/types/extract'
+import type { Json } from '@/types/database.types'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { constraintKey } from '@/lib/constraint-key'
 
 const SYSTEM_PROMPT = `You are a literary craft analyst helping writers learn by imitation. 
 Given a literary extract and an imitation constraint, you will:
@@ -64,6 +67,20 @@ export async function POST(request: Request) {
     )
   }
 
+  const key = constraintKey(body.constraint)
+
+  // Check if analysis already exists
+  const { data: existing } = await supabaseAdmin
+    .from('passage_analyses')
+    .select('analysis')
+    .eq('passage_id', body.extractId)
+    .eq('constraint_key', key)
+    .maybeSingle()
+
+  if (existing?.analysis) {
+    return NextResponse.json(existing.analysis as unknown as ExtractAnalysis)
+  }
+
   const client = new Anthropic({ apiKey })
 
   try {
@@ -101,6 +118,13 @@ export async function POST(request: Request) {
         { status: 502 }
       )
     }
+
+    // Store in database for future requests
+    await supabaseAdmin.from('passage_analyses').insert({
+      passage_id: body.extractId,
+      constraint_key: key,
+      analysis: analysis as unknown as Json,
+    })
 
     return NextResponse.json(analysis)
   } catch (err) {
