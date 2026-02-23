@@ -23,11 +23,17 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
     return { error: 'Password must be at least 6 characters' }
   }
 
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/auth/callback`,
+      emailRedirectTo: `${siteUrl}/email-verified`,
     },
   })
 
@@ -59,7 +65,7 @@ export async function login(_prevState: AuthState | undefined, formData: FormDat
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect('/lab')
 }
 
 export async function signInWithGoogle() {
@@ -71,7 +77,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${siteUrl}/auth/callback`,
+      redirectTo: `${siteUrl}/auth/callback?next=/lab`,
     },
   })
 
