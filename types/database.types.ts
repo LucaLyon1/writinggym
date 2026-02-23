@@ -41,18 +41,21 @@ export type Database = {
     Tables: {
       daily_stats: {
         Row: {
+          passages_practiced: number
           sessions: number
           stat_date: string
           user_id: string
           words_written: number
         }
         Insert: {
+          passages_practiced?: number
           sessions?: number
           stat_date: string
           user_id: string
           words_written?: number
         }
         Update: {
+          passages_practiced?: number
           sessions?: number
           stat_date?: string
           user_id?: string
@@ -133,6 +136,98 @@ export type Database = {
           },
         ]
       }
+      passage_pack_items: {
+        Row: {
+          pack_id: string
+          passage_id: string
+        }
+        Insert: {
+          pack_id: string
+          passage_id: string
+        }
+        Update: {
+          pack_id?: string
+          passage_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passage_pack_items_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "passage_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passage_packs: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          label: string
+          price_cents: number
+          pro_only: boolean
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id: string
+          label: string
+          price_cents?: number
+          pro_only?: boolean
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label?: string
+          price_cents?: number
+          pro_only?: boolean
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          can_access_all_passages: boolean
+          can_access_packs: boolean
+          can_export: boolean
+          can_save_rewrites: boolean
+          created_at: string
+          daily_passage_limit: number | null
+          has_progress_tracking: boolean
+          id: string
+          interval: string | null
+          label: string
+          price_cents: number
+        }
+        Insert: {
+          can_access_all_passages?: boolean
+          can_access_packs?: boolean
+          can_export?: boolean
+          can_save_rewrites?: boolean
+          created_at?: string
+          daily_passage_limit?: number | null
+          has_progress_tracking?: boolean
+          id: string
+          interval?: string | null
+          label: string
+          price_cents?: number
+        }
+        Update: {
+          can_access_all_passages?: boolean
+          can_access_packs?: boolean
+          can_export?: boolean
+          can_save_rewrites?: boolean
+          created_at?: string
+          daily_passage_limit?: number | null
+          has_progress_tracking?: boolean
+          id?: string
+          interval?: string | null
+          label?: string
+          price_cents?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -190,15 +285,162 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_rewrites: {
+        Row: {
+          constraint_key: string
+          created_at: string
+          id: string
+          is_favorite: boolean
+          note: string | null
+          passage_id: string
+          rewrite_text: string
+          updated_at: string
+          user_id: string
+          word_count: number | null
+        }
+        Insert: {
+          constraint_key: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          note?: string | null
+          passage_id: string
+          rewrite_text: string
+          updated_at?: string
+          user_id: string
+          word_count?: number | null
+        }
+        Update: {
+          constraint_key?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          note?: string | null
+          passage_id?: string
+          rewrite_text?: string
+          updated_at?: string
+          user_id?: string
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_rewrites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_pack_access: {
+        Row: {
+          pack_id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          pack_id: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          pack_id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_pack_access_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "passage_packs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_pack_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      record_session_completion: {
-        Args: { p_passage_id: string; p_user_id: string }
-        Returns: undefined
-      }
+      get_user_entitlements: { Args: { p_user_id: string }; Returns: Json }
+      record_session_completion:
+        | {
+            Args: { p_passage_id: string; p_user_id: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_passage_id: string
+              p_user_id: string
+              p_word_count?: number
+            }
+            Returns: undefined
+          }
     }
     Enums: {
       [_ in never]: never

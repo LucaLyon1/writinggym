@@ -447,6 +447,9 @@ export function LandingPage() {
           <Link href="/lab" className="landing-btn-primary">
             Browse Passages →
           </Link>
+          <Link href="/plans" className="landing-btn-outline">
+            View plans →
+          </Link>
           <Link href="/signup" className="landing-btn-outline">
             Create account →
           </Link>
