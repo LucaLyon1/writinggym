@@ -28,7 +28,7 @@ export function CompletionHeatmap({ completions }: { completions: Completion[] }
     return map
   }, [completions])
 
-  const { grid, weekLabels } = useMemo(() => {
+  const { grid } = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 

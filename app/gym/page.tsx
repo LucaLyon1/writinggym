@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import type { Passage } from '@/data/passages'
 import { passages } from '@/data/passages'
 import { ExtractBrowser } from '@/components/ExtractBrowser'
 import { AnalysisView } from '@/components/AnalysisView'
 
-export default function GymPage() {
+function GymPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const passageId = searchParams.get('passage')
@@ -40,4 +40,12 @@ export default function GymPage() {
   }
 
   return <ExtractBrowser onSelect={setSelectedPassage} />
+}
+
+export default function GymPage() {
+  return (
+    <Suspense fallback={<div className="gym-loading">Loading…</div>}>
+      <GymPageContent />
+    </Suspense>
+  )
 }

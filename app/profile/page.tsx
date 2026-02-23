@@ -143,7 +143,7 @@ export default async function ProfilePage() {
                           Try again →
                         </Link>
                       )}
-                      <form action={deleteCompletion} className="profile-card-delete-form">
+                      <form action={async (formData: FormData) => { await deleteCompletion(formData) }} className="profile-card-delete-form">
                         <input type="hidden" name="id" value={c.id} />
                         <button type="submit" className="profile-card-delete" title="Delete this submission">
                           Delete

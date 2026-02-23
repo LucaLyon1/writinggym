@@ -9,7 +9,7 @@ export type AuthState = {
   success?: string
 }
 
-export async function signup(_prevState: AuthState, formData: FormData) {
+export async function signup(_prevState: AuthState | undefined, formData: FormData) {
   const supabase = await createClient()
 
   const email = formData.get('email') as string
@@ -42,7 +42,7 @@ export async function signup(_prevState: AuthState, formData: FormData) {
   }
 }
 
-export async function login(_prevState: AuthState, formData: FormData) {
+export async function login(_prevState: AuthState | undefined, formData: FormData) {
   const supabase = await createClient()
 
   const email = formData.get('email') as string

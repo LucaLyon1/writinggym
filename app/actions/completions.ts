@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-export async function deleteCompletion(_prevState: unknown, formData: FormData) {
+export async function deleteCompletion(formData: FormData) {
   const id = formData.get('id') as string | null
   const supabase = await createClient()
   const {
