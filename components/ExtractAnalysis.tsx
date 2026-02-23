@@ -115,8 +115,8 @@ function CategoryPills({
             className="ea-pill"
             style={{
               backgroundColor: isActive ? config.bg : 'transparent',
-              borderColor: isActive ? config.border : 'rgba(232,228,220,0.2)',
-              color: isActive ? config.color : '#9B9488',
+              borderColor: isActive ? config.border : 'var(--line)',
+              color: isActive ? config.color : 'var(--ink-muted)',
             }}
             onClick={() => onToggle(key)}
           >
@@ -138,14 +138,17 @@ function ReadItButton({
   stop,
   speaking,
   loading,
+  disabled,
 }: {
   text: string
   speak: (t: string) => void
   stop: () => void
   speaking: boolean
   loading: boolean
+  disabled?: boolean
 }) {
   const busy = speaking || loading
+  const hasText = text.trim().length > 0
 
   if (busy) {
     return (
@@ -169,7 +172,11 @@ function ReadItButton({
   }
 
   return (
-    <button className="ea-read-btn" onClick={() => speak(text)}>
+    <button
+      className="ea-read-btn"
+      onClick={() => speak(text)}
+      disabled={disabled || !hasText}
+    >
       <svg width="12" height="12" viewBox="0 0 14 14" fill="currentColor">
         <polygon points="2,1 13,7 2,13" />
       </svg>
@@ -261,11 +268,20 @@ function WriteSidebar({ analysis }: { analysis: ExtractAnalysisType }) {
   )
 }
 
+interface UserFeedback {
+  segments: ExtractAnalysisType['segments']
+  summary: string[]
+  feedback: string
+}
+
 export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisProps) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [userText, setUserText] = useState('')
+  const [feedback, setFeedback] = useState<UserFeedback | null>(null)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
 
   const wordCount = useMemo(() => countWords(userText), [userText])
@@ -274,6 +290,38 @@ export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisP
     () => analysis?.segments.map((s) => s.text).join('') ?? '',
     [analysis]
   )
+
+  async function handleAnalyze() {
+    if (!analysis || !userText.trim()) return
+    if (userText.trim().length < 50) {
+      setFeedbackError('Write at least 50 characters before requesting feedback.')
+      return
+    }
+    setFeedbackError(null)
+    setFeedback(null)
+    setFeedbackLoading(true)
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userText: userText.trim(),
+          originalText: fullText,
+          constraint: analysis.constraint,
+        }),
+      })
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string }
+        throw new Error(data.error ?? 'Failed to get feedback')
+      }
+      const data = (await res.json()) as UserFeedback
+      setFeedback(data)
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : 'Failed to get feedback')
+    } finally {
+      setFeedbackLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (analysis && phase === 'loading') {
@@ -341,9 +389,21 @@ export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisP
 
   return (
     <div className="ea-root">
-      <div className="ea-source">{analysis.source}</div>
+      <div className="ea-source ea-source-with-back">
+        <button
+          className="ea-back-link"
+          onClick={() => setPhase('analyse')}
+        >
+          ← back to extract
+        </button>
+        <span>{analysis.source}</span>
+      </div>
       <div className="ea-columns">
         <main className="ea-main ea-write-main">
+          <div className="ea-extract-reference">
+            <h3 className="ea-extract-reference-heading">Original extract</h3>
+            <p className="ea-extract-reference-text">{fullText}</p>
+          </div>
           <textarea
             className="ea-textarea"
             value={userText}
@@ -352,13 +412,39 @@ export function ExtractAnalysis({ analysis, isLoading, error }: ExtractAnalysisP
           />
           <div className="ea-write-footer">
             <span className="ea-word-count">{wordCount} words</span>
+            <ReadItButton
+              text={userText}
+              speak={speak}
+              stop={stop}
+              speaking={speaking}
+              loading={speechLoading}
+              disabled={!userText.trim()}
+            />
             <button
-              className="ea-back-link"
-              onClick={() => setPhase('analyse')}
+              className="ea-analyze-btn"
+              onClick={handleAnalyze}
+              disabled={feedbackLoading || userText.trim().length < 50}
             >
-              ← back to extract
+              {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
             </button>
           </div>
+
+          {feedbackLoading && (
+            <p className="ea-feedback-loading">Analysing your writing…</p>
+          )}
+
+          {feedbackError && (
+            <p className="ea-feedback-error">{feedbackError}</p>
+          )}
+
+          {feedback && !feedbackLoading && (
+            <div className="ea-feedback-block">
+              <h3 className="ea-feedback-heading">Honest feedback</h3>
+              <div className="ea-feedback-content">
+                <p className="ea-feedback-text">{feedback.feedback}</p>
+              </div>
+            </div>
+          )}
         </main>
         <WriteSidebar analysis={analysis} />
       </div>
