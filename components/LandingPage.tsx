@@ -1,7 +1,130 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+
+const MANUSCRIPT_NOTES = {
+  voice:
+    'Woolf’s interior voice: "perpetual" suggests something ongoing, inescapable — not a passing mood but a state of being. The word choice bleeds personality.',
+  imagery:
+    'Concrete anchor: the taxi cabs ground the abstract feeling. We see what she sees. The mundane detail makes the loneliness tangible.',
+  structure:
+    'Repetition creates rhythm: "out, out, far out" — each word pushes further. The syntax mirrors the feeling of distance, of being cast away.',
+  pacing:
+    '"Alone." A single word. The sentence stops. The pause lets the weight of isolation land before the next thought.',
+} as const
+
+function CraftTooltip({ note, children }: { note: string; children: React.ReactNode }) {
+  const [show, setShow] = useState(false)
+  const [pos, setPos] = useState({ x: 0, y: 0 })
+  const ref = useRef<HTMLSpanElement>(null)
+
+  const handleMouseEnter = () => setShow(true)
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    setPos({ x: rect.left + rect.width / 2, y: rect.top })
+  }
+  const handleMouseLeave = () => setShow(false)
+
+  return (
+    <>
+      <span ref={ref} onMouseEnter={handleMouseEnter} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+        {children}
+      </span>
+      {show &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="landing-ms-tooltip"
+            style={{ left: pos.x, top: pos.y - 8, transform: 'translate(-50%, -100%)' }}
+          >
+            <span className="landing-ms-tooltip-text">{note}</span>
+            <span className="landing-ms-tooltip-arrow" />
+          </div>,
+          document.body
+        )}
+    </>
+  )
+}
+
+function TypewriterExercise() {
+  const phrases = [
+    { type: 'She felt the weight of the morning...', correct: 'She felt the weight of the morning light on her skin.' },
+    { type: 'The city waited outside...', correct: 'The city waited outside the window, silent and vast.' },
+    { type: 'Something shifted in the air...', correct: 'Something shifted in the air between them.' },
+  ]
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting' | 'correcting' | 'done'>('typing')
+  const [display, setDisplay] = useState('')
+  const [displayIndex, setDisplayIndex] = useState(0)
+
+  useEffect(() => {
+    const { type, correct } = phrases[phraseIndex]
+
+    if (phase === 'typing') {
+      if (displayIndex < type.length) {
+        const t = setTimeout(() => {
+          setDisplay(type.slice(0, displayIndex + 1))
+          setDisplayIndex(displayIndex + 1)
+        }, 50)
+        return () => clearTimeout(t)
+      }
+      const t = setTimeout(() => setPhase('pausing'), 400)
+      return () => clearTimeout(t)
+    }
+
+    if (phase === 'pausing') {
+      const t = setTimeout(() => setPhase('deleting'), 1200)
+      return () => clearTimeout(t)
+    }
+
+    if (phase === 'deleting') {
+      if (displayIndex > 0) {
+        const t = setTimeout(() => {
+          setDisplay(type.slice(0, displayIndex - 1))
+          setDisplayIndex(displayIndex - 1)
+        }, 30)
+        return () => clearTimeout(t)
+      }
+      const t = setTimeout(() => {
+        setPhase('correcting')
+        setDisplayIndex(0)
+      }, 200)
+      return () => clearTimeout(t)
+    }
+
+    if (phase === 'correcting') {
+      if (displayIndex < correct.length) {
+        const t = setTimeout(() => {
+          setDisplay(correct.slice(0, displayIndex + 1))
+          setDisplayIndex(displayIndex + 1)
+        }, 45)
+        return () => clearTimeout(t)
+      }
+      const t = setTimeout(() => setPhase('done'), 800)
+      return () => clearTimeout(t)
+    }
+
+    if (phase === 'done') {
+      const t = setTimeout(() => {
+        setPhase('typing')
+        setDisplay('')
+        setDisplayIndex(0)
+        setPhraseIndex((phraseIndex + 1) % phrases.length)
+      }, 1500)
+      return () => clearTimeout(t)
+    }
+  }, [phase, displayIndex, phraseIndex])
+
+  return (
+    <div className="landing-typewriter">
+      <span className="landing-typewriter-text">{display}</span>
+      <span className="landing-typewriter-cursor" />
+    </div>
+  )
+}
 
 export function LandingPage() {
   const navRef = useRef<HTMLElement>(null)
@@ -76,13 +199,21 @@ export function LandingPage() {
             </p>
             <p className="landing-ms-passage">
               &quot;She had a{' '}
-              <span className="landing-ms-hl landing-ms-hl-voice">perpetual sense</span>
+              <CraftTooltip note={MANUSCRIPT_NOTES.voice}>
+                <span className="landing-ms-hl landing-ms-hl-voice">perpetual sense</span>
+              </CraftTooltip>
               , as she{' '}
-              <span className="landing-ms-hl landing-ms-hl-imagery">watched the taxi cabs</span>
+              <CraftTooltip note={MANUSCRIPT_NOTES.imagery}>
+                <span className="landing-ms-hl landing-ms-hl-imagery">watched the taxi cabs</span>
+              </CraftTooltip>
               , of being{' '}
-              <span className="landing-ms-hl landing-ms-hl-structure">out, out, far out</span>
+              <CraftTooltip note={MANUSCRIPT_NOTES.structure}>
+                <span className="landing-ms-hl landing-ms-hl-structure">out, out, far out</span>
+              </CraftTooltip>
               {' '}to sea and{' '}
-              <span className="landing-ms-hl landing-ms-hl-pacing">alone</span>
+              <CraftTooltip note={MANUSCRIPT_NOTES.pacing}>
+                <span className="landing-ms-hl landing-ms-hl-pacing">alone</span>
+              </CraftTooltip>
               ...&quot;
             </p>
             <div className="landing-ms-legend">
@@ -110,7 +241,7 @@ export function LandingPage() {
               >
                 Your exercise
               </p>
-              <div className="landing-ms-line" />
+              <TypewriterExercise />
             </div>
           </div>
         </div>
