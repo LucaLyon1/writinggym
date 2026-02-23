@@ -2434,9 +2434,10 @@ body {
   --landing-rust: #b84c2e;
   --landing-rust-dark: #8f3a22;
   --landing-gold: #c9a84c;
-  --landing-muted: #7a6f62;
+  --landing-muted: #5c5246;
+  --landing-body: var(--landing-serif);
   --landing-serif: "Playfair Display", Georgia, serif;
-  --landing-mono: "DM Mono", "Courier New", monospace;
+  --landing-mono: var(--font-geist-mono), "Courier New", monospace;
 
   background-color: var(--landing-paper);
   color: var(--landing-ink);
@@ -2479,7 +2480,7 @@ body {
 }
 
 .landing-nav-logo {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2489,7 +2490,7 @@ body {
 
 .landing-nav-cta {
   font-family: var(--landing-mono);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--landing-paper);
@@ -2525,7 +2526,7 @@ body {
 
 .landing-hero-eyebrow {
   font-family: var(--landing-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--landing-rust);
@@ -2535,7 +2536,7 @@ body {
 }
 
 .landing-hero-title {
-  font-size: clamp(3.5rem, 6vw, 5.5rem);
+  font-size: clamp(3.75rem, 6.5vw, 5.75rem);
   font-weight: 900;
   line-height: 0.95;
   letter-spacing: -0.02em;
@@ -2552,7 +2553,7 @@ body {
 .landing-hero-subtitle {
   margin-top: 2rem;
   font-family: var(--landing-mono);
-  font-size: 0.92rem;
+  font-size: 1.02rem;
   line-height: 1.7;
   color: var(--landing-muted);
   max-width: 38ch;
@@ -2571,7 +2572,7 @@ body {
 
 .landing-btn-primary {
   font-family: var(--landing-mono);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--landing-paper);
@@ -2598,7 +2599,7 @@ body {
 
 .landing-btn-outline {
   font-family: var(--landing-mono);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--landing-muted);
@@ -2618,7 +2619,7 @@ body {
 
 .landing-btn-secondary {
   font-family: var(--landing-mono);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--landing-muted);
@@ -2661,7 +2662,7 @@ body {
 
 .landing-ms-label {
   font-family: var(--landing-mono);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--landing-rust);
@@ -2669,7 +2670,7 @@ body {
 }
 
 .landing-ms-passage {
-  font-size: 1.02rem;
+  font-size: 1.1rem;
   line-height: 1.8;
   color: var(--landing-ink);
   font-style: italic;
@@ -2687,7 +2688,7 @@ body {
 
 .landing-ms-phase-header {
   font-family: var(--landing-mono);
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--landing-ink);
@@ -2747,12 +2748,12 @@ body {
 .landing-ms-tooltip {
   position: fixed;
   z-index: 100;
-  max-width: 280px;
-  padding: 0.75rem 1rem;
+  max-width: 300px;
+  padding: 0.85rem 1.1rem;
   background: #1a1714;
   color: #f5f0e8;
   font-family: "Lora", Georgia, serif;
-  font-size: 0.8rem;
+  font-size: 0.88rem;
   line-height: 1.5;
   border-radius: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
@@ -2793,7 +2794,7 @@ body {
   align-items: baseline;
   gap: 0;
   min-height: 1.5em;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: var(--landing-ink);
   font-style: italic;
 }
@@ -2842,7 +2843,7 @@ body {
   gap: 0.75rem 1.25rem;
   margin-top: 1rem;
   font-family: var(--landing-mono);
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--landing-ink);
@@ -2895,13 +2896,13 @@ body {
 
 .landing-section-num {
   font-family: var(--landing-mono);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.2em;
   color: var(--landing-rust);
 }
 
 .landing-section-title {
-  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-size: clamp(2.2rem, 3.8vw, 3.25rem);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -2949,7 +2950,7 @@ body {
 }
 
 .landing-phase-name {
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
 }
@@ -2961,7 +2962,7 @@ body {
 
 .landing-phase-desc {
   font-family: var(--landing-mono);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   line-height: 1.7;
   color: var(--landing-muted);
 }
@@ -3017,7 +3018,7 @@ body {
 }
 
 .landing-author-name {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
   font-style: italic;
   color: var(--landing-paper);
@@ -3026,10 +3027,10 @@ body {
 
 .landing-author-note {
   font-family: var(--landing-mono);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(245, 240, 232, 0.35);
+  color: rgba(245, 240, 232, 0.55);
 }
 
 /* How */
@@ -3076,7 +3077,7 @@ body {
 
 .landing-step-num {
   font-family: var(--landing-mono);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.15em;
   color: var(--landing-rust);
   flex-shrink: 0;
@@ -3084,14 +3085,14 @@ body {
 }
 
 .landing-step-title {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin-bottom: 0.35rem;
 }
 
 .landing-step-desc {
   font-family: var(--landing-mono);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   line-height: 1.65;
   color: var(--landing-muted);
 }
@@ -3127,7 +3128,7 @@ body {
 
 .landing-cta-tag {
   font-family: var(--landing-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--landing-rust);
@@ -3135,7 +3136,7 @@ body {
 }
 
 .landing-cta-title {
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-size: clamp(2.75rem, 5.5vw, 4.75rem);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -3150,7 +3151,7 @@ body {
 
 .landing-cta-sub {
   font-family: var(--landing-mono);
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   color: var(--landing-muted);
   margin-bottom: 3rem;
   max-width: 45ch;
@@ -3164,7 +3165,7 @@ body {
   align-items: center;
   gap: 0.6rem;
   font-family: var(--landing-mono);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--landing-muted);
@@ -3186,7 +3187,7 @@ body {
 }
 
 .landing-footer-logo {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -3194,7 +3195,7 @@ body {
 
 .landing-footer-mono {
   font-family: var(--landing-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   letter-spacing: 0.08em;
   color: var(--landing-muted);
 }

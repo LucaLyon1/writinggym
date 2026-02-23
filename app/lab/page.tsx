@@ -7,7 +7,7 @@ import { passages } from '@/data/passages'
 import { ExtractBrowser } from '@/components/ExtractBrowser'
 import { AnalysisView } from '@/components/AnalysisView'
 
-function GymPageContent() {
+function LabPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const passageId = searchParams.get('passage')
@@ -26,7 +26,7 @@ function GymPageContent() {
 
   function handleBack() {
     setSelectedPassage(null)
-    router.replace('/gym')
+    router.replace('/lab')
   }
 
   if (selectedPassage) {
@@ -42,10 +42,10 @@ function GymPageContent() {
   return <ExtractBrowser onSelect={setSelectedPassage} />
 }
 
-export default function GymPage() {
+export default function LabPage() {
   return (
     <Suspense fallback={<div className="gym-loading">Loading…</div>}>
-      <GymPageContent />
+      <LabPageContent />
     </Suspense>
   )
 }

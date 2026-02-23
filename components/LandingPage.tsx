@@ -183,7 +183,7 @@ export function LandingPage() {
             track your progress.
           </p>
           <div className="landing-hero-actions">
-            <Link href="/gym" className="landing-btn-primary" id="start">
+            <Link href="/lab" className="landing-btn-primary" id="start">
               Browse Passages
             </Link>
             <a href="#how" className="landing-btn-secondary">
@@ -312,8 +312,8 @@ export function LandingPage() {
           className="landing-reveal"
           style={{
             fontFamily: 'var(--landing-mono)',
-            fontSize: '0.88rem',
-            color: 'rgba(245,240,232,0.5)',
+            fontSize: '0.98rem',
+            color: 'rgba(245,240,232,0.7)',
             maxWidth: '55ch',
             lineHeight: 1.8,
           }}
@@ -444,7 +444,7 @@ export function LandingPage() {
           constraints, and feedback. Study the masters. Write more.
         </p>
         <div className="landing-reveal landing-cta-buttons">
-          <Link href="/gym" className="landing-btn-primary">
+          <Link href="/lab" className="landing-btn-primary">
             Browse Passages →
           </Link>
           <Link href="/signup" className="landing-btn-outline">
