@@ -9,8 +9,8 @@ export async function AuthNav() {
   if (data.user) {
     return (
       <nav className="auth-nav">
-        <Link href="/plans" className="auth-nav-link">
-          Plans
+        <Link href="/pricing" className="auth-nav-link auth-nav-pricing">
+          Pricing
         </Link>
         <Link href="/profile" className="auth-nav-link">
           Profile
@@ -26,8 +26,8 @@ export async function AuthNav() {
 
   return (
     <nav className="auth-nav">
-      <Link href="/plans" className="auth-nav-link">
-        Plans
+      <Link href="/pricing" className="auth-nav-link auth-nav-pricing">
+        Pricing
       </Link>
       <Link href="/login" className="auth-nav-link">
         Sign in

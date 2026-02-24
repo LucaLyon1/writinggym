@@ -13,9 +13,24 @@ function truncate(text: string, maxLen: number): string {
   return text.slice(0, maxLen).replace(/\s+\S*$/, '') + '…'
 }
 
+function matchesSearch(p: Passage, query: string): boolean {
+  if (!query.trim()) return true
+  const q = query.toLowerCase().trim()
+  const tagLabels = p.tags
+    .map((tid) => tags.find((t) => t.id === tid)?.label ?? '')
+    .join(' ')
+  return (
+    p.title.toLowerCase().includes(q) ||
+    p.author.toLowerCase().includes(q) ||
+    p.work.toLowerCase().includes(q) ||
+    p.text.toLowerCase().includes(q) ||
+    tagLabels.toLowerCase().includes(q)
+  )
+}
+
 export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
-  const [activeTags, setActiveTags] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   const passageCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -30,31 +45,11 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
     if (activeCategoryId) {
       result = result.filter((p) => p.categoryId === activeCategoryId)
     }
-    if (activeTags.length > 0) {
-      result = result.filter((p) =>
-        activeTags.every((tag) => p.tags.includes(tag))
-      )
-    }
+    result = result.filter((p) => matchesSearch(p, searchQuery))
     return result
-  }, [activeCategoryId, activeTags])
+  }, [activeCategoryId, searchQuery])
 
   const activeCategory = categories.find((c) => c.id === activeCategoryId)
-
-  const visibleTags = useMemo(() => {
-    const tagSet = new Set<string>()
-    for (const p of filtered) {
-      for (const t of p.tags) tagSet.add(t)
-    }
-    return tags.filter((t) => tagSet.has(t.id))
-  }, [filtered])
-
-  function toggleTag(tagId: string) {
-    setActiveTags((prev) =>
-      prev.includes(tagId)
-        ? prev.filter((t) => t !== tagId)
-        : [...prev, tagId]
-    )
-  }
 
   return (
     <div className="browser-root">
@@ -99,19 +94,16 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
             </div>
           )}
 
-          {visibleTags.length > 0 && (
-            <div className="tag-bar">
-              {visibleTags.map((tag) => (
-                <button
-                  key={tag.id}
-                  className={`tag-pill ${activeTags.includes(tag.id) ? 'active' : ''}`}
-                  onClick={() => toggleTag(tag.id)}
-                >
-                  {tag.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="search-bar">
+            <input
+              type="search"
+              placeholder="Search by title, author, work, or tags…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+              aria-label="Search extracts"
+            />
+          </div>
 
           {filtered.length === 0 && (
             <p className="browser-empty">

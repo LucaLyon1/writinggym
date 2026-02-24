@@ -120,7 +120,7 @@ const DEFAULT_PLANS: Plan[] = [
   },
 ]
 
-export default async function PlansPage() {
+export default async function PricingPage() {
   const supabase = await createClient()
   const { data: plansData } = await supabase
     .from('plans')

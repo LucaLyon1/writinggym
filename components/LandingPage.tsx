@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 
 const MANUSCRIPT_NOTES = {
   voice:
-    'Woolf’s interior voice: "perpetual" suggests something ongoing, inescapable — not a passing mood but a state of being. The word choice bleeds personality.',
+    "Woolf's interior voice: \"perpetual\" suggests something ongoing, inescapable — not a passing mood but a state of being. The word choice bleeds personality.",
   imagery:
     'Concrete anchor: the taxi cabs ground the abstract feeling. We see what she sees. The mundane detail makes the loneliness tangible.',
   structure:
@@ -127,19 +127,6 @@ function TypewriterExercise() {
 }
 
 export function LandingPage() {
-  const navRef = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    const nav = navRef.current
-    if (!nav) return
-
-    const onScroll = () => {
-      nav.classList.toggle('landing-nav-scrolled', window.scrollY > 30)
-    }
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
   useEffect(() => {
     const reveals = document.querySelectorAll('.landing-reveal')
     const observer = new IntersectionObserver(
@@ -159,13 +146,6 @@ export function LandingPage() {
 
   return (
     <div className="landing-root">
-      {/* NAV */}
-      <nav ref={navRef} className="landing-nav" id="landing-nav">
-        <Link href="/" className="landing-nav-logo">
-          Proselab
-        </Link>
-      </nav>
-
       {/* HERO */}
       <section className="landing-hero">
         <div className="landing-hero-left">
@@ -178,7 +158,7 @@ export function LandingPage() {
             Every Day.
           </h1>
           <p className="landing-hero-subtitle">
-            Study passages from Tolstoy, Woolf, Morrison, Hemingway, and more with
+            Study passages from Eliot, Plath, Tolstoy, Woolf, Morrison, Hemingway, and more with
             AI-powered craft analysis. Write your own version, get feedback, and
             track your progress.
           </p>
@@ -306,7 +286,7 @@ export function LandingPage() {
       <section className="landing-passages">
         <div className="landing-section-header landing-reveal">
           <span className="landing-section-num">02 /</span>
-          <h2 className="landing-section-title">8 Categories, 30+ Passages</h2>
+          <h2 className="landing-section-title">9 Categories, 40+ Passages</h2>
         </div>
         <p
           className="landing-reveal"
@@ -320,7 +300,7 @@ export function LandingPage() {
         >
           Passages organized by craft: character intro, in medias res, place
           &amp; atmosphere, dialogue, interiority, time &amp; memory, rhythm
-          &amp; style, tension &amp; dread. Filter by tags. Each one teaches
+          &amp; style, tension &amp; dread, poetry. Filter by tags. Each one teaches
           something different.
         </p>
         <div
@@ -332,10 +312,6 @@ export function LandingPage() {
             <p className="landing-author-note">Interiority</p>
           </div>
           <div className="landing-author-item">
-            <p className="landing-author-name">Raymond Carver</p>
-            <p className="landing-author-note">Minimalism</p>
-          </div>
-          <div className="landing-author-item">
             <p className="landing-author-name">Toni Morrison</p>
             <p className="landing-author-note">Weight &amp; Memory</p>
           </div>
@@ -344,21 +320,10 @@ export function LandingPage() {
             <p className="landing-author-note">Dialogue</p>
           </div>
           <div className="landing-author-item">
-            <p className="landing-author-name">Leo Tolstoy</p>
-            <p className="landing-author-note">Character</p>
+            <p className="landing-author-name">Raymond Carver</p>
+            <p className="landing-author-note">Minimalism</p>
           </div>
-          <div className="landing-author-item">
-            <p className="landing-author-name">Cormac McCarthy</p>
-            <p className="landing-author-note">Rhythm</p>
-          </div>
-          <div className="landing-author-item">
-            <p className="landing-author-name">Joan Didion</p>
-            <p className="landing-author-note">Time &amp; Memory</p>
-          </div>
-          <div className="landing-author-item">
-            <p className="landing-author-name">Anton Chekhov</p>
-            <p className="landing-author-note">Restraint</p>
-          </div>
+          <span className="landing-author-more">and more</span>
         </div>
       </section>
 
@@ -447,8 +412,8 @@ export function LandingPage() {
           <Link href="/lab" className="landing-btn-primary">
             Browse Passages →
           </Link>
-          <Link href="/plans" className="landing-btn-outline">
-            View plans →
+          <Link href="/pricing" className="landing-btn-outline">
+            View pricing →
           </Link>
           <Link href="/signup" className="landing-btn-outline">
             Create account →

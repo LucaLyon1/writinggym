@@ -44,6 +44,12 @@ export const categories: Category[] = [
     description:
       "The mechanics of unease — what is withheld, what is implied",
   },
+  {
+    id: "poetry",
+    label: "Poetry",
+    description:
+      "Verse from Eliot, Plath, Shakespeare, Dickinson, and more — study craft through poetry",
+  },
 ];
 
 export const tags: Tag[] = [

@@ -9,6 +9,7 @@ import { interiorityPassages } from "./interiority";
 import { timeAndMemoryPassages } from "./time-and-memory";
 import { rhythmAndStylePassages } from "./rhythm-and-style";
 import { tensionAndDreadPassages } from "./tension-and-dread";
+import { poetryPassages } from "./poetry";
 
 import { Passage } from "./types";
 
@@ -21,4 +22,5 @@ export const passages: Passage[] = [
   ...timeAndMemoryPassages,
   ...rhythmAndStylePassages,
   ...tensionAndDreadPassages,
+  ...poetryPassages,
 ];

@@ -166,8 +166,8 @@ export default async function ProfilePage() {
         <section className="profile-quotas" aria-label="Usage quotas and stats">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h2 className="profile-quotas-title" style={{ marginBottom: 0 }}>Your plan</h2>
-            <Link href="/plans" className="profile-card-link">
-              View all plans →
+            <Link href="/pricing" className="profile-card-link">
+              View pricing →
             </Link>
           </div>
           <div className="profile-quotas-grid">
