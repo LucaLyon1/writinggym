@@ -161,7 +161,18 @@ export default async function ProfilePage() {
           ← Back to main screen
         </Link>
         <header className="profile-header">
-          <h1 className="profile-title">Your submissions</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h1 className="profile-title" style={{ marginBottom: 0 }}>Your submissions</h1>
+            <span
+              className={`profile-plan-badge ${
+                entitlements.plan_label && entitlements.plan_label !== 'Free'
+                  ? 'profile-plan-badge-paid'
+                  : 'profile-plan-badge-free'
+              }`}
+            >
+              {entitlements.plan_label ?? 'Free'} plan
+            </span>
+          </div>
           <p className="profile-subtitle">
             {completions?.length ?? 0} passage
             {(completions?.length ?? 0) !== 1 ? 's' : ''} completed

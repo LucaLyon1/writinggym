@@ -28,6 +28,8 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
 
+  console.log('siteUrl', siteUrl)
+
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -74,6 +76,7 @@ export async function signInWithGoogle() {
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
 
+  console.log('siteUrl', siteUrl)
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {

@@ -1,58 +1,29 @@
 import Link from 'next/link'
+import { PricingPlans } from '@/components/checkout/PricingPlans'
+import { createClient } from '@/lib/supabase/server'
 
-interface PricingPlan {
-  id: string
-  label: string
-  price: string
-  features: string[]
-  cta: string
-  ctaHref: string
-  isPopular?: boolean
+async function getCurrentPlanId(): Promise<string | null> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('plan_id, status')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle()
+
+    return sub?.plan_id ?? null
+  } catch {
+    return null
+  }
 }
 
-const PLANS: PricingPlan[] = [
-  {
-    id: 'free',
-    label: 'Free',
-    price: 'Free',
-    features: [
-      'Unlimited submissions',
-      '5 analysis per week',
-      'Restricted extracts access',
-    ],
-    cta: 'Get started free',
-    ctaHref: '/signup',
-  },
-  {
-    id: 'core',
-    label: 'Core',
-    price: '$12.99/month',
-    features: [
-      'Unlimited submissions',
-      'Unlimited analysis',
-      'Core extract library (buy as needed)',
-      'Premium badge',
-    ],
-    cta: 'Upgrade to Core',
-    ctaHref: '/signup',
-    isPopular: true,
-  },
-  {
-    id: 'premium',
-    label: 'Premium',
-    price: '$37.99/month',
-    features: [
-      'Everything in Core',
-      'Full extract library — unlimited access',
-      'Playground — practice with any text or extract you bring',
-      'Choose your preferred voice for listening to text aloud',
-    ],
-    cta: 'Upgrade to Premium',
-    ctaHref: '/signup',
-  },
-]
+export default async function PricingPage() {
+  const currentPlanId = await getCurrentPlanId()
 
-export default function PricingPage() {
   return (
     <div className="plans-root">
       <div className="plans-inner">
@@ -73,46 +44,7 @@ export default function PricingPage() {
           </p>
         </header>
 
-        <section className="plans-grid" aria-label="Available plans">
-          {PLANS.map((plan) => (
-            <article
-              key={plan.id}
-              className={`plans-card ${plan.isPopular ? 'plans-card-popular' : ''}`}
-            >
-              {plan.isPopular && (
-                <span className="plans-badge">Most popular</span>
-              )}
-              <div className="plans-card-header">
-                <h2 className="plans-card-title">{plan.label}</h2>
-                <p className="plans-card-price">{plan.price}</p>
-              </div>
-
-              <ul className="plans-features" aria-label="Plan features">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="plans-feature">
-                    <span className="plans-feature-check" aria-hidden>
-                      ✓
-                    </span>
-                    <span className="plans-feature-label">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="plans-card-cta">
-                <Link
-                  href={plan.ctaHref}
-                  className={
-                    plan.id === 'free'
-                      ? 'plans-btn plans-btn-outline'
-                      : 'plans-btn plans-btn-primary'
-                  }
-                >
-                  {plan.cta}
-                </Link>
-              </div>
-            </article>
-          ))}
-        </section>
+        <PricingPlans currentPlanId={currentPlanId} />
 
         <p className="plans-note">
           All plans include AI craft analysis, feedback, and text-to-speech.
