@@ -44,10 +44,22 @@ export default function RootLayout({
         </header>
         {children}
         <Script
+          id="cookieyes"
+          type="text/javascript"
+          src="https://cdn-cookieyes.com/client_data/89f12ea21621052ee39f69acc448847c/script.js"
+          strategy="afterInteractive"
+        />
+        <Script
           defer
           data-website-id="dfid_IBYj6a8XOWT1aRRW4PExx"
           data-domain="proselab.io"
           src="https://datafa.st/js/script.js"
+          strategy="afterInteractive"
+        />
+        <Script
+          defer
+          data-website-id="51d4b355-7309-41fd-84c5-cd2218b76b82"
+          src="https://cloud.umami.is/script.js"
           strategy="afterInteractive"
         />
       </body>
