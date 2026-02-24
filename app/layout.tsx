@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
@@ -42,6 +43,13 @@ export default function RootLayout({
           <AuthNav />
         </header>
         {children}
+        <Script
+          defer
+          data-website-id="dfid_IBYj6a8XOWT1aRRW4PExx"
+          data-domain="proselab.io"
+          src="https://datafa.st/js/script.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
