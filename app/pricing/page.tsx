@@ -1,135 +1,58 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import type { Tables } from '@/types/database.types'
 
-type Plan = Tables<'plans'>
-
-function formatPrice(cents: number, interval: string | null): string {
-  if (cents === 0) return 'Free'
-  const dollars = cents / 100
-  const formatted = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(dollars)
-  if (interval) {
-    const per = interval.toLowerCase().includes('year') ? '/year' : '/month'
-    return `${formatted}${per}`
-  }
-  return formatted
+interface PricingPlan {
+  id: string
+  label: string
+  price: string
+  features: string[]
+  cta: string
+  ctaHref: string
+  isPopular?: boolean
 }
 
-function getFeatureLabel(
-  key: keyof Pick<
-    Plan,
-    | 'daily_passage_limit'
-    | 'can_access_all_passages'
-    | 'can_access_packs'
-    | 'can_export'
-    | 'can_save_rewrites'
-    | 'has_progress_tracking'
-  >,
-  plan: Plan
-): string {
-  switch (key) {
-    case 'daily_passage_limit':
-      return plan.daily_passage_limit == null
-        ? 'Unlimited passages per day'
-        : `${plan.daily_passage_limit} passages per day`
-    case 'can_access_all_passages':
-      return 'All passages unlocked'
-    case 'can_access_packs':
-      return 'Passage packs'
-    case 'can_export':
-      return 'Export your work'
-    case 'can_save_rewrites':
-      return 'Save submissions'
-    case 'has_progress_tracking':
-      return 'Progress tracking'
-    default:
-      return ''
-  }
-}
-
-function getFeatureValue(
-  key: keyof Pick<
-    Plan,
-    | 'daily_passage_limit'
-    | 'can_access_all_passages'
-    | 'can_access_packs'
-    | 'can_export'
-    | 'can_save_rewrites'
-    | 'has_progress_tracking'
-  >,
-  plan: Plan
-): boolean | string {
-  const v = plan[key]
-  if (key === 'daily_passage_limit') return true
-  return v === true
-}
-
-const FEATURE_KEYS = [
-  'daily_passage_limit',
-  'can_access_all_passages',
-  'can_access_packs',
-  'can_export',
-  'can_save_rewrites',
-  'has_progress_tracking',
-] as const
-
-const DEFAULT_PLANS: Plan[] = [
+const PLANS: PricingPlan[] = [
   {
     id: 'free',
     label: 'Free',
-    price_cents: 0,
-    interval: null,
-    daily_passage_limit: 3,
-    can_access_all_passages: false,
-    can_access_packs: false,
-    can_export: false,
-    can_save_rewrites: false,
-    has_progress_tracking: true,
-    created_at: '',
+    price: 'Free',
+    features: [
+      'Unlimited submissions',
+      '5 analysis per week',
+      'Restricted extracts access',
+    ],
+    cta: 'Get started free',
+    ctaHref: '/signup',
   },
   {
-    id: 'pro-monthly',
-    label: 'Pro',
-    price_cents: 999,
-    interval: 'month',
-    daily_passage_limit: null,
-    can_access_all_passages: true,
-    can_access_packs: true,
-    can_export: true,
-    can_save_rewrites: true,
-    has_progress_tracking: true,
-    created_at: '',
+    id: 'core',
+    label: 'Core',
+    price: '$12.99/month',
+    features: [
+      'Unlimited submissions',
+      'Unlimited analysis',
+      'Restricted extracts (buy as needed)',
+      'Premium badge',
+    ],
+    cta: 'Upgrade to Core',
+    ctaHref: '/signup',
+    isPopular: true,
   },
   {
-    id: 'pro-yearly',
-    label: 'Pro',
-    price_cents: 9990,
-    interval: 'year',
-    daily_passage_limit: null,
-    can_access_all_passages: true,
-    can_access_packs: true,
-    can_export: true,
-    can_save_rewrites: true,
-    has_progress_tracking: true,
-    created_at: '',
+    id: 'premium',
+    label: 'Premium',
+    price: '$37.99/month',
+    features: [
+      'Everything in Core',
+      'Unlimited extracts',
+      'Playground (bring your own extract/text)',
+      'Customizable voices on "hearing text"',
+    ],
+    cta: 'Upgrade to Premium',
+    ctaHref: '/signup',
   },
 ]
 
-export default async function PricingPage() {
-  const supabase = await createClient()
-  const { data: plansData } = await supabase
-    .from('plans')
-    .select('*')
-    .order('price_cents', { ascending: true })
-
-  const plans: Plan[] =
-    plansData && plansData.length > 0 ? plansData : DEFAULT_PLANS
-
+export default function PricingPage() {
   return (
     <div className="plans-root">
       <div className="plans-inner">
@@ -145,68 +68,50 @@ export default async function PricingPage() {
             <em>plan</em>
           </h1>
           <p className="plans-subtitle">
-            Start free and upgrade when you need more passages, export, and
-            full access to the library.
+            Start free and upgrade when you need unlimited analysis, extracts,
+            and premium features.
           </p>
         </header>
 
         <section className="plans-grid" aria-label="Available plans">
-          {plans.map((plan) => {
-            const isFree = plan.price_cents === 0
-            const isPopular =
-              plan.price_cents > 0 &&
-              plan.interval?.toLowerCase().includes('month')
-            return (
-              <article
-                key={plan.id}
-                className={`plans-card ${isPopular ? 'plans-card-popular' : ''}`}
-              >
-                {isPopular && <span className="plans-badge">Most popular</span>}
-                <div className="plans-card-header">
-                  <h2 className="plans-card-title">{plan.label}</h2>
-                  <p className="plans-card-price">
-                    {formatPrice(plan.price_cents, plan.interval)}
-                  </p>
-                  {plan.interval &&
-                    plan.interval.toLowerCase().includes('year') && (
-                      <p className="plans-card-savings">
-                        Save ~17% vs monthly
-                      </p>
-                    )}
-                </div>
+          {PLANS.map((plan) => (
+            <article
+              key={plan.id}
+              className={`plans-card ${plan.isPopular ? 'plans-card-popular' : ''}`}
+            >
+              {plan.isPopular && (
+                <span className="plans-badge">Most popular</span>
+              )}
+              <div className="plans-card-header">
+                <h2 className="plans-card-title">{plan.label}</h2>
+                <p className="plans-card-price">{plan.price}</p>
+              </div>
 
-                <ul className="plans-features" aria-label="Plan features">
-                  {FEATURE_KEYS.map((key) => {
-                    const value = getFeatureValue(key, plan)
-                    const label = getFeatureLabel(key, plan)
-                    const show =
-                      key === 'daily_passage_limit' || value === true
-                    if (!show) return null
-                    return (
-                      <li key={key} className="plans-feature">
-                        <span className="plans-feature-check" aria-hidden>
-                          ✓
-                        </span>
-                        <span className="plans-feature-label">{label}</span>
-                      </li>
-                    )
-                  })}
-                </ul>
+              <ul className="plans-features" aria-label="Plan features">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="plans-feature">
+                    <span className="plans-feature-check" aria-hidden>
+                      ✓
+                    </span>
+                    <span className="plans-feature-label">{feature}</span>
+                  </li>
+                ))}
+              </ul>
 
-                <div className="plans-card-cta">
-                  {isFree ? (
-                    <Link href="/signup" className="plans-btn plans-btn-outline">
-                      Get started free
-                    </Link>
-                  ) : (
-                    <Link href="/signup" className="plans-btn plans-btn-primary">
-                      Upgrade to {plan.label}
-                    </Link>
-                  )}
-                </div>
-              </article>
-            )
-          })}
+              <div className="plans-card-cta">
+                <Link
+                  href={plan.ctaHref}
+                  className={
+                    plan.id === 'free'
+                      ? 'plans-btn plans-btn-outline'
+                      : 'plans-btn plans-btn-primary'
+                  }
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            </article>
+          ))}
         </section>
 
         <p className="plans-note">
