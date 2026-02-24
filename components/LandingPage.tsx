@@ -159,7 +159,7 @@ export function LandingPage() {
           </h1>
           <p className="landing-hero-subtitle">
             Study passages from Eliot, Plath, Tolstoy, Woolf, Morrison, Hemingway, and more with
-            AI-powered craft analysis. Write your own version, get feedback, and
+            guided craft analysis. Write your own version, get feedback, and
             track your progress.
           </p>
           <div className="landing-hero-actions">
