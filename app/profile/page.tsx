@@ -5,6 +5,9 @@ import { passages, categories } from '@/data/passages'
 import type { Tables } from '@/types/database.types'
 import { deleteCompletionAction } from '@/app/actions/completions'
 import { CompletionHeatmap } from '@/components/CompletionHeatmap'
+import { StreakBadges } from '@/components/StreakBadges'
+import { computeStreaksFromCompletions } from '@/lib/streak'
+import { getCurrentBadge } from '@/lib/streak-badges'
 
 type PassageCompletion = Tables<'passage_completions'>
 
@@ -134,6 +137,8 @@ export default async function ProfilePage() {
     0
   )
 
+  const { currentStreak, longestStreak } = computeStreaksFromCompletions(completions ?? [])
+
   if (error) {
     return (
       <div className="profile-root">
@@ -206,16 +211,21 @@ export default async function ProfilePage() {
           <div className="profile-quotas-stats">
             <h2 className="profile-quotas-title">Your stats</h2>
             <div className="profile-quotas-grid">
-              <div className="profile-quota-card">
+              <div className="profile-quota-card profile-quota-card-streak">
                 <span className="profile-quota-label">Current streak</span>
-                <span className="profile-quota-value">
-                  {profile?.current_streak ?? 0} day{(profile?.current_streak ?? 0) !== 1 ? 's' : ''}
+                <span className="profile-quota-value profile-quota-value-streak">
+                  {getCurrentBadge(currentStreak)?.emoji && (
+                    <span className="profile-quota-badge" aria-hidden>
+                      {getCurrentBadge(currentStreak)!.emoji}
+                    </span>
+                  )}
+                  {currentStreak} day{currentStreak !== 1 ? 's' : ''}
                 </span>
               </div>
               <div className="profile-quota-card">
                 <span className="profile-quota-label">Longest streak</span>
                 <span className="profile-quota-value">
-                  {profile?.longest_streak ?? 0} day{(profile?.longest_streak ?? 0) !== 1 ? 's' : ''}
+                  {longestStreak} day{longestStreak !== 1 ? 's' : ''}
                 </span>
               </div>
               <div className="profile-quota-card">
@@ -233,6 +243,7 @@ export default async function ProfilePage() {
                 <span className="profile-quota-value">{profile?.total_passages_done ?? completions?.length ?? 0}</span>
               </div>
             </div>
+            <StreakBadges currentStreak={currentStreak} />
           </div>
         </section>
 

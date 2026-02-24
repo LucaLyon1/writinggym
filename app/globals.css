@@ -2206,6 +2206,121 @@ body {
   transition: width 0.2s ease;
 }
 
+.profile-quota-badge {
+  margin-right: 0.35rem;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.streak-badges {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.streak-badges-current {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.streak-badges-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.streak-badges-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.streak-badges-label {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.streak-badges-next {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.streak-badges-ladder {
+  margin-top: 0.75rem;
+}
+
+.streak-badges-summary {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.streak-badges-summary::-webkit-details-marker {
+  display: none;
+}
+
+.streak-badges-summary::before {
+  content: '▶';
+  display: inline-block;
+  margin-right: 0.4rem;
+  font-size: 0.6rem;
+  transition: transform 0.2s ease;
+}
+
+.streak-badges-ladder[open] .streak-badges-summary::before {
+  transform: rotate(90deg);
+}
+
+.streak-badges-list {
+  margin-top: 1rem;
+  padding-left: 1.25rem;
+  list-style: none;
+}
+
+.streak-badges-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.streak-badges-item.unlocked {
+  color: var(--ink);
+}
+
+.streak-badges-item.locked {
+  color: var(--ink-muted);
+  opacity: 0.8;
+}
+
+.streak-badges-item-emoji {
+  font-size: 1.1rem;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.streak-badges-item-days {
+  min-width: 4rem;
+}
+
+.streak-badges-item-label {
+  flex: 1;
+}
+
+.streak-badges-item-hint {
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}
+
 .profile-empty {
   text-align: center;
   padding: 4rem 2rem;
