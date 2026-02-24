@@ -426,19 +426,42 @@ export function LandingPage() {
 
       {/* FOOTER */}
       <footer className="landing-footer">
-        <span className="landing-footer-logo">Proselab</span>
-        <span className="landing-footer-mono">
-          Next.js 16 · React 19 · Supabase · Anthropic Claude · ElevenLabs
-        </span>
-        <a
-          href="https://github.com/LucaLyon1/writinggym"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="landing-footer-mono"
-          style={{ color: 'var(--landing-rust)' }}
-        >
-          GitHub ↗
-        </a>
+        <div className="landing-footer-top">
+          <span className="landing-footer-logo">Proselab</span>
+          <span className="landing-footer-mono">
+            Next.js 16 · React 19 · Supabase · Anthropic Claude · ElevenLabs
+          </span>
+          <a
+            href="https://github.com/LucaLyon1/writinggym"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-footer-mono"
+            style={{ color: 'var(--landing-rust)' }}
+          >
+            GitHub ↗
+          </a>
+        </div>
+        <div className="landing-footer-contact">
+          <a href="mailto:contact@proselab.io" className="landing-footer-mono">
+            contact@proselab.io
+          </a>
+          <a
+            href="https://x.com/LucaSav_io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-footer-mono"
+          >
+            X ↗
+          </a>
+          <a
+            href="https://substack.com/@lucasavio"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-footer-mono"
+          >
+            Substack ↗
+          </a>
+        </div>
       </footer>
     </div>
   )
