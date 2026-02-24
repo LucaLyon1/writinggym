@@ -442,6 +442,18 @@ export function LandingPage() {
           </a>
         </div>
         <div className="landing-footer-contact">
+          <Link href="/privacy" className="landing-footer-mono">
+            Privacy
+          </Link>
+          <Link href="/terms" className="landing-footer-mono">
+            Terms
+          </Link>
+          <Link href="/cookies" className="landing-footer-mono">
+            Cookies
+          </Link>
+          <Link href="/contact" className="landing-footer-mono">
+            Contact
+          </Link>
           <a href="mailto:contact@proselab.io" className="landing-footer-mono">
             contact@proselab.io
           </a>
