@@ -30,7 +30,7 @@ const PLANS: PricingPlan[] = [
     features: [
       'Unlimited submissions',
       'Unlimited analysis',
-      'Restricted extracts (buy as needed)',
+      'Core extract library (buy as needed)',
       'Premium badge',
     ],
     cta: 'Upgrade to Core',
@@ -43,9 +43,9 @@ const PLANS: PricingPlan[] = [
     price: '$37.99/month',
     features: [
       'Everything in Core',
-      'Unlimited extracts',
-      'Playground (bring your own extract/text)',
-      'Customizable voices on "hearing text"',
+      'Full extract library — unlimited access',
+      'Playground — practice with any text or extract you bring',
+      'Choose your preferred voice for listening to text aloud',
     ],
     cta: 'Upgrade to Premium',
     ctaHref: '/signup',
