@@ -12,7 +12,7 @@ async function getCurrentPlanId(): Promise<string | null> {
       .from('subscriptions')
       .select('plan_id, status')
       .eq('user_id', user.id)
-      .eq('status', 'active')
+      .in('status', ['active', 'trialing'])
       .maybeSingle()
 
     return sub?.plan_id ?? null

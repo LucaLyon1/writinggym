@@ -43,7 +43,7 @@ async function fetchEntitlements(supabase: Awaited<ReturnType<typeof createClien
     .from('subscriptions')
     .select('plan_id')
     .eq('user_id', userId)
-    .eq('status', 'active')
+    .in('status', ['active', 'trialing'])
     .maybeSingle()
 
   const planId = sub?.plan_id ?? null

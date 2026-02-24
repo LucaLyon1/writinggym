@@ -1,11 +1,81 @@
 import Link from 'next/link'
 import Stripe from 'stripe'
+import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 const PRODUCT_LABELS: Record<string, string> = {
   core: 'Core',
   premium: 'Premium',
+}
+
+async function resolvePlanId(product: string): Promise<string | null> {
+  const { data: plan } = await supabaseAdmin
+    .from('plans')
+    .select('id')
+    .ilike('label', product)
+    .maybeSingle()
+
+  if (plan) return plan.id
+
+  const { data: planById } = await supabaseAdmin
+    .from('plans')
+    .select('id')
+    .eq('id', product)
+    .maybeSingle()
+
+  return planById?.id ?? null
+}
+
+async function ensureSubscription(session: Stripe.Checkout.Session) {
+  if (session.mode !== 'subscription') return
+
+  const userId = session.client_reference_id || session.metadata?.user_id
+  if (!userId) return
+
+  const { data: existing } = await supabaseAdmin
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .in('status', ['active', 'trialing'])
+    .maybeSingle()
+
+  if (existing) return
+
+  const product = session.metadata?.product
+  if (!product) return
+
+  const planId = await resolvePlanId(product)
+  if (!planId) return
+
+  const stripeSubscriptionId = typeof session.subscription === 'string'
+    ? session.subscription
+    : (session.subscription as Stripe.Subscription)?.id
+
+  if (!stripeSubscriptionId) return
+
+  const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+  const stripeCustomerId = typeof session.customer === 'string'
+    ? session.customer
+    : (session.customer as Stripe.Customer)?.id ?? null
+
+  await supabaseAdmin
+    .from('subscriptions')
+    .upsert(
+      {
+        user_id: userId,
+        plan_id: planId,
+        status: subscription.status,
+        stripe_subscription_id: stripeSubscriptionId,
+        stripe_customer_id: stripeCustomerId,
+        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        cancel_at_period_end: subscription.cancel_at_period_end,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    )
 }
 
 interface SuccessPageProps {
@@ -23,8 +93,10 @@ export default async function PricingSuccessPage({ searchParams }: SuccessPagePr
       const product = session.metadata?.product
       planLabel = product ? PRODUCT_LABELS[product] ?? product : null
       customerEmail = session.customer_details?.email ?? null
-    } catch {
-      // Session retrieval failed — show generic success
+
+      await ensureSubscription(session)
+    } catch (err) {
+      console.error('[success] Failed to verify session:', err)
     }
   }
 
