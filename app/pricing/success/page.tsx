@@ -56,6 +56,7 @@ async function ensureSubscription(session: Stripe.Checkout.Session) {
   if (!stripeSubscriptionId) return
 
   const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+  const item = subscription.items.data[0]
   const stripeCustomerId = typeof session.customer === 'string'
     ? session.customer
     : (session.customer as Stripe.Customer)?.id ?? null
@@ -69,8 +70,8 @@ async function ensureSubscription(session: Stripe.Checkout.Session) {
         status: subscription.status,
         stripe_subscription_id: stripeSubscriptionId,
         stripe_customer_id: stripeCustomerId,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        current_period_start: new Date(item.current_period_start * 1000).toISOString(),
+        current_period_end: new Date(item.current_period_end * 1000).toISOString(),
         cancel_at_period_end: subscription.cancel_at_period_end,
         updated_at: new Date().toISOString(),
       },

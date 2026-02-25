@@ -3,7 +3,10 @@ import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  // @ts-expect-error – managed_payments_preview is in private preview
+  apiVersion: '2026-01-28.clover; managed_payments_preview=v1',
+})
 
 export async function POST() {
   try {

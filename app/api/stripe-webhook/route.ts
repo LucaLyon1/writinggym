@@ -12,6 +12,23 @@ const PRODUCT_TAGS: Record<string, string> = {
   book: '14115500',
 }
 
+function getSubscriptionPeriod(subscription: Stripe.Subscription) {
+  const item = subscription.items.data[0]
+  return {
+    current_period_start: new Date(item.current_period_start * 1000).toISOString(),
+    current_period_end: new Date(item.current_period_end * 1000).toISOString(),
+  }
+}
+
+function getSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
+  if (invoice.parent?.type === 'subscription_details') {
+    return typeof invoice.parent.subscription_details?.subscription === 'string'
+      ? invoice.parent.subscription_details.subscription
+      : invoice.parent.subscription_details?.subscription?.id ?? null
+  }
+  return null
+}
+
 async function resolvePlanId(product: string): Promise<string | null> {
   const { data: plan } = await supabaseAdmin
     .from('plans')
@@ -62,6 +79,14 @@ export async function POST(request: NextRequest) {
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {
         await handleCheckoutCompleted(stripeEvent.data.object as Stripe.Checkout.Session)
+        break
+      }
+      case 'checkout.session.async_payment_succeeded': {
+        await handleCheckoutCompleted(stripeEvent.data.object as Stripe.Checkout.Session)
+        break
+      }
+      case 'checkout.session.async_payment_failed': {
+        await handleAsyncPaymentFailed(stripeEvent.data.object as Stripe.Checkout.Session)
         break
       }
       case 'customer.subscription.updated': {
@@ -147,6 +172,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   console.log('[webhook] Retrieving Stripe subscription:', stripeSubscriptionId)
   const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+  const period = getSubscriptionPeriod(subscription)
 
   const stripeCustomerId = typeof session.customer === 'string'
     ? session.customer
@@ -158,8 +184,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     status: subscription.status,
     stripe_subscription_id: stripeSubscriptionId,
     stripe_customer_id: stripeCustomerId,
-    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    current_period_start: period.current_period_start,
+    current_period_end: period.current_period_end,
     cancel_at_period_end: subscription.cancel_at_period_end,
     updated_at: new Date().toISOString(),
   }
@@ -194,10 +220,11 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     planId = (await resolvePlanId(productMetadata)) ?? undefined
   }
 
+  const period = getSubscriptionPeriod(subscription)
   const updateData: Record<string, unknown> = {
     status: subscription.status,
-    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    current_period_start: period.current_period_start,
+    current_period_end: period.current_period_end,
     cancel_at_period_end: subscription.cancel_at_period_end,
     updated_at: new Date().toISOString(),
   }
@@ -247,10 +274,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = typeof invoice.subscription === 'string'
-    ? invoice.subscription
-    : (invoice.subscription as Stripe.Subscription)?.id
-
+  const stripeSubscriptionId = getSubscriptionIdFromInvoice(invoice)
   if (!stripeSubscriptionId) return
 
   const { data: existing } = await supabaseAdmin
@@ -265,13 +289,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 
   const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+  const period = getSubscriptionPeriod(subscription)
 
   const { error } = await supabaseAdmin
     .from('subscriptions')
     .update({
       status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      current_period_start: period.current_period_start,
+      current_period_end: period.current_period_end,
       updated_at: new Date().toISOString(),
     })
     .eq('id', existing.id)
@@ -284,10 +309,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = typeof invoice.subscription === 'string'
-    ? invoice.subscription
-    : (invoice.subscription as Stripe.Subscription)?.id
-
+  const stripeSubscriptionId = getSubscriptionIdFromInvoice(invoice)
   if (!stripeSubscriptionId) return
 
   const { data: existing } = await supabaseAdmin
@@ -313,6 +335,39 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     console.error('[webhook] Failed to mark subscription past_due:', error)
   } else {
     console.log(`[webhook] Subscription marked past_due for user ${existing.user_id}`)
+  }
+}
+
+async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
+  console.log('[webhook] checkout.session.async_payment_failed:', {
+    session_id: session.id,
+    customer_email: session.customer_details?.email,
+    product: session.metadata?.product,
+  })
+
+  const userId = session.client_reference_id || session.metadata?.user_id
+  if (!userId) return
+
+  const { data: existing } = await supabaseAdmin
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!existing) return
+
+  const { error } = await supabaseAdmin
+    .from('subscriptions')
+    .update({
+      status: 'incomplete',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', existing.id)
+
+  if (error) {
+    console.error('[webhook] Failed to mark subscription incomplete:', error)
+  } else {
+    console.log(`[webhook] Subscription marked incomplete for user ${userId} (async payment failed)`)
   }
 }
 

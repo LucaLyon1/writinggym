@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  // @ts-expect-error – managed_payments_preview is in private preview
+  apiVersion: '2026-01-28.clover; managed_payments_preview=v1',
+})
 
 const headers = {
   'Content-Type': 'application/json',
@@ -101,11 +104,15 @@ export async function POST(request: NextRequest) {
 
     if (user) {
       sessionOptions.client_reference_id = user.id
-    }
-    if (user) {
       sessionOptions.customer_email = user.email
     }
-    sessionOptions.automatic_tax = { enabled: true }
+
+    if (useManagedPayments) {
+      // @ts-expect-error – managed_payments is in private preview
+      sessionOptions.managed_payments = { enabled: true }
+    } else {
+      sessionOptions.automatic_tax = { enabled: true }
+    }
 
     if (mode === 'subscription' && trialDays) {
       sessionOptions.subscription_data = {
