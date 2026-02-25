@@ -26,7 +26,7 @@ const PLANS: PricingPlan[] = [
     price: 'Free',
     features: [
       'Unlimited submissions',
-      '5 analysis per week',
+      '5 analyses per week',
       'Restricted extracts access',
     ],
     cta: 'Get started free',
