@@ -143,7 +143,7 @@ export default async function ProfilePage() {
     return (
       <div className="profile-root">
         <div className="profile-inner">
-          <Link href="/lab" className="profile-back-link">
+          <Link href="/" className="profile-back-link">
             ← Back to main screen
           </Link>
           <p className="profile-error">Failed to load your submissions.</p>
@@ -157,7 +157,7 @@ export default async function ProfilePage() {
   return (
     <div className="profile-root">
       <div className="profile-inner">
-        <Link href="/lab" className="profile-back-link">
+        <Link href="/" className="profile-back-link">
           ← Back to main screen
         </Link>
         <header className="profile-header">
@@ -263,7 +263,7 @@ export default async function ProfilePage() {
         {!completions?.length ? (
           <div className="profile-empty">
             <p>You haven&apos;t completed any passages yet.</p>
-            <Link href="/lab" className="profile-empty-link">
+            <Link href="/" className="profile-empty-link">
               Browse passages and start writing
             </Link>
           </div>
@@ -319,7 +319,7 @@ export default async function ProfilePage() {
                     )}
                     <div className="profile-card-actions">
                       {passage && (
-                        <Link href={`/lab?passage=${passage.id}`} className="profile-card-link">
+                        <Link href={`/?passage=${passage.id}`} className="profile-card-link">
                           Try again →
                         </Link>
                       )}

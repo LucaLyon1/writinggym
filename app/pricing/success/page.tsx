@@ -133,7 +133,7 @@ export default async function PricingSuccessPage({ searchParams }: SuccessPagePr
         </header>
 
         <div className="plans-success-actions">
-          <Link href="/lab" className="plans-btn plans-btn-primary">
+          <Link href="/" className="plans-btn plans-btn-primary">
             Start writing
           </Link>
           <Link href="/profile" className="plans-btn plans-btn-outline">

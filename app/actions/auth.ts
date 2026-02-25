@@ -67,7 +67,7 @@ export async function login(_prevState: AuthState | undefined, formData: FormDat
   }
 
   revalidatePath('/', 'layout')
-  redirect('/lab')
+  redirect('/')
 }
 
 export async function signInWithGoogle() {
@@ -79,7 +79,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${siteUrl}/auth/callback?next=/lab`,
+      redirectTo: `${siteUrl}/auth/callback`,
     },
   })
 
