@@ -9,6 +9,7 @@ import { StreakBadges } from '@/components/StreakBadges'
 import { computeStreaksFromCompletions } from '@/lib/streak'
 import { getCurrentBadge } from '@/lib/streak-badges'
 import { getUserEntitlements, type Entitlements } from '@/lib/plan'
+import { ManageSubscriptionButton } from '@/components/checkout/ManageSubscriptionButton'
 
 type PassageCompletion = Tables<'passage_completions'>
 
@@ -114,9 +115,9 @@ export default async function ProfilePage() {
                 Upgrade →
               </Link>
             ) : (
-              <Link href="/pricing" className="profile-card-link">
-                Manage plan →
-              </Link>
+              <ManageSubscriptionButton className="profile-card-link">
+                Manage subscription →
+              </ManageSubscriptionButton>
             )}
           </div>
           <div className="profile-quotas-grid">

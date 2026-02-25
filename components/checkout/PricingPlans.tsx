@@ -47,7 +47,7 @@ const PLANS: PricingPlan[] = [
     lookupKey: 'core',
     product: 'core',
     mode: 'subscription',
-    useManagedPayments: false,
+    useManagedPayments: true,
     isPopular: true,
   },
   {
@@ -64,7 +64,7 @@ const PLANS: PricingPlan[] = [
     lookupKey: 'premium',
     product: 'premium',
     mode: 'subscription',
-    useManagedPayments: false,
+    useManagedPayments: true,
     isPopular: false,
   },
 ]

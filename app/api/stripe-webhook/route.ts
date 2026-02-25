@@ -72,6 +72,14 @@ export async function POST(request: NextRequest) {
         await handleSubscriptionDeleted(stripeEvent.data.object as Stripe.Subscription)
         break
       }
+      case 'invoice.paid': {
+        await handleInvoicePaid(stripeEvent.data.object as Stripe.Invoice)
+        break
+      }
+      case 'invoice.payment_failed': {
+        await handleInvoicePaymentFailed(stripeEvent.data.object as Stripe.Invoice)
+        break
+      }
       default:
         console.log(`[webhook] Unhandled event type: ${stripeEvent.type}`)
     }
@@ -235,6 +243,76 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     console.error('[webhook] Failed to cancel subscription:', error)
   } else {
     console.log(`[webhook] Subscription canceled for user ${existing.user_id}`)
+  }
+}
+
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const stripeSubscriptionId = typeof invoice.subscription === 'string'
+    ? invoice.subscription
+    : (invoice.subscription as Stripe.Subscription)?.id
+
+  if (!stripeSubscriptionId) return
+
+  const { data: existing } = await supabaseAdmin
+    .from('subscriptions')
+    .select('id, user_id')
+    .eq('stripe_subscription_id', stripeSubscriptionId)
+    .maybeSingle()
+
+  if (!existing) {
+    console.log(`[webhook] invoice.paid — no local subscription for ${stripeSubscriptionId}`)
+    return
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+
+  const { error } = await supabaseAdmin
+    .from('subscriptions')
+    .update({
+      status: subscription.status,
+      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', existing.id)
+
+  if (error) {
+    console.error('[webhook] Failed to update subscription on invoice.paid:', error)
+  } else {
+    console.log(`[webhook] Subscription renewed for user ${existing.user_id}`)
+  }
+}
+
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const stripeSubscriptionId = typeof invoice.subscription === 'string'
+    ? invoice.subscription
+    : (invoice.subscription as Stripe.Subscription)?.id
+
+  if (!stripeSubscriptionId) return
+
+  const { data: existing } = await supabaseAdmin
+    .from('subscriptions')
+    .select('id, user_id')
+    .eq('stripe_subscription_id', stripeSubscriptionId)
+    .maybeSingle()
+
+  if (!existing) {
+    console.log(`[webhook] invoice.payment_failed — no local subscription for ${stripeSubscriptionId}`)
+    return
+  }
+
+  const { error } = await supabaseAdmin
+    .from('subscriptions')
+    .update({
+      status: 'past_due',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', existing.id)
+
+  if (error) {
+    console.error('[webhook] Failed to mark subscription past_due:', error)
+  } else {
+    console.log(`[webhook] Subscription marked past_due for user ${existing.user_id}`)
   }
 }
 
