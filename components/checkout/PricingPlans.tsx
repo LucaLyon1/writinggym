@@ -39,7 +39,7 @@ const PLANS: PricingPlan[] = [
     price: '$12.99/month',
     features: [
       'Unlimited submissions',
-      'Unlimited analysis',
+      'Unlimited analyses',
       'Core extract library (buy as needed)',
       'Premium badge',
     ],

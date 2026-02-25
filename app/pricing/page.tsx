@@ -39,7 +39,7 @@ export default async function PricingPage() {
             <em>plan</em>
           </h1>
           <p className="plans-subtitle">
-            Start free and upgrade when you need unlimited analysis, extracts,
+            Start free and upgrade when you need unlimited analyses, extracts,
             and premium features.
           </p>
         </header>
