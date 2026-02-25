@@ -5,7 +5,6 @@ import type { Json } from '@/types/database.types'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { constraintKey } from '@/lib/constraint-key'
 import { createClient } from '@/lib/supabase/server'
-import { checkAnalysisQuota, recordAnalysisRequest } from '@/lib/plan'
 
 const SYSTEM_PROMPT = `You are a literary craft analyst helping writers learn by imitation. 
 Given a literary extract and an imitation constraint, you will:
@@ -94,21 +93,7 @@ export async function POST(request: Request) {
     )
   }
 
-  // ── 3. Weekly quota check ───────────────────────────────────
-  const quota = await checkAnalysisQuota(user.id)
-
-  if (!quota.allowed) {
-    return NextResponse.json(
-      {
-        error: `You've used ${quota.used}/${quota.limit} analyses this week. Upgrade to Core for unlimited access.`,
-        quota: { used: quota.used, limit: quota.limit },
-        upgradeUrl: '/pricing',
-      },
-      { status: 429 }
-    )
-  }
-
-  // ── 4. Call Claude ────────────────────────────────────────────
+  // ── 3. Call Claude ─────────────────────────────────────────
   const client = new Anthropic({ apiKey })
 
   try {
@@ -147,15 +132,12 @@ export async function POST(request: Request) {
       )
     }
 
-    // ── 5. Save to cache + record usage ──────────────────────────
-    await Promise.all([
-      supabaseAdmin.from('passage_analyses').insert({
-        passage_id: body.extractId,
-        constraint_key: key,
-        analysis: analysis as unknown as Json,
-      }),
-      recordAnalysisRequest(user.id, body.extractId, key),
-    ])
+    // ── 4. Save to cache ──────────────────────────────────────────
+    await supabaseAdmin.from('passage_analyses').insert({
+      passage_id: body.extractId,
+      constraint_key: key,
+      analysis: analysis as unknown as Json,
+    })
 
     return NextResponse.json(analysis)
   } catch (err) {
