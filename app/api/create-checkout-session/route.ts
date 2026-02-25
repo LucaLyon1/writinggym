@@ -102,17 +102,10 @@ export async function POST(request: NextRequest) {
     if (user) {
       sessionOptions.client_reference_id = user.id
     }
-
-    if (useManagedPayments) {
-      ;(sessionOptions as Record<string, unknown>).managed_payments = {
-        enabled: true,
-      }
-    } else {
-      if (user) {
-        sessionOptions.customer_email = user.email
-      }
-      sessionOptions.automatic_tax = { enabled: true }
+    if (user) {
+      sessionOptions.customer_email = user.email
     }
+    sessionOptions.automatic_tax = { enabled: true }
 
     if (mode === 'subscription' && trialDays) {
       sessionOptions.subscription_data = {

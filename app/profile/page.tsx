@@ -111,11 +111,11 @@ export default async function ProfilePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h2 className="profile-quotas-title" style={{ marginBottom: 0 }}>Your plan</h2>
             {entitlements.plan_id === 'free' ? (
-              <Link href="/pricing" className="profile-card-link">
+              <Link href="/pricing" className="profile-manage-subscription">
                 Upgrade →
               </Link>
             ) : (
-              <ManageSubscriptionButton className="profile-card-link">
+              <ManageSubscriptionButton className="profile-manage-subscription">
                 Manage subscription →
               </ManageSubscriptionButton>
             )}
