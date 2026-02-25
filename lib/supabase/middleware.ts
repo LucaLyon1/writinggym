@@ -35,5 +35,18 @@ export async function updateSession(request: NextRequest) {
   // Refresh session – must run immediately after createServerClient
   await supabase.auth.getClaims()
 
+  // Protect extract analysis: require auth when viewing an extract
+  const { pathname } = request.nextUrl
+  if (pathname.startsWith('/extract/')) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      const signupUrl = new URL('/signup', request.url)
+      signupUrl.searchParams.set('next', pathname)
+      return NextResponse.redirect(signupUrl)
+    }
+  }
+
   return supabaseResponse
 }

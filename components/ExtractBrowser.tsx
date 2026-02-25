@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useMemo } from 'react'
 import { passages, categories, tags } from '@/data/passages'
 import type { Passage } from '@/data/passages'
@@ -54,9 +55,9 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
   return (
     <div className="browser-root">
       <header className="browser-header">
-        <h1 className="gym-logo">
+        <Link href="/" className="gym-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
           <span className="gym-logo-mark">✦</span> Proselab
-        </h1>
+        </Link>
         <p className="browser-tagline">
           Pick an extract. Study the craft. Write your own.
         </p>

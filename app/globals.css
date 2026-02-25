@@ -21,6 +21,7 @@
 
   --radius: 4px;
   --radius-lg: 10px;
+  --auth-header-height: 4rem;
 }
 
 /* ─── Reset ──────────────────────────────────────────────── */
@@ -44,6 +45,7 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   min-height: 100dvh;
+  padding-top: var(--auth-header-height);
 }
 
 /* ─── Layout ─────────────────────────────────────────────── */
@@ -1416,7 +1418,7 @@ body {
   flex: 1;
   display: grid;
   grid-template-columns: 240px 1fr;
-  height: calc(100dvh - 77px);
+  height: calc(100dvh - var(--auth-header-height) - 77px);
   overflow: hidden;
 }
 
@@ -2132,7 +2134,6 @@ body {
 .profile-root {
   min-height: 100dvh;
   padding: 2rem;
-  padding-top: 4rem;
   background: var(--paper);
 }
 

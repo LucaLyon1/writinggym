@@ -39,6 +39,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      analysis_requests: {
+        Row: {
+          constraint_key: string
+          id: string
+          passage_id: string
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          constraint_key: string
+          id?: string
+          passage_id: string
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          constraint_key?: string
+          id?: string
+          passage_id?: string
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_stats: {
         Row: {
           passages_practiced: number
@@ -188,43 +220,34 @@ export type Database = {
       }
       plans: {
         Row: {
-          can_access_all_passages: boolean
-          can_access_packs: boolean
-          can_export: boolean
-          can_save_rewrites: boolean
-          created_at: string
-          daily_passage_limit: number | null
-          has_progress_tracking: boolean
+          extract_access: string
+          has_custom_voice: boolean
+          has_playground: boolean
           id: string
-          interval: string | null
           label: string
-          price_cents: number
+          price_monthly_cents: number
+          stripe_lookup_key: string | null
+          weekly_analysis_limit: number | null
         }
         Insert: {
-          can_access_all_passages?: boolean
-          can_access_packs?: boolean
-          can_export?: boolean
-          can_save_rewrites?: boolean
-          created_at?: string
-          daily_passage_limit?: number | null
-          has_progress_tracking?: boolean
+          extract_access: string
+          has_custom_voice?: boolean
+          has_playground?: boolean
           id: string
-          interval?: string | null
           label: string
-          price_cents?: number
+          price_monthly_cents?: number
+          stripe_lookup_key?: string | null
+          weekly_analysis_limit?: number | null
         }
         Update: {
-          can_access_all_passages?: boolean
-          can_access_packs?: boolean
-          can_export?: boolean
-          can_save_rewrites?: boolean
-          created_at?: string
-          daily_passage_limit?: number | null
-          has_progress_tracking?: boolean
+          extract_access?: string
+          has_custom_voice?: boolean
+          has_playground?: boolean
           id?: string
-          interval?: string | null
           label?: string
-          price_cents?: number
+          price_monthly_cents?: number
+          stripe_lookup_key?: string | null
+          weekly_analysis_limit?: number | null
         }
         Relationships: []
       }
@@ -335,6 +358,7 @@ export type Database = {
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
+          canceled_at: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -342,12 +366,15 @@ export type Database = {
           plan_id: string
           status: string
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
+          trial_end: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           cancel_at_period_end?: boolean
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -355,12 +382,15 @@ export type Database = {
           plan_id?: string
           status?: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           cancel_at_period_end?: boolean
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -368,7 +398,9 @@ export type Database = {
           plan_id?: string
           status?: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -427,7 +459,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_category: {
+        Args: { p_category_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_request_analysis: { Args: { p_user_id: string }; Returns: Json }
+      get_free_category_ids: { Args: never; Returns: string[] }
       get_user_entitlements: { Args: { p_user_id: string }; Returns: Json }
+      get_user_plan: { Args: { p_user_id: string }; Returns: string }
+      record_analysis_request: {
+        Args: {
+          p_constraint_key: string
+          p_passage_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       record_session_completion:
         | {
             Args: { p_passage_id: string; p_user_id: string }

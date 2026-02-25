@@ -12,6 +12,8 @@ interface ExtractAnalysisProps {
   passageId?: string
   constraint?: string
   categoryId?: string
+  /** Override for source attribution (author, work). Used instead of AI-generated analysis.source when provided. */
+  source?: string
 }
 
 type Phase = 'loading' | 'analyse' | 'write'
@@ -343,7 +345,7 @@ interface Submission {
   completed_at: string
 }
 
-export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId }: ExtractAnalysisProps) {
+export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId, source: sourceOverride }: ExtractAnalysisProps) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -425,6 +427,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           userText: userText.trim(),
           originalText: fullText,
           constraint: analysis.constraint,
+          passageId: passageId ?? undefined,
         }),
       })
       if (!res.ok) {
@@ -516,10 +519,12 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
     return null
   }
 
+  const displaySource = sourceOverride ?? analysis.source
+
   if (phase === 'analyse') {
     return (
       <div className="ea-root">
-        <div className="ea-source">{analysis.source}</div>
+        <div className="ea-source">{displaySource}</div>
         <div className="ea-columns">
           <main className="ea-main">
             <div className="ea-toolbar">
@@ -556,7 +561,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
         >
           ← back to extract
         </button>
-        <span>{analysis.source}</span>
+        <span>{displaySource}</span>
       </div>
       <div className="ea-columns">
         <main className="ea-main ea-write-main">

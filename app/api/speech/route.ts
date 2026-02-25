@@ -1,6 +1,8 @@
 import { ElevenLabsClient } from "elevenlabs";
 import { NextRequest, NextResponse } from "next/server";
 import { parseDialogue } from "@/lib/parse-dialogue";
+import { createClient } from "@/lib/supabase/server";
+import { getUserPlanDetails } from "@/lib/plan";
 
 const client = new ElevenLabsClient({
   apiKey: process.env.ELEVENLABS_API_KEY,
@@ -9,7 +11,20 @@ const client = new ElevenLabsClient({
 const NARRATOR_VOICE = "JBFqnCBsd6RMkjVDRZzb"; // George – warm, natural narrator
 
 export async function POST(req: NextRequest) {
-  const { text, categoryId } = await req.json();
+  // ── Auth check ────────────────────────────────────────────────
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json(
+      { error: "Sign in to use text-to-speech." },
+      { status: 401 }
+    );
+  }
+
+  const { text, categoryId, voiceId } = await req.json();
 
   if (!text || typeof text !== "string") {
     return NextResponse.json({ error: "Missing text" }, { status: 400 });
@@ -17,6 +32,20 @@ export async function POST(req: NextRequest) {
 
   if (text.length > 5000) {
     return NextResponse.json({ error: "Text too long" }, { status: 400 });
+  }
+
+  // ── Custom voice requires Premium plan ────────────────────────
+  if (voiceId && voiceId !== NARRATOR_VOICE) {
+    const plan = await getUserPlanDetails(user.id);
+    if (!plan.has_custom_voice) {
+      return NextResponse.json(
+        {
+          error: "Custom voice is a Premium feature. Upgrade to unlock it.",
+          upgradeUrl: "/pricing",
+        },
+        { status: 403 }
+      );
+    }
   }
 
   const isDialogue = categoryId === "dialogue";
@@ -62,11 +91,10 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await res.arrayBuffer();
         audioBuffer = Buffer.from(arrayBuffer);
       } else {
-        // Fallback to single-voice TTS if parsing didn't yield multi-speaker
-        audioBuffer = await convertWithTTS(text);
+        audioBuffer = await convertWithTTS(text, voiceId);
       }
     } else {
-      audioBuffer = await convertWithTTS(text);
+      audioBuffer = await convertWithTTS(text, voiceId);
     }
 
     return new NextResponse(audioBuffer as unknown as BodyInit, {
@@ -83,8 +111,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function convertWithTTS(text: string): Promise<Buffer> {
-  const audioStream = await client.textToSpeech.convert(NARRATOR_VOICE, {
+async function convertWithTTS(text: string, voice?: string): Promise<Buffer> {
+  const audioStream = await client.textToSpeech.convert(voice || NARRATOR_VOICE, {
     text,
     model_id: "eleven_multilingual_v2",
     output_format: "mp3_44100_128",

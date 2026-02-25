@@ -8,82 +8,9 @@ import { CompletionHeatmap } from '@/components/CompletionHeatmap'
 import { StreakBadges } from '@/components/StreakBadges'
 import { computeStreaksFromCompletions } from '@/lib/streak'
 import { getCurrentBadge } from '@/lib/streak-badges'
+import { getUserEntitlements, type Entitlements } from '@/lib/plan'
 
 type PassageCompletion = Tables<'passage_completions'>
-
-type Entitlements = {
-  plan_label?: string
-  daily_passage_limit?: number | null
-  passages_used_today?: number
-  can_access_all_passages?: boolean
-  can_access_packs?: boolean
-  can_export?: boolean
-  can_save_rewrites?: boolean
-  has_progress_tracking?: boolean
-}
-
-async function fetchEntitlements(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<Entitlements> {
-  const { data: rpcData } = await supabase.rpc('get_user_entitlements', { p_user_id: userId })
-  if (rpcData && typeof rpcData === 'object') {
-    const e = rpcData as Record<string, unknown>
-    return {
-      plan_label: typeof e.plan_label === 'string' ? e.plan_label : undefined,
-      daily_passage_limit: typeof e.daily_passage_limit === 'number' ? e.daily_passage_limit : e.daily_passage_limit === null ? null : undefined,
-      passages_used_today: typeof e.passages_used_today === 'number' ? e.passages_used_today : undefined,
-      can_access_all_passages: typeof e.can_access_all_passages === 'boolean' ? e.can_access_all_passages : undefined,
-      can_access_packs: typeof e.can_access_packs === 'boolean' ? e.can_access_packs : undefined,
-      can_export: typeof e.can_export === 'boolean' ? e.can_export : undefined,
-      can_save_rewrites: typeof e.can_save_rewrites === 'boolean' ? e.can_save_rewrites : undefined,
-      has_progress_tracking: typeof e.has_progress_tracking === 'boolean' ? e.has_progress_tracking : undefined,
-    }
-  }
-
-  const today = new Date().toISOString().slice(0, 10)
-  const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('plan_id')
-    .eq('user_id', userId)
-    .in('status', ['active', 'trialing'])
-    .maybeSingle()
-
-  const planId = sub?.plan_id ?? null
-  let plan: { label: string; daily_passage_limit: number | null } | null = null
-
-  if (planId) {
-    const { data: p } = await supabase
-      .from('plans')
-      .select('label, daily_passage_limit')
-      .eq('id', planId)
-      .single()
-    plan = p
-  }
-
-  if (!plan) {
-    const { data: freePlan } = await supabase
-      .from('plans')
-      .select('label, daily_passage_limit')
-      .order('price_cents', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-    plan = freePlan
-  }
-
-  const { data: dailyStat } = await supabase
-    .from('daily_stats')
-    .select('passages_practiced')
-    .eq('user_id', userId)
-    .eq('stat_date', today)
-    .maybeSingle()
-
-  const passagesUsedToday = dailyStat?.passages_practiced ?? 0
-  const dailyLimit = plan?.daily_passage_limit ?? null
-
-  return {
-    plan_label: plan?.label ?? 'Free',
-    daily_passage_limit: dailyLimit,
-    passages_used_today: passagesUsedToday,
-  }
-}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -121,7 +48,7 @@ export default async function ProfilePage() {
   }
 
   const [entitlements, profileResult, completionsResult] = await Promise.all([
-    fetchEntitlements(supabase, user.id),
+    getUserEntitlements(user.id),
     supabase.from('profiles').select('current_streak, longest_streak, total_passages_done, total_sessions').eq('id', user.id).single(),
     supabase
       .from('passage_completions')
@@ -165,12 +92,12 @@ export default async function ProfilePage() {
             <h1 className="profile-title" style={{ marginBottom: 0 }}>Your submissions</h1>
             <span
               className={`profile-plan-badge ${
-                entitlements.plan_label && entitlements.plan_label !== 'Free'
+                entitlements.plan_id !== 'free'
                   ? 'profile-plan-badge-paid'
                   : 'profile-plan-badge-free'
               }`}
             >
-              {entitlements.plan_label ?? 'Free'} plan
+              {entitlements.plan_label} plan
             </span>
           </div>
           <p className="profile-subtitle">
@@ -182,40 +109,55 @@ export default async function ProfilePage() {
         <section className="profile-quotas" aria-label="Usage quotas and stats">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h2 className="profile-quotas-title" style={{ marginBottom: 0 }}>Your plan</h2>
-            <Link href="/pricing" className="profile-card-link">
-              View pricing →
-            </Link>
+            {entitlements.plan_id === 'free' ? (
+              <Link href="/pricing" className="profile-card-link">
+                Upgrade →
+              </Link>
+            ) : (
+              <Link href="/pricing" className="profile-card-link">
+                Manage plan →
+              </Link>
+            )}
           </div>
           <div className="profile-quotas-grid">
             <div className="profile-quota-card">
               <span className="profile-quota-label">Plan</span>
-              <span className="profile-quota-value">{entitlements.plan_label ?? 'Free'}</span>
+              <span className="profile-quota-value">{entitlements.plan_label}</span>
             </div>
-            {entitlements.daily_passage_limit != null && (
+            {entitlements.weekly_analysis_limit != null ? (
               <div className="profile-quota-card">
-                <span className="profile-quota-label">Passages today</span>
+                <span className="profile-quota-label">Analyses this week</span>
                 <span className="profile-quota-value">
-                  {entitlements.passages_used_today ?? 0} / {entitlements.daily_passage_limit}
+                  {Math.max(0, entitlements.weekly_analysis_limit - entitlements.analyses_used_this_week)} remaining
                 </span>
                 <div className="profile-quota-bar">
                   <div
                     className="profile-quota-bar-fill"
                     style={{
-                      width: `${Math.min(
-                        100,
-                        entitlements.daily_passage_limit > 0
-                          ? ((entitlements.passages_used_today ?? 0) / entitlements.daily_passage_limit) * 100
-                          : 0
+                      width: `${Math.min(100, entitlements.weekly_analysis_limit > 0
+                        ? (entitlements.analyses_used_this_week / entitlements.weekly_analysis_limit) * 100
+                        : 0
                       )}%`,
                     }}
                   />
                 </div>
               </div>
-            )}
-            {entitlements.daily_passage_limit == null && (
+            ) : (
               <div className="profile-quota-card">
-                <span className="profile-quota-label">Passages today</span>
-                <span className="profile-quota-value">{entitlements.passages_used_today ?? 0} (unlimited)</span>
+                <span className="profile-quota-label">Analyses</span>
+                <span className="profile-quota-value">Unlimited</span>
+              </div>
+            )}
+            <div className="profile-quota-card">
+              <span className="profile-quota-label">Extract library</span>
+              <span className="profile-quota-value">
+                {entitlements.extract_access === 'full' ? 'Full access' : entitlements.extract_access === 'core' ? 'Core' : 'Restricted'}
+              </span>
+            </div>
+            {entitlements.has_playground && (
+              <div className="profile-quota-card">
+                <span className="profile-quota-label">Playground</span>
+                <span className="profile-quota-value">Active</span>
               </div>
             )}
           </div>
@@ -319,7 +261,7 @@ export default async function ProfilePage() {
                     )}
                     <div className="profile-card-actions">
                       {passage && (
-                        <Link href={`/?passage=${passage.id}`} className="profile-card-link">
+                        <Link href={`/extract/${passage.id}`} className="profile-card-link">
                           Try again →
                         </Link>
                       )}

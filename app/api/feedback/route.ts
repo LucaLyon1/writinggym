@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ExtractAnalysis } from '@/types/extract'
+import { createClient } from '@/lib/supabase/server'
+import { constraintKey } from '@/lib/constraint-key'
+import { checkAnalysisQuota, recordAnalysisRequest } from '@/lib/plan'
 
 const SYSTEM_PROMPT = `You are a literary craft analyst giving honest, constructive feedback to a writer who has attempted an imitation exercise.
 
@@ -63,10 +66,36 @@ export async function POST(request: Request) {
     )
   }
 
+  // ── Auth check ────────────────────────────────────────────────
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json(
+      { error: 'Sign in to use feedback.' },
+      { status: 401 }
+    )
+  }
+
+  // ── Quota check (feedback counts toward analysis quota) ───────
+  const quota = await checkAnalysisQuota(user.id)
+
+  if (!quota.allowed) {
+    return NextResponse.json(
+      {
+        error: `You've used ${quota.used}/${quota.limit} analyses this week. Upgrade to Core for unlimited access.`,
+        quota: { used: quota.used, limit: quota.limit },
+        upgradeUrl: '/pricing',
+      },
+      { status: 429 }
+    )
+  }
+
   const body = (await request.json()) as {
     userText: string
     originalText: string
     constraint: string
+    passageId?: string
   }
 
   if (!body.userText || !body.originalText || !body.constraint) {
@@ -119,6 +148,10 @@ export async function POST(request: Request) {
         },
         { status: 502 }
       )
+    }
+
+    if (body.passageId) {
+      await recordAnalysisRequest(user.id, body.passageId, constraintKey(body.constraint))
     }
 
     return NextResponse.json(result)

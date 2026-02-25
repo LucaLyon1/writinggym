@@ -24,7 +24,7 @@ export function AnalysisView({ passage, onBack }: AnalysisViewProps) {
     <div className="analysis-view">
       <div className="analysis-topbar">
         <button className="back-btn" onClick={onBack}>
-          ← Collection
+          ← Go back to library
         </button>
         {category && (
           <span className="gym-category-badge">{category.label}</span>
@@ -40,6 +40,7 @@ export function AnalysisView({ passage, onBack }: AnalysisViewProps) {
         passageId={passage.id}
         constraint={constraint}
         categoryId={passage.categoryId}
+        source={`${passage.author}, ${passage.work}`}
       />
     </div>
   )

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { constraintKey } from '@/lib/constraint-key'
 import type { Json } from '@/types/database.types'
+import { recordSessionCompletion } from '@/lib/plan'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -95,6 +96,11 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+
+  // Update streaks, daily stats, and profile counters
+  await recordSessionCompletion(user.id, body.passageId, body.wordCount).catch(
+    (err) => console.error('Failed to record session completion:', err)
+  )
 
   return NextResponse.json({ success: true })
 }
