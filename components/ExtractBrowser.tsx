@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { passages, categories, tags } from '@/data/passages'
 import type { Passage } from '@/data/passages'
 
@@ -32,6 +32,16 @@ function matchesSearch(p: Passage, query: string): boolean {
 export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [completedByPassage, setCompletedByPassage] = useState<
+    Record<string, number>
+  >({})
+
+  useEffect(() => {
+    fetch('/api/completions/summary')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => (data ? setCompletedByPassage(data) : null))
+      .catch(() => {})
+  }, [])
 
   const passageCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -115,12 +125,21 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
           <div className="passage-grid">
             {filtered.map((passage) => {
               const cat = categories.find((c) => c.id === passage.categoryId)
+              const hasCompleted = (completedByPassage[passage.id] ?? 0) > 0
               return (
                 <button
                   key={passage.id}
-                  className="passage-tile"
+                  className={`passage-tile ${hasCompleted ? 'passage-tile-completed' : ''}`}
                   onClick={() => onSelect(passage)}
                 >
+                  {hasCompleted && (
+                    <span
+                      className="tile-completed-badge"
+                      aria-label="Completed"
+                    >
+                      Completed
+                    </span>
+                  )}
                   <span className="tile-category">{cat?.label}</span>
                   <span className="tile-author">
                     {passage.author} · {passage.work}

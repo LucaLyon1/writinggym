@@ -42,6 +42,7 @@ const PLANS: PricingPlan[] = [
       'Unlimited analyses',
       'Core extract library (buy as needed)',
       'Premium badge',
+      'Access to the Discord community',
     ],
     cta: 'Upgrade to Core',
     lookupKey: 'core',

@@ -1530,6 +1530,7 @@ body {
   cursor: pointer;
   text-align: left;
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  position: relative;
 }
 
 .passage-tile:hover,
@@ -1537,6 +1538,24 @@ body {
   border-color: var(--accent-soft);
   box-shadow: 0 4px 16px rgba(184, 74, 46, 0.08);
   transform: translateY(-2px);
+}
+
+.passage-tile-completed {
+  border-left: 3px solid var(--accent);
+}
+
+.tile-completed-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: var(--accent-pale);
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
 }
 
 .tile-category {
@@ -3000,7 +3019,7 @@ button.profile-manage-subscription:disabled {
 }
 
 .plans-badge-current {
-  background: #2d6a4f;
+  background: var(--plans-rust);
 }
 
 .plans-btn-current {
