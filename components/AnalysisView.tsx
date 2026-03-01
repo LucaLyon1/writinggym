@@ -40,7 +40,6 @@ export function AnalysisView({ passage, onBack }: AnalysisViewProps) {
         passageId={passage.id}
         constraint={constraint}
         categoryId={passage.categoryId}
-        source={`${passage.author}, ${passage.work}`}
       />
     </div>
   )

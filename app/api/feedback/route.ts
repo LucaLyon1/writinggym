@@ -18,12 +18,36 @@ Your task:
    - Annotate 3–5 interesting segments with craft categories: structure, voice, imagery, pacing
    - Notes should explain what the writer is doing and its effect
 
-2. Write honest, constructive feedback (2–4 paragraphs) that:
+2. Score the writing on 5 criteria, each out of 100.
+
+Fairness and trade-off policy (important):
+- Do not double-punish the writer for the same trade-off.
+- If the writer follows a difficult constraint well but quality drops, reflect that mainly in craft scores, not in constraint score.
+- If the writer improves quality by drifting from the constraint, reflect that mainly in constraint score, not by also crushing craft scores unless the craft itself is weak.
+- Reward intelligent risk-taking and ambition, even when execution is uneven.
+- Keep scores differentiated: avoid giving all five criteria nearly the same score.
+
+Calibration anchors:
+- A score of 70 means competent and clear execution.
+- A score of 85 means strong, deliberate craft choices.
+- A score of 90+ means exceptional work that feels publishable or unmistakably authorial.
+- Reserve below 25 for text that barely attempts the task.
+
+Criterion definitions (use these exactly):
+- "voice": Voice — Does the writer develop a distinctive, committed tone? Word choice, register, consistency. A score of 70 means competent and clear. 85 means the voice feels like a real stylistic choice. 90+ means you'd recognize it in another piece.
+- "imagery": Imagery — Quality and specificity of sensory detail. Does the writing make you see? 70 means solid, accurate detail. 85 means at least one image that surprises. 90+ means a detail that couldn't have come from anyone else.
+- "structure": Structure — Sentence construction, rhythm, variety. Does the prose have shape and intention? 70 means controlled. 85 means the rhythm serves the meaning. 90+ means the form and content feel inseparable.
+- "pacing": Pacing — Speed of information delivery. Is compression and expansion deliberate? 70 means nothing drags or rushes. 85 means the pacing creates emphasis. 90+ means you feel the writer accelerating and braking with purpose.
+- "constraint": Constraint — How faithfully and intelligently does the writing honor the exercise? 70 means the constraint is followed technically. 85 means it's followed in spirit, with understanding of why it exists. 90+ means the constraint becomes invisible — the writing feels free while obeying every rule.
+
+3. Write honest, constructive feedback (2–4 paragraphs) that:
    - Names what's working well — be specific, cite phrases or moments
    - Identifies what's not working or could be stronger — again, be specific
    - Compares meaningfully to the original: where does the user capture the spirit? Where do they miss?
    - Suggests 1–2 concrete next steps to improve
    - Be direct and kind. No false praise. Writers learn from honest critique.
+
+4. Write a single punchy verdict sentence (max 12 words) that captures the overall impression — like a headline review.
 
 Craft categories (same as extract analysis):
 - "structure": sentence length, syntax, clause order, rhythm
@@ -39,7 +63,15 @@ Response shape (valid JSON only, no markdown fences):
     { "text": "..." }
   ],
   "summary": ["sentence 1", "sentence 2"],
-  "feedback": "Your honest 2–4 paragraph critique here. Be specific. Be constructive."
+  "feedback": "Your honest 2–4 paragraph critique here. Be specific. Be constructive.",
+  "scores": {
+    "voice": 55,
+    "imagery": 62,
+    "structure": 48,
+    "pacing": 50,
+    "constraint": 70
+  },
+  "verdict": "A solid first attempt with flashes of real voice."
 }`
 
 function stripMarkdownFences(raw: string): string {
@@ -51,10 +83,20 @@ function stripMarkdownFences(raw: string): string {
   return cleaned.trim()
 }
 
+export interface FeedbackScores {
+  voice: number
+  imagery: number
+  structure: number
+  pacing: number
+  constraint: number
+}
+
 export interface UserFeedback {
   segments: ExtractAnalysis['segments']
   summary: string[]
   feedback: string
+  scores: FeedbackScores
+  verdict: string
 }
 
 export async function POST(request: Request) {

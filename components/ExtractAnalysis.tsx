@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import type { CraftCategory, ExtractAnalysis as ExtractAnalysisType, Segment } from '@/types/extract'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
@@ -12,8 +12,6 @@ interface ExtractAnalysisProps {
   passageId?: string
   constraint?: string
   categoryId?: string
-  /** Override for source attribution (author, work). Used instead of AI-generated analysis.source when provided. */
-  source?: string
 }
 
 type Phase = 'loading' | 'analyse' | 'write'
@@ -242,6 +240,178 @@ function SummarySidebar({
   )
 }
 
+const SCORE_CRITERIA: { key: keyof FeedbackScores; label: string; icon: string }[] = [
+  { key: 'voice', label: 'Voice', icon: '🎙' },
+  { key: 'imagery', label: 'Imagery', icon: '🎨' },
+  { key: 'structure', label: 'Structure', icon: '🏗' },
+  { key: 'pacing', label: 'Pacing', icon: '⏱' },
+  { key: 'constraint', label: 'Constraint', icon: '🎯' },
+]
+
+function getScoreColor(score: number): string {
+  if (score >= 80) return '#2d8a4e'
+  if (score >= 60) return '#b88a2e'
+  if (score >= 40) return '#b86e2e'
+  return '#b84a2e'
+}
+
+function getOverallGrade(scores: FeedbackScores): { score: number; label: string } {
+  const values = Object.values(scores)
+  const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length)
+  let label = 'Keep going'
+  if (avg >= 90) label = 'Masterful'
+  else if (avg >= 80) label = 'Exceptional'
+  else if (avg >= 70) label = 'Strong'
+  else if (avg >= 60) label = 'Promising'
+  else if (avg >= 50) label = 'Developing'
+  else if (avg >= 40) label = 'Emerging'
+  return { score: avg, label }
+}
+
+function ScoreRing({ score, size = 100 }: { score: number; size?: number }) {
+  const strokeWidth = 6
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (score / 100) * circumference
+  const color = getScoreColor(score)
+
+  return (
+    <svg width={size} height={size} className="sc-ring">
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="var(--line)"
+        strokeWidth={strokeWidth}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        className="sc-ring-progress"
+      />
+      <text
+        x={size / 2}
+        y={size / 2 - 4}
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="sc-ring-score"
+        style={{ fill: color }}
+      >
+        {score}
+      </text>
+      <text
+        x={size / 2}
+        y={size / 2 + 22}
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="sc-ring-label"
+      >
+        /100
+      </text>
+    </svg>
+  )
+}
+
+function ScoreCardPopup({
+  feedback,
+  constraint,
+  onClose,
+}: {
+  feedback: UserFeedback
+  constraint: string
+  onClose: () => void
+}) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const overall = getOverallGrade(feedback.scores)
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <div className="sc-overlay" onClick={onClose}>
+      <div
+        className="sc-card"
+        ref={cardRef}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="sc-close" onClick={onClose} aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <line x1="2" y1="2" x2="12" y2="12" />
+            <line x1="12" y1="2" x2="2" y2="12" />
+          </svg>
+        </button>
+
+        <div className="sc-header">
+          <span className="sc-brand">REWRITE</span>
+          <span className="sc-divider" />
+          <span className="sc-type">Writing Score</span>
+        </div>
+
+        <div className="sc-hero">
+          <ScoreRing score={overall.score} size={110} />
+          <div className="sc-hero-info">
+            <span className="sc-grade">{overall.label}</span>
+            <p className="sc-verdict">{feedback.verdict}</p>
+          </div>
+        </div>
+
+        <div className="sc-criteria">
+          {SCORE_CRITERIA.map(({ key, label, icon }) => {
+            const value = feedback.scores[key]
+            const pct = `${value}%`
+            return (
+              <div key={key} className="sc-criterion">
+                <div className="sc-criterion-header">
+                  <span className="sc-criterion-icon">{icon}</span>
+                  <span className="sc-criterion-label">{label}</span>
+                  <span
+                    className="sc-criterion-value"
+                    style={{ color: getScoreColor(value) }}
+                  >
+                    {value}
+                  </span>
+                </div>
+                <div className="sc-bar">
+                  <div
+                    className="sc-bar-fill"
+                    style={{
+                      width: pct,
+                      backgroundColor: getScoreColor(value),
+                    }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="sc-constraint">
+          <span className="sc-constraint-label">Exercise</span>
+          <p className="sc-constraint-text">{constraint}</p>
+        </div>
+
+        <div className="sc-footer">
+          <span className="sc-watermark">rewrite — learn to write by imitation</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function WriteSidebar({
   analysis,
   submissions,
@@ -250,6 +420,10 @@ function WriteSidebar({
   onDeleteSubmission,
   deletingId,
   formatDate,
+  feedback,
+  feedbackLoading,
+  feedbackError,
+  saveError,
 }: {
   analysis: ExtractAnalysisType
   submissions: Submission[]
@@ -258,6 +432,10 @@ function WriteSidebar({
   onDeleteSubmission: (id: string) => void
   deletingId: string | null
   formatDate: (iso: string) => string
+  feedback: UserFeedback | null
+  feedbackLoading: boolean
+  feedbackError: string | null
+  saveError: string | null
 }) {
   const annotatedSegments = analysis.segments.filter((s) => s.annotation)
 
@@ -267,6 +445,33 @@ function WriteSidebar({
         <h3 className="ea-sidebar-heading">Your exercise</h3>
         <p className="ea-constraint-reminder">{analysis.constraint}</p>
       </div>
+
+      {feedbackLoading && (
+        <div className="ea-sidebar-section">
+          <p className="ea-feedback-loading">Analysing your writing…</p>
+        </div>
+      )}
+
+      {feedbackError && (
+        <div className="ea-sidebar-section">
+          <p className="ea-feedback-error">{feedbackError}</p>
+        </div>
+      )}
+
+      {saveError && (
+        <div className="ea-sidebar-section">
+          <p className="ea-feedback-error">{saveError}</p>
+        </div>
+      )}
+
+      {feedback && !feedbackLoading && (
+        <div className="ea-sidebar-section ea-sidebar-feedback">
+          <h3 className="ea-sidebar-heading">Honest feedback</h3>
+          <div className="ea-sidebar-feedback-content">
+            <p className="ea-feedback-text">{feedback.feedback}</p>
+          </div>
+        </div>
+      )}
 
       <div className="ea-sidebar-section">
         <h3 className="ea-sidebar-heading">Annotations</h3>
@@ -331,10 +536,20 @@ function WriteSidebar({
   )
 }
 
+interface FeedbackScores {
+  voice: number
+  imagery: number
+  structure: number
+  pacing: number
+  constraint: number
+}
+
 interface UserFeedback {
   segments: ExtractAnalysisType['segments']
   summary: string[]
   feedback: string
+  scores: FeedbackScores
+  verdict: string
 }
 
 interface Submission {
@@ -345,10 +560,11 @@ interface Submission {
   completed_at: string
 }
 
-export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId, source: sourceOverride }: ExtractAnalysisProps) {
+export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId }: ExtractAnalysisProps) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [extractExpanded, setExtractExpanded] = useState(false)
   const [userText, setUserText] = useState('')
   const [feedback, setFeedback] = useState<UserFeedback | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
@@ -359,6 +575,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [showScoreCard, setShowScoreCard] = useState(false)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
 
   const fetchSubmissions = useCallback(async () => {
@@ -436,6 +653,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       }
       const data = (await res.json()) as UserFeedback
       setFeedback(data)
+      if (data.scores) setShowScoreCard(true)
     } catch (err) {
       setFeedbackError(err instanceof Error ? err.message : 'Failed to get feedback')
     } finally {
@@ -519,12 +737,9 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
     return null
   }
 
-  const displaySource = sourceOverride ?? analysis.source
-
   if (phase === 'analyse') {
     return (
       <div className="ea-root">
-        <div className="ea-source">{displaySource}</div>
         <div className="ea-columns">
           <main className="ea-main">
             <div className="ea-toolbar">
@@ -554,20 +769,20 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
 
   return (
     <div className="ea-root">
-      <div className="ea-source ea-source-with-back">
-        <button
-          className="ea-back-link"
-          onClick={() => setPhase('analyse')}
-        >
-          ← back to extract
-        </button>
-        <span>{displaySource}</span>
-      </div>
       <div className="ea-columns">
         <main className="ea-main ea-write-main">
-          <div className="ea-extract-reference">
-            <h3 className="ea-extract-reference-heading">Original extract</h3>
+          <div className={`ea-extract-reference${extractExpanded ? ' ea-extract-expanded' : ''}`}>
+            <div className="ea-extract-reference-header">
+              <h3 className="ea-extract-reference-heading">Original extract</h3>
+              <button
+                className="ea-extract-toggle"
+                onClick={() => setExtractExpanded((v) => !v)}
+              >
+                {extractExpanded ? 'Collapse' : 'Expand'}
+              </button>
+            </div>
             <p className="ea-extract-reference-text">{fullText}</p>
+            {!extractExpanded && <div className="ea-extract-fade" />}
           </div>
           <textarea
             className="ea-textarea"
@@ -602,26 +817,19 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
                 {saveLoading ? 'Saving…' : saveSuccess ? 'Saved' : 'Save'}
               </button>
             </span>
+            {feedback?.scores && (
+              <button
+                className="ea-scorecard-btn"
+                onClick={() => setShowScoreCard(true)}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M8 12h8M8 8h8M8 16h4" />
+                </svg>
+                Score Card
+              </button>
+            )}
           </div>
-
-          {saveError && <p className="ea-feedback-error">{saveError}</p>}
-
-          {feedbackLoading && (
-            <p className="ea-feedback-loading">Analysing your writing…</p>
-          )}
-
-          {feedbackError && (
-            <p className="ea-feedback-error">{feedbackError}</p>
-          )}
-
-          {feedback && !feedbackLoading && (
-            <div className="ea-feedback-block">
-              <h3 className="ea-feedback-heading">Honest feedback</h3>
-              <div className="ea-feedback-content">
-                <p className="ea-feedback-text">{feedback.feedback}</p>
-              </div>
-            </div>
-          )}
         </main>
         <WriteSidebar
           analysis={analysis}
@@ -631,8 +839,19 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           onDeleteSubmission={handleDeleteSubmission}
           deletingId={deletingId}
           formatDate={formatSubmissionDate}
+          feedback={feedback}
+          feedbackLoading={feedbackLoading}
+          feedbackError={feedbackError}
+          saveError={saveError}
         />
       </div>
+      {showScoreCard && feedback?.scores && analysis && (
+        <ScoreCardPopup
+          feedback={feedback}
+          constraint={analysis.constraint}
+          onClose={() => setShowScoreCard(false)}
+        />
+      )}
     </div>
   )
 }
