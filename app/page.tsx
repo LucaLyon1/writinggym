@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import type { Passage } from '@/data/passages'
 import { ExtractBrowser } from '@/components/ExtractBrowser'
+import { Onboarding } from '@/components/Onboarding'
 
 export default function HomePage() {
   const router = useRouter()
@@ -11,5 +12,10 @@ export default function HomePage() {
     router.push(`/extract/${passage.id}`)
   }
 
-  return <ExtractBrowser onSelect={handleSelect} />
+  return (
+    <>
+      <Onboarding />
+      <ExtractBrowser onSelect={handleSelect} />
+    </>
+  )
 }
