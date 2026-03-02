@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { addContactToAudience } from '@/lib/resend'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -8,7 +9,11 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const { data } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (data.user?.email) {
+      addContactToAudience(data.user.email)
+    }
   }
 
   return NextResponse.redirect(new URL(next, requestUrl.origin))

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { addContactToAudience } from '@/lib/resend'
 
 export type AuthState = {
   error?: string
@@ -42,6 +43,8 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
   if (error) {
     return { error: error.message }
   }
+
+  addContactToAudience(email)
 
   revalidatePath('/', 'layout')
   return {
