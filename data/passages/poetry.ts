@@ -457,4 +457,51 @@ export const poetryPassages: Passage[] = [
             },
         ],
     },
+    {
+        id: "poetry-013",
+        categoryId: "poetry",
+        tags: ["romantic", "beauty", "love", "lord byron", "georgian"],
+        title: "She Walks in Beauty",
+        author: "Lord Byron",
+        work: "Hebrew Melodies (1815)",
+        text: `She walks in beauty, like the night
+  Of cloudless climes and starry skies;
+  And all that's best of dark and bright
+  Meet in her aspect and her eyes;
+  Thus mellowed to that tender light
+  Which heaven to gaudy day denies.
+
+  One shade the more, one ray the less,
+  Had half impaired the nameless grace
+  Which waves in every raven tress,
+  Or softly lightens o'er her face;
+  Where thoughts serenely sweet express
+  How pure, how dear their dwelling-place.
+
+  And on that cheek, and o'er that brow,
+  So soft, so calm, yet eloquent,
+  The smiles that win, the tints that glow,
+  But tell of days in goodness spent,
+  A mind at peace with all below,
+  A heart whose love is innocent!`,
+        context:
+            "Byron wrote this after seeing his cousin by marriage at a party, wearing a black mourning dress. The poem fuses opposites — dark and bright, night and stars — into a single vision of beauty. The speaker never describes her directly; instead he describes the effect of her presence. The final stanza moves from physical beauty to moral character, suggesting that outer radiance reflects inner goodness.",
+        twists: [
+            {
+                label: "He walks in beauty",
+                prompt:
+                    "Rewrite the poem about a man. Byron's imagery (night, stars, raven tress) is coded feminine — find equivalent images that feel equally specific and reverent.",
+            },
+            {
+                label: "Unbalance it",
+                prompt:
+                    "Byron insists on perfect balance ('One shade the more, one ray the less / Had half impaired'). Rewrite with deliberate imbalance — beauty that is too dark, or too bright. What happens to the tone?",
+            },
+            {
+                label: "Modern setting",
+                prompt:
+                    "Keep Byron's structure and rhyme scheme but set the poem in a contemporary space — a club, a subway platform, a Zoom call. Let the archaic diction collide with modern context.",
+            },
+        ],
+    },
 ];
