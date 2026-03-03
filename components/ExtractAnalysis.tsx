@@ -498,7 +498,7 @@ function WriteSidebar({
         {submissionsLoading ? (
           <p className="ea-submissions-loading">Loading…</p>
         ) : submissions.length === 0 ? (
-          <p className="ea-submissions-empty">No submissions yet. Save your work to see it here.</p>
+          <p className="ea-submissions-empty">No submissions yet. Get feedback on your writing to see it here.</p>
         ) : (
           <ul className="ea-submissions-list">
             {submissions.map((s) => (
@@ -569,9 +569,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [feedback, setFeedback] = useState<UserFeedback | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
-  const [saveLoading, setSaveLoading] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [saveSuccess, setSaveSuccess] = useState(false)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -654,6 +652,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       const data = (await res.json()) as UserFeedback
       setFeedback(data)
       if (data.scores) setShowScoreCard(true)
+      await saveCompletion(data)
     } catch (err) {
       setFeedbackError(err instanceof Error ? err.message : 'Failed to get feedback')
     } finally {
@@ -661,11 +660,9 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
     }
   }
 
-  async function handleSave() {
-    if (!feedback || !passageId || !constraint || !analysis) return
+  async function saveCompletion(feedbackData: UserFeedback) {
+    if (!passageId || !constraint || !analysis) return
     setSaveError(null)
-    setSaveLoading(true)
-    setSaveSuccess(false)
     try {
       const res = await fetch('/api/completions', {
         method: 'POST',
@@ -675,23 +672,16 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           constraint,
           userText: userText.trim(),
           wordCount,
-          feedback,
+          feedback: feedbackData,
         }),
       })
       const data = (await res.json()) as { error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Failed to save')
-      setSaveSuccess(true)
       fetchSubmissions()
-      setTimeout(() => setSaveSuccess(false), 2000)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save')
-    } finally {
-      setSaveLoading(false)
     }
   }
-
-  const canSave = Boolean(feedback && passageId && constraint)
-  const saveTooltip = !canSave ? 'Get feedback on your writing first' : undefined
 
   function formatSubmissionDate(iso: string) {
     return new Date(iso).toLocaleDateString('en-US', {
@@ -808,15 +798,6 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
             >
               {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
             </button>
-            <span title={saveTooltip} className="ea-save-wrapper">
-              <button
-                className={`ea-save-btn${saveSuccess ? ' ea-save-saved' : ''}`}
-                onClick={handleSave}
-                disabled={!canSave || saveLoading}
-              >
-                {saveLoading ? 'Saving…' : saveSuccess ? 'Saved' : 'Save'}
-              </button>
-            </span>
             {feedback?.scores && (
               <button
                 className="ea-scorecard-btn"
