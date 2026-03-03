@@ -764,12 +764,20 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           <div className={`ea-extract-reference${extractExpanded ? ' ea-extract-expanded' : ''}`}>
             <div className="ea-extract-reference-header">
               <h3 className="ea-extract-reference-heading">Original extract</h3>
-              <button
-                className="ea-extract-toggle"
-                onClick={() => setExtractExpanded((v) => !v)}
-              >
-                {extractExpanded ? 'Collapse' : 'Expand'}
-              </button>
+              <div className="ea-extract-reference-actions">
+                <button
+                  className="ea-return-to-analysis"
+                  onClick={() => setPhase('analyse')}
+                >
+                  ← Return to analysis
+                </button>
+                <button
+                  className="ea-extract-toggle"
+                  onClick={() => setExtractExpanded((v) => !v)}
+                >
+                  {extractExpanded ? 'Collapse' : 'Expand'}
+                </button>
+              </div>
             </div>
             <p className="ea-extract-reference-text">{fullText}</p>
             {!extractExpanded && <div className="ea-extract-fade" />}
