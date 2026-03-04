@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import type { CraftCategory, ExtractAnalysis as ExtractAnalysisType, Segment } from '@/types/extract'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
@@ -562,6 +564,8 @@ interface Submission {
 }
 
 export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId, initialUserText }: ExtractAnalysisProps) {
+  const router = useRouter()
+  const pathname = usePathname()
   const [phase, setPhase] = useState<Phase>(initialUserText ? 'write' : 'loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
@@ -632,6 +636,22 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       setFeedbackError('Write at least 50 characters before requesting feedback.')
       return
     }
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      const nextPath = pathname ?? '/'
+      try {
+        sessionStorage.setItem(
+          'rewrite-draft',
+          JSON.stringify({ pathname: nextPath, userText: userText.trim() })
+        )
+      } catch {
+        // sessionStorage may be unavailable
+      }
+      const signupUrl = `/signup?next=${encodeURIComponent(nextPath)}`
+      router.push(signupUrl)
+      return
+    }
     setFeedbackError(null)
     setFeedback(null)
     setFeedbackLoading(true)
@@ -646,6 +666,19 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           passageId: passageId ?? undefined,
         }),
       })
+      if (res.status === 401) {
+        const nextPath = pathname ?? '/'
+        try {
+          sessionStorage.setItem(
+            'rewrite-draft',
+            JSON.stringify({ pathname: nextPath, userText: userText.trim() })
+          )
+        } catch {
+          // sessionStorage may be unavailable
+        }
+        router.push(`/signup?next=${encodeURIComponent(nextPath)}`)
+        return
+      }
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
         throw new Error(data.error ?? 'Failed to get feedback')
@@ -654,6 +687,11 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       setFeedback(data)
       if (data.scores) setShowScoreCard(true)
       await saveCompletion(data)
+      try {
+        sessionStorage.removeItem('rewrite-draft')
+      } catch {
+        // sessionStorage may be unavailable
+      }
     } catch (err) {
       setFeedbackError(err instanceof Error ? err.message : 'Failed to get feedback')
     } finally {

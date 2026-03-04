@@ -28,13 +28,13 @@ function GoogleIcon() {
   )
 }
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, formAction, isPending] = useActionState(login, undefined)
   const [googleError, setGoogleError] = useState<string | null>(null)
 
   async function handleGoogleSignIn() {
     setGoogleError(null)
-    const result = await signInWithGoogle()
+    const result = await signInWithGoogle(next)
     if (result?.error) {
       setGoogleError(result.error)
     }
@@ -69,6 +69,7 @@ export function LoginForm() {
       </div>
 
       <form action={formAction} className="auth-form">
+        {next && <input type="hidden" name="next" value={next} />}
         <div className="auth-field">
           <label htmlFor="email" className="auth-label">
             Email
@@ -111,7 +112,7 @@ export function LoginForm() {
 
       <p className="auth-footer">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="auth-link">
+        <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="auth-link">
           Sign up
         </Link>
       </p>

@@ -15,6 +15,7 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const next = (formData.get('next') as string) || '/'
 
   if (!email || !password) {
     return { error: 'Email and password are required' }
@@ -24,20 +25,18 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
     return { error: 'Password must be at least 6 characters' }
   }
 
-
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-
-  console.log('siteUrl', siteUrl)
-
+  const emailRedirectTo =
+    next && next.startsWith('/')
+      ? `${siteUrl}/email-verified?next=${encodeURIComponent(next)}`
+      : `${siteUrl}/email-verified`
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      emailRedirectTo: `${siteUrl}/email-verified`,
-    },
+    options: { emailRedirectTo },
   })
 
   if (error) {
@@ -58,6 +57,7 @@ export async function login(_prevState: AuthState | undefined, formData: FormDat
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const next = (formData.get('next') as string) || '/'
 
   if (!email || !password) {
     return { error: 'Email and password are required' }
@@ -70,20 +70,22 @@ export async function login(_prevState: AuthState | undefined, formData: FormDat
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect(next)
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(next?: string) {
   const supabase = await createClient()
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+  const redirectTo =
+    next && next.startsWith('/')
+      ? `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
+      : `${siteUrl}/auth/callback`
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: {
-      redirectTo: `${siteUrl}/auth/callback`,
-    },
+    options: { redirectTo },
   })
 
   if (error) {
