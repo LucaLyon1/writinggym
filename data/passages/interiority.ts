@@ -58,6 +58,34 @@ export const interiorityPassages: Passage[] = [
     ],
   },
   {
+    id: "woolf-dalloway-loneliness",
+    categoryId: "interiority",
+    tags: ["stream-of-consciousness", "repetition", "sensory-detail"],
+    title: "Mrs Dalloway",
+    author: "Virginia Woolf",
+    work: "Mrs Dalloway (1925)",
+    text: "She had a perpetual sense, as she watched the taxi cabs, of being out, out, far out to sea and alone; she always had the feeling that it was very, very dangerous to live even one day.",
+    context:
+      "Woolf buries the word 'alone' deep inside the sentence, after a rhythmic push — 'out, out, far out' — that mimics the feeling of drifting away from the shore. The taxi cabs anchor us in London, but the mind is already at sea. And then the second clause lands: danger is not outside, it is in the fact of being alive at all.",
+    twists: [
+      {
+        label: "Ground the feeling",
+        prompt:
+          "Rewrite it so the loneliness is expressed entirely through concrete, physical detail — no abstractions, no 'sense', no 'feeling'. Only what the body and the world do.",
+      },
+      {
+        label: "Reverse the drift",
+        prompt:
+          "Rewrite it so the movement goes inward instead of outward — the character feels the world pressing in, not drifting away.",
+      },
+      {
+        label: "Make it plural",
+        prompt:
+          "Rewrite it from the perspective of two people standing side by side, both feeling this. How does shared loneliness change the sentence?",
+      },
+    ],
+  },
+  {
     id: "james-ambassador",
     categoryId: "interiority",
     tags: ["stream-of-consciousness", "restraint"],

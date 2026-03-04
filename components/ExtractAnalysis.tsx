@@ -12,6 +12,7 @@ interface ExtractAnalysisProps {
   passageId?: string
   constraint?: string
   categoryId?: string
+  initialUserText?: string
 }
 
 type Phase = 'loading' | 'analyse' | 'write'
@@ -560,12 +561,12 @@ interface Submission {
   completed_at: string
 }
 
-export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId }: ExtractAnalysisProps) {
-  const [phase, setPhase] = useState<Phase>('loading')
+export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId, initialUserText }: ExtractAnalysisProps) {
+  const [phase, setPhase] = useState<Phase>(initialUserText ? 'write' : 'loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [extractExpanded, setExtractExpanded] = useState(false)
-  const [userText, setUserText] = useState('')
+  const [userText, setUserText] = useState(initialUserText ?? '')
   const [feedback, setFeedback] = useState<UserFeedback | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)

@@ -8,9 +8,10 @@ import { ExtractAnalysis } from '@/components/ExtractAnalysis'
 interface AnalysisViewProps {
   passage: Passage
   onBack: () => void
+  initialUserText?: string
 }
 
-export function AnalysisView({ passage, onBack }: AnalysisViewProps) {
+export function AnalysisView({ passage, onBack, initialUserText }: AnalysisViewProps) {
   const category = categories.find((c) => c.id === passage.categoryId)
   const constraint = passage.twists[0]?.prompt ?? passage.context
 
@@ -40,6 +41,7 @@ export function AnalysisView({ passage, onBack }: AnalysisViewProps) {
         passageId={passage.id}
         constraint={constraint}
         categoryId={passage.categoryId}
+        initialUserText={initialUserText}
       />
     </div>
   )
