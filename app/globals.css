@@ -2777,6 +2777,35 @@ button.profile-manage-subscription:disabled {
   padding: 2rem 0;
 }
 
+.profile-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0;
+}
+
+.profile-load-more-btn {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  background: var(--accent-pale);
+  border: 1px solid rgba(184, 74, 46, 0.25);
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.profile-load-more-btn:hover:not(:disabled) {
+  color: var(--accent-soft);
+  background: rgba(240, 224, 218, 0.9);
+  border-color: rgba(184, 74, 46, 0.35);
+}
+
+.profile-load-more-btn:disabled {
+  cursor: wait;
+  opacity: 0.8;
+}
+
 /* ─── Completion heatmap (GitHub-style) ───────────────────────── */
 .heatmap-section {
   margin-bottom: 2.5rem;
