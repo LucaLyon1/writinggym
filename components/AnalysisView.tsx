@@ -30,6 +30,9 @@ export function AnalysisView({ passage, onBack, initialUserText }: AnalysisViewP
         {category && (
           <span className="gym-category-badge">{category.label}</span>
         )}
+        <span className={`tile-difficulty tile-difficulty-${passage.difficulty}`}>
+          {passage.difficulty.charAt(0).toUpperCase() + passage.difficulty.slice(1)}
+        </span>
         <span className="analysis-topbar-title">
           {passage.author} — <em>{passage.title}</em>
         </span>

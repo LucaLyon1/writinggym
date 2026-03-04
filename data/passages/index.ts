@@ -1,4 +1,4 @@
-export type { Category, Passage, Tag } from "./types";
+export type { Category, Difficulty, Passage, Tag } from "./types";
 export { categories, tags } from "./categories";
 
 import { characterIntroPassages } from "./character-intro";

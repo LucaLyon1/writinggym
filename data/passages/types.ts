@@ -9,10 +9,13 @@ export type Tag = {
   label: string;
 };
 
+export type Difficulty = "accessible" | "intermediate" | "challenging";
+
 export type Passage = {
   id: string;
   categoryId: string;
   tags: string[];
+  difficulty: Difficulty;
   title: string;
   author: string;
   work: string;

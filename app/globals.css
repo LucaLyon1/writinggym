@@ -1640,18 +1640,24 @@ body {
   border-left: 3px solid var(--accent);
 }
 
+.tile-top-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
 .tile-completed-badge {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
   font-family: var(--font-mono);
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--accent);
   background: var(--accent-pale);
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 999px;
+  flex-shrink: 0;
 }
 
 .tile-category {
@@ -1663,7 +1669,7 @@ body {
   background: var(--accent-pale);
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  align-self: flex-start;
+  flex-shrink: 0;
 }
 
 .tile-author {
@@ -1803,6 +1809,58 @@ body {
   border: 1px solid var(--line);
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
+}
+
+/* ── Difficulty badge on tiles ────────────────────────────── */
+.tile-difficulty {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  line-height: 1;
+}
+
+.tile-difficulty-accessible {
+  color: #3a7d44;
+  background: #e6f4e8;
+  border: 1px solid #c3e4c8;
+}
+
+.tile-difficulty-intermediate {
+  color: #a67c20;
+  background: #fef6e4;
+  border: 1px solid #f0dfa8;
+}
+
+.tile-difficulty-challenging {
+  color: #a83a2e;
+  background: #fce8e6;
+  border: 1px solid #f0c4bf;
+}
+
+/* ── Difficulty dot in sidebar ────────────────────────────── */
+.difficulty-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.45rem;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.difficulty-accessible {
+  background: #3a7d44;
+}
+
+.difficulty-intermediate {
+  background: #a67c20;
+}
+
+.difficulty-challenging {
+  background: #a83a2e;
 }
 
 /* ── Browser empty state ───────────────────────────────────── */

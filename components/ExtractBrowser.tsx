@@ -3,7 +3,13 @@
 import Link from 'next/link'
 import { useState, useMemo, useEffect } from 'react'
 import { passages, categories, tags } from '@/data/passages'
-import type { Passage } from '@/data/passages'
+import type { Difficulty, Passage } from '@/data/passages'
+
+const DIFFICULTY_META: Record<Difficulty, { label: string; icon: string }> = {
+  accessible: { label: 'Accessible', icon: '◇' },
+  intermediate: { label: 'Intermediate', icon: '◆' },
+  challenging: { label: 'Challenging', icon: '◆◆' },
+}
 
 interface ExtractBrowserProps {
   onSelect: (passage: Passage) => void
@@ -31,6 +37,7 @@ function matchesSearch(p: Passage, query: string): boolean {
 
 export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
+  const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [completedByPassage, setCompletedByPassage] = useState<
     Record<string, number>
@@ -56,9 +63,12 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
     if (activeCategoryId) {
       result = result.filter((p) => p.categoryId === activeCategoryId)
     }
+    if (activeDifficulty) {
+      result = result.filter((p) => p.difficulty === activeDifficulty)
+    }
     result = result.filter((p) => matchesSearch(p, searchQuery))
     return result
-  }, [activeCategoryId, searchQuery])
+  }, [activeCategoryId, activeDifficulty, searchQuery])
 
   const activeCategory = categories.find((c) => c.id === activeCategoryId)
 
@@ -93,6 +103,23 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
             >
               <span className="cat-btn-label">{cat.label}</span>
               <span className="cat-btn-count">{passageCounts[cat.id] || 0}</span>
+            </button>
+          ))}
+
+          <span className="sidebar-label" style={{ marginTop: '1.25rem' }}>Difficulty</span>
+          {(['accessible', 'intermediate', 'challenging'] as Difficulty[]).map((d) => (
+            <button
+              key={d}
+              className={`cat-btn ${activeDifficulty === d ? 'active' : ''}`}
+              onClick={() => setActiveDifficulty(activeDifficulty === d ? null : d)}
+            >
+              <span className="cat-btn-label">
+                <span className={`difficulty-dot difficulty-${d}`} />
+                {DIFFICULTY_META[d].label}
+              </span>
+              <span className="cat-btn-count">
+                {passages.filter((p) => p.difficulty === d).length}
+              </span>
             </button>
           ))}
         </nav>
@@ -132,15 +159,17 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
                   className={`passage-tile ${hasCompleted ? 'passage-tile-completed' : ''}`}
                   onClick={() => onSelect(passage)}
                 >
-                  {hasCompleted && (
-                    <span
-                      className="tile-completed-badge"
-                      aria-label="Completed"
-                    >
-                      Completed
-                    </span>
-                  )}
-                  <span className="tile-category">{cat?.label}</span>
+                  <div className="tile-top-badges">
+                    <span className="tile-category">{cat?.label}</span>
+                    {hasCompleted && (
+                      <span
+                        className="tile-completed-badge"
+                        aria-label="Completed"
+                      >
+                        Completed
+                      </span>
+                    )}
+                  </div>
                   <span className="tile-author">
                     {passage.author} · {passage.work}
                   </span>
@@ -159,8 +188,8 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
                     })}
                   </div>
                   <div className="tile-footer">
-                    <span className="tile-twists">
-                      {passage.twists.length} exercises
+                    <span className={`tile-difficulty tile-difficulty-${passage.difficulty}`}>
+                      {DIFFICULTY_META[passage.difficulty].label}
                     </span>
                     <span className="tile-cta">Analyse →</span>
                   </div>
