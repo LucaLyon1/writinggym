@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 
 const STORAGE_KEY = 'proselab-onboarding-done'
 
@@ -9,36 +10,45 @@ interface Step {
   title: string
   description: string
   detail: string
+  isFinal?: boolean
 }
 
 const steps: Step[] = [
   {
     icon: '✦',
     title: 'Welcome to Proselab',
-    description: 'A writing practice space where you learn by imitation — the way painters copy masters, the way musicians learn standards.',
-    detail: 'Great writers learned by studying great writing. Proselab gives you the tools to do the same.',
+    description: 'A deliberate practice space for writers. Learn by imitation — the way painters copy masters, the way musicians learn standards.',
+    detail: 'Great writers learned by studying great writing. Proselab gives you the structure to do the same.',
   },
   {
     icon: '◈',
-    title: 'Study the craft',
-    description: 'Pick a passage from authors like Carver, Didion, or Morrison. Our AI breaks down the writing — structure, voice, imagery, pacing — so you can see how it works.',
-    detail: 'Hover over highlighted text to read annotations. Use the category pills to filter by craft element.',
+    title: 'Choose your session',
+    description: 'Pick a craft axis — dialogue, opening lines, interiority, scene-setting — and a session length. Proselab selects a passage from a master writer matched to your focus.',
+    detail: 'Each session is intentional. You practice one dimension of craft at a time.',
   },
   {
     icon: '✎',
-    title: 'Write your version',
-    description: 'Each extract comes with a writing constraint — a focused exercise to try a technique yourself. Write directly in the app with the original alongside for reference.',
+    title: 'Rewrite the passage',
+    description: 'Study the original with AI craft analysis, then write your own version under a constraint. The constraint focuses your attention on the technique that matters.',
     detail: 'There are no rules. The constraint is a guide, not a cage.',
   },
   {
     icon: '◉',
-    title: 'Get honest feedback',
-    description: 'Submit your writing and receive thoughtful AI critique — what worked, what could be stronger, and what to try next time.',
-    detail: 'Save your rewrites, track your streaks, and watch your craft grow over time.',
+    title: 'Get coached',
+    description: 'Receive dimension-by-dimension analysis of where your instincts diverged from the original, a craft score across four axes, and one actionable thing to try next time.',
+    detail: 'Track your scores over time. See which dimensions you improve in. Ask follow-up questions to go deeper.',
+  },
+  {
+    icon: '◎',
+    title: 'Where should you start?',
+    description: "Take a quick writing assessment \u2014 write a short passage and we'll map your strengths and blind spots across the dimensions of craft. The results will point you toward the sessions and exercises that matter most.",
+    detail: "It only takes a few minutes. Or skip it and dive straight into practice.",
+    isFinal: true,
   },
 ]
 
 export function Onboarding() {
+  const router = useRouter()
   const [visible, setVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward')
@@ -136,14 +146,37 @@ export function Onboarding() {
         </div>
 
         <div className="onboarding-actions">
-          {currentStep > 0 && (
+          {currentStep > 0 && !isLast && (
             <button className="onboarding-back" onClick={handleBack}>
               ← Back
             </button>
           )}
-          <button className="onboarding-next" onClick={handleNext}>
-            {isLast ? 'Start exploring' : 'Continue →'}
-          </button>
+          {isLast ? (
+            <>
+              <button
+                className="onboarding-back"
+                onClick={handleBack}
+              >
+                ← Back
+              </button>
+              <button
+                className="onboarding-next"
+                onClick={() => { dismiss(); router.push('/assessment') }}
+              >
+                Take the assessment
+              </button>
+              <button
+                className="onboarding-skip-final"
+                onClick={dismiss}
+              >
+                Skip — start practicing
+              </button>
+            </>
+          ) : (
+            <button className="onboarding-next" onClick={handleNext}>
+              Continue →
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -8,6 +8,8 @@ import { getCurrentBadge } from '@/lib/streak-badges'
 import { getUserEntitlements } from '@/lib/plan'
 import { ManageSubscriptionButton } from '@/components/checkout/ManageSubscriptionButton'
 import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
+import { ScoreProfile } from '@/components/ScoreProfile'
+import { PracticeRecord } from '@/components/PracticeRecord'
 
 type PassageCompletion = Tables<'passage_completions'>
 
@@ -185,6 +187,10 @@ export default async function ProfilePage() {
         </section>
 
         <CompletionHeatmap completions={statsCompletions ?? []} />
+
+        <ScoreProfile />
+
+        <PracticeRecord />
 
         {!totalCount ? (
           <div className="profile-empty">

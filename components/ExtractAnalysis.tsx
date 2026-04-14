@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { CraftCategory, ExtractAnalysis as ExtractAnalysisType, Segment } from '@/types/extract'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
+import { RadarChart } from '@/components/RadarChart'
+import { FollowUpChat } from '@/components/FollowUpChat'
 
 interface ExtractAnalysisProps {
   analysis: ExtractAnalysisType | null
@@ -259,8 +261,8 @@ function getScoreColor(score: number): string {
 }
 
 function getOverallGrade(scores: FeedbackScores): { score: number; label: string } {
-  const values = Object.values(scores)
-  const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length)
+  const values = Object.values(scores).filter((v): v is number => v !== null)
+  const avg = values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0
   let label = 'Keep going'
   if (avg >= 90) label = 'Masterful'
   else if (avg >= 80) label = 'Exceptional'
@@ -365,7 +367,19 @@ function ScoreCardPopup({
         </div>
 
         <div className="sc-hero">
-          <ScoreRing score={overall.score} size={110} />
+          <div className="sc-hero-scores">
+            <ScoreRing score={overall.score} size={100} />
+            <RadarChart
+              scores={{
+                voice: feedback.scores.voice,
+                imagery: feedback.scores.imagery,
+                structure: feedback.scores.structure,
+                pacing: feedback.scores.pacing,
+              }}
+              size={140}
+              showLabels
+            />
+          </div>
           <div className="sc-hero-info">
             <span className="sc-grade">{overall.label}</span>
             <p className="sc-verdict">{feedback.verdict}</p>
@@ -375,7 +389,18 @@ function ScoreCardPopup({
         <div className="sc-criteria">
           {SCORE_CRITERIA.map(({ key, label, icon }) => {
             const value = feedback.scores[key]
-            const pct = `${value}%`
+            if (value === null) return (
+              <div key={key} className="sc-criterion sc-criterion-na">
+                <div className="sc-criterion-header">
+                  <span className="sc-criterion-icon">{icon}</span>
+                  <span className="sc-criterion-label">{label}</span>
+                  <span className="sc-criterion-value sc-na">N/A</span>
+                </div>
+                <div className="sc-bar">
+                  <div className="sc-bar-fill sc-bar-na" style={{ width: '100%' }} />
+                </div>
+              </div>
+            )
             return (
               <div key={key} className="sc-criterion">
                 <div className="sc-criterion-header">
@@ -392,7 +417,7 @@ function ScoreCardPopup({
                   <div
                     className="sc-bar-fill"
                     style={{
-                      width: pct,
+                      width: `${value}%`,
                       backgroundColor: getScoreColor(value),
                     }}
                   />
@@ -401,6 +426,31 @@ function ScoreCardPopup({
             )
           })}
         </div>
+
+        {feedback.divergences && (
+          <div className="sc-divergences">
+            {(Object.entries(feedback.divergences) as [keyof DivergenceAnalysis, string | null][])
+              .filter(([, text]) => text !== null)
+              .map(([dim, text]) => {
+                const config = CATEGORIES[dim]
+                return (
+                  <div key={dim} className="sc-divergence-item" style={{ borderLeftColor: config.color }}>
+                    <span className="sc-divergence-label" style={{ color: config.color }}>
+                      {config.label}
+                    </span>
+                    <p className="sc-divergence-text">{text}</p>
+                  </div>
+                )
+              })}
+          </div>
+        )}
+
+        {feedback.actionable_observation && (
+          <div className="sc-actionable">
+            <span className="sc-actionable-label">Try next time</span>
+            <p className="sc-actionable-text">{feedback.actionable_observation}</p>
+          </div>
+        )}
 
         <div className="sc-constraint">
           <span className="sc-constraint-label">Exercise</span>
@@ -427,6 +477,8 @@ function WriteSidebar({
   feedbackLoading,
   feedbackError,
   saveError,
+  originalText,
+  userText,
 }: {
   analysis: ExtractAnalysisType
   submissions: Submission[]
@@ -439,6 +491,8 @@ function WriteSidebar({
   feedbackLoading: boolean
   feedbackError: string | null
   saveError: string | null
+  originalText: string
+  userText: string
 }) {
   const annotatedSegments = analysis.segments.filter((s) => s.annotation)
 
@@ -468,12 +522,59 @@ function WriteSidebar({
       )}
 
       {feedback && !feedbackLoading && (
-        <div className="ea-sidebar-section ea-sidebar-feedback">
-          <h3 className="ea-sidebar-heading">Honest feedback</h3>
-          <div className="ea-sidebar-feedback-content">
-            <p className="ea-feedback-text">{feedback.feedback}</p>
+        <>
+          {feedback.divergences && (
+            <div className="ea-sidebar-section ea-sidebar-divergences">
+              <h3 className="ea-sidebar-heading">Where you diverged</h3>
+              <div className="ea-divergence-list">
+                {(Object.entries(feedback.divergences) as [keyof DivergenceAnalysis, string | null][])
+                  .filter(([, text]) => text !== null)
+                  .map(([dim, text]) => {
+                    const config = CATEGORIES[dim]
+                    const score = feedback.scores[dim]
+                    return (
+                      <div key={dim} className="ea-divergence-item" style={{ borderLeftColor: config.color }}>
+                        <div className="ea-divergence-header">
+                          <span className="ea-divergence-label" style={{ color: config.color }}>
+                            {config.label}
+                          </span>
+                          {score !== null && (
+                            <span className="ea-divergence-score" style={{ color: getScoreColor(score) }}>
+                              {score}/100
+                            </span>
+                          )}
+                        </div>
+                        <p className="ea-divergence-text">{text}</p>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+
+          {feedback.actionable_observation && (
+            <div className="ea-sidebar-section ea-sidebar-actionable">
+              <h3 className="ea-sidebar-heading">Try this next time</h3>
+              <p className="ea-actionable-text">{feedback.actionable_observation}</p>
+            </div>
+          )}
+
+          <div className="ea-sidebar-section ea-sidebar-feedback">
+            <h3 className="ea-sidebar-heading">Full analysis</h3>
+            <div className="ea-sidebar-feedback-content">
+              <p className="ea-feedback-text">{feedback.feedback}</p>
+            </div>
           </div>
-        </div>
+
+          <div className="ea-sidebar-section">
+            <FollowUpChat
+              originalText={originalText}
+              constraint={analysis.constraint}
+              userText={userText}
+              feedbackSummary={feedback.feedback}
+            />
+          </div>
+        </>
       )}
 
       <div className="ea-sidebar-section">
@@ -540,11 +641,18 @@ function WriteSidebar({
 }
 
 interface FeedbackScores {
-  voice: number
-  imagery: number
-  structure: number
-  pacing: number
+  voice: number | null
+  imagery: number | null
+  structure: number | null
+  pacing: number | null
   constraint: number
+}
+
+interface DivergenceAnalysis {
+  voice: string | null
+  imagery: string | null
+  structure: string | null
+  pacing: string | null
 }
 
 interface UserFeedback {
@@ -552,6 +660,8 @@ interface UserFeedback {
   summary: string[]
   feedback: string
   scores: FeedbackScores
+  divergences?: DivergenceAnalysis
+  actionable_observation?: string
   verdict: string
 }
 
@@ -574,11 +684,13 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [feedback, setFeedback] = useState<UserFeedback | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  const [testLoading, setTestLoading] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showScoreCard, setShowScoreCard] = useState(false)
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
 
   const fetchSubmissions = useCallback(async () => {
@@ -679,6 +791,14 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
         router.push(`/signup?next=${encodeURIComponent(nextPath)}`)
         return
       }
+      if (res.status === 403) {
+        const data = (await res.json()) as { requiresUpgrade?: boolean; error?: string }
+        if (data.requiresUpgrade) {
+          setShowUpgradePrompt(true)
+          setFeedbackLoading(false)
+          return
+        }
+      }
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
         throw new Error(data.error ?? 'Failed to get feedback')
@@ -719,6 +839,33 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       fetchSubmissions()
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save')
+    }
+  }
+
+  async function handleTest() {
+    if (!analysis) return
+    setTestLoading(true)
+    setFeedbackError(null)
+    try {
+      const res = await fetch('/api/example', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalText: fullText,
+          constraint: analysis.constraint,
+          passageId: passageId ?? undefined,
+        }),
+      })
+      const data = (await res.json()) as { example?: string; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed to generate example')
+      if (data.example) {
+        setUserText(data.example)
+        setFeedback(null)
+      }
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : 'Failed to generate example')
+    } finally {
+      setTestLoading(false)
     }
   }
 
@@ -839,6 +986,15 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
               categoryId={categoryId}
             />
             <button
+              type="button"
+              className="ea-test-btn"
+              onClick={handleTest}
+              disabled={testLoading || feedbackLoading}
+              title="Generate a passage that should score 100/100 for this constraint"
+            >
+              {testLoading ? 'Generating…' : 'Test'}
+            </button>
+            <button
               className="ea-analyze-btn"
               onClick={handleAnalyze}
               disabled={feedbackLoading || userText.trim().length < 50}
@@ -871,6 +1027,8 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           feedbackLoading={feedbackLoading}
           feedbackError={feedbackError}
           saveError={saveError}
+          originalText={fullText}
+          userText={userText}
         />
       </div>
       {showScoreCard && feedback?.scores && analysis && (
@@ -879,6 +1037,37 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           constraint={analysis.constraint}
           onClose={() => setShowScoreCard(false)}
         />
+      )}
+      {showUpgradePrompt && (
+        <div className="sc-overlay" onClick={() => setShowUpgradePrompt(false)}>
+          <div className="upgrade-prompt" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="sc-close"
+              onClick={() => setShowUpgradePrompt(false)}
+              aria-label="Close"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="2" y1="2" x2="12" y2="12" />
+                <line x1="12" y1="2" x2="2" y2="12" />
+              </svg>
+            </button>
+            <h2 className="upgrade-prompt-title">Get coached on your writing</h2>
+            <p className="upgrade-prompt-text">
+              The free tier lets you rewrite and compare. The Core plan adds what makes the difference:
+              AI analysis of every rewrite, craft scores across four dimensions, a personal practice record,
+              and follow-up chat to go deeper on any passage.
+            </p>
+            <ul className="upgrade-prompt-features">
+              <li>Detailed divergence analysis — where and why your instincts differ</li>
+              <li>Craft scores that track your progress over time</li>
+              <li>One specific, actionable observation per session</li>
+              <li>Follow-up chat to deepen understanding</li>
+            </ul>
+            <a href="/pricing" className="upgrade-prompt-btn">
+              See plans — from $12/month
+            </a>
+          </div>
+        </div>
       )}
     </div>
   )

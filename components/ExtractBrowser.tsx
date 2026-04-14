@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import { passages, categories, tags } from '@/data/passages'
 import type { Difficulty, Passage } from '@/data/passages'
 
@@ -13,6 +12,8 @@ const DIFFICULTY_META: Record<Difficulty, { label: string; icon: string }> = {
 
 interface ExtractBrowserProps {
   onSelect: (passage: Passage) => void
+  /** Renders at the top of the main column only (sidebar stays full height). */
+  hero?: ReactNode
 }
 
 function truncate(text: string, maxLen: number): string {
@@ -35,7 +36,7 @@ function matchesSearch(p: Passage, query: string): boolean {
   )
 }
 
-export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
+export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -73,16 +74,7 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
   const activeCategory = categories.find((c) => c.id === activeCategoryId)
 
   return (
-    <div className="browser-root">
-      <header className="browser-header">
-        <Link href="/" className="gym-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <span className="gym-logo-mark">✦</span> Proselab
-        </Link>
-        <p className="browser-tagline">
-          Pick an extract. Study the craft. Write your own.
-        </p>
-      </header>
-
+    <div className="browser-root browser-embedded">
       <div className="browser-body">
         <nav className="browser-sidebar">
           <span className="sidebar-label">Categories</span>
@@ -125,6 +117,7 @@ export function ExtractBrowser({ onSelect }: ExtractBrowserProps) {
         </nav>
 
         <main className="browser-main">
+          {hero}
           {activeCategory && (
             <div className="category-header">
               <h2 className="category-title">{activeCategory.label}</h2>

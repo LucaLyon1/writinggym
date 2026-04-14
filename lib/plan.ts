@@ -113,6 +113,47 @@ export async function getUserPlanDetails(userId: string): Promise<Plan> {
     return data as Plan
 }
 
+// ── Check daily session limit for free users ─────────────────
+
+export interface DailySessionQuota {
+    allowed: boolean
+    used: number
+    limit: number | null
+}
+
+export async function checkDailySessionQuota(userId: string): Promise<DailySessionQuota> {
+    const planId = await getUserPlan(userId)
+
+    if (planId !== 'free') {
+        return { allowed: true, used: 0, limit: null }
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+
+    const { data } = await supabaseAdmin
+        .from('daily_stats')
+        .select('sessions')
+        .eq('user_id', userId)
+        .eq('stat_date', today)
+        .maybeSingle()
+
+    const used = data?.sessions ?? 0
+    const limit = 1
+
+    return {
+        allowed: used < limit,
+        used,
+        limit,
+    }
+}
+
+// ── Check if user has paid plan (for feature gating) ─────────
+
+export async function isPaidUser(userId: string): Promise<boolean> {
+    const planId = await getUserPlan(userId)
+    return planId !== 'free'
+}
+
 // ── Full entitlements (plan + current usage) ─────────────────
 
 export async function getUserEntitlements(userId: string): Promise<Entitlements> {

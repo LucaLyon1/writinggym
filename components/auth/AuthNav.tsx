@@ -9,11 +9,17 @@ export async function AuthNav() {
   if (data.user) {
     return (
       <nav className="auth-nav">
-        <Link href="/pricing" className="auth-nav-link auth-nav-pricing">
-          Pricing
+        <Link href="/session" className="auth-nav-link auth-nav-primary">
+          Practice
+        </Link>
+        <Link href="/assessment" className="auth-nav-link">
+          Assessment
         </Link>
         <Link href="/profile" className="auth-nav-link">
           Profile
+        </Link>
+        <Link href="/pricing" className="auth-nav-link auth-nav-pricing">
+          Pricing
         </Link>
         <form action={logout}>
           <button type="submit" className="auth-nav-btn">
@@ -26,6 +32,12 @@ export async function AuthNav() {
 
   return (
     <nav className="auth-nav">
+      <Link href="/session" className="auth-nav-link auth-nav-primary">
+        Practice
+      </Link>
+      <Link href="/assessment" className="auth-nav-link">
+        Assessment
+      </Link>
       <Link href="/pricing" className="auth-nav-link auth-nav-pricing">
         Pricing
       </Link>

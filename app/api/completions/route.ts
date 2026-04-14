@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { constraintKey } from '@/lib/constraint-key'
 import type { Json } from '@/types/database.types'
-import { recordSessionCompletion } from '@/lib/plan'
+import { recordSessionCompletion, checkDailySessionQuota } from '@/lib/plan'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -75,6 +75,18 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Missing required fields: passageId, constraint, feedback' },
       { status: 400 }
+    )
+  }
+
+  const sessionQuota = await checkDailySessionQuota(user.id)
+  if (!sessionQuota.allowed) {
+    return NextResponse.json(
+      {
+        error: 'You\'ve reached your daily session limit. Upgrade to Core for unlimited sessions.',
+        upgradeUrl: '/pricing',
+        requiresUpgrade: true,
+      },
+      { status: 403 }
     )
   }
 
