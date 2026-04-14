@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import type { CraftCategory, ExtractAnalysis as ExtractAnalysisType, Segment } from '@/types/extract'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
-import { RadarChart } from '@/components/RadarChart'
 import { FollowUpChat } from '@/components/FollowUpChat'
 
 interface ExtractAnalysisProps {
@@ -245,222 +244,87 @@ function SummarySidebar({
   )
 }
 
-const SCORE_CRITERIA: { key: keyof FeedbackScores; label: string; icon: string }[] = [
-  { key: 'voice', label: 'Voice', icon: '🎙' },
-  { key: 'imagery', label: 'Imagery', icon: '🎨' },
-  { key: 'structure', label: 'Structure', icon: '🏗' },
-  { key: 'pacing', label: 'Pacing', icon: '⏱' },
-  { key: 'constraint', label: 'Constraint', icon: '🎯' },
-]
-
-function getScoreColor(score: number): string {
-  if (score >= 80) return '#2d8a4e'
-  if (score >= 60) return '#b88a2e'
-  if (score >= 40) return '#b86e2e'
-  return '#b84a2e'
+interface DivergenceAnalysis {
+  voice: string | null
+  imagery: string | null
+  structure: string | null
+  pacing: string | null
 }
 
-function getOverallGrade(scores: FeedbackScores): { score: number; label: string } {
-  const values = Object.values(scores).filter((v): v is number => v !== null)
-  const avg = values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0
-  let label = 'Keep going'
-  if (avg >= 90) label = 'Masterful'
-  else if (avg >= 80) label = 'Exceptional'
-  else if (avg >= 70) label = 'Strong'
-  else if (avg >= 60) label = 'Promising'
-  else if (avg >= 50) label = 'Developing'
-  else if (avg >= 40) label = 'Emerging'
-  return { score: avg, label }
+interface UserFeedback {
+  segments: ExtractAnalysisType['segments']
+  strong_points: string[]
+  weak_points: string[]
+  analysis: string
+  divergences?: DivergenceAnalysis
+  next_step?: string
+  verdict: string
 }
 
-function ScoreRing({ score, size = 100 }: { score: number; size?: number }) {
-  const strokeWidth = 6
-  const radius = (size - strokeWidth) / 2
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (score / 100) * circumference
-  const color = getScoreColor(score)
+interface Submission {
+  id: string
+  user_text: string | null
+  feedback: Record<string, unknown> | null
+  word_count: number | null
+  completed_at: string
+}
+
+// Old feedback had { scores, feedback (string), verdict, actionable_observation, divergences }
+// New feedback has  { strong_points, weak_points, analysis, verdict, next_step, divergences }
+function normalizeFeedback(raw: Record<string, unknown> | null): UserFeedback | null {
+  if (!raw) return null
+  return {
+    segments: (raw.segments ?? []) as UserFeedback['segments'],
+    strong_points: Array.isArray(raw.strong_points) ? raw.strong_points as string[] : [],
+    weak_points: Array.isArray(raw.weak_points) ? raw.weak_points as string[] : [],
+    analysis: typeof raw.analysis === 'string' ? raw.analysis : (typeof raw.feedback === 'string' ? raw.feedback : ''),
+    divergences: (raw.divergences ?? undefined) as DivergenceAnalysis | undefined,
+    next_step: typeof raw.next_step === 'string' ? raw.next_step : (typeof raw.actionable_observation === 'string' ? raw.actionable_observation : undefined),
+    verdict: typeof raw.verdict === 'string' ? raw.verdict : '',
+  }
+}
+
+function FeedbackPanel({ feedback }: { feedback: UserFeedback }) {
+  const strongPoints = feedback.strong_points ?? []
+  const weakPoints = feedback.weak_points ?? []
 
   return (
-    <svg width={size} height={size} className="sc-ring">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="var(--line)"
-        strokeWidth={strokeWidth}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        className="sc-ring-progress"
-      />
-      <text
-        x={size / 2}
-        y={size / 2 - 4}
-        textAnchor="middle"
-        dominantBaseline="central"
-        className="sc-ring-score"
-        style={{ fill: color }}
-      >
-        {score}
-      </text>
-      <text
-        x={size / 2}
-        y={size / 2 + 22}
-        textAnchor="middle"
-        dominantBaseline="central"
-        className="sc-ring-label"
-      >
-        /100
-      </text>
-    </svg>
-  )
-}
-
-function ScoreCardPopup({
-  feedback,
-  constraint,
-  onClose,
-}: {
-  feedback: UserFeedback
-  constraint: string
-  onClose: () => void
-}) {
-  const cardRef = useRef<HTMLDivElement>(null)
-  const overall = getOverallGrade(feedback.scores)
-
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [onClose])
-
-  return (
-    <div className="sc-overlay" onClick={onClose}>
-      <div
-        className="sc-card"
-        ref={cardRef}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="sc-close" onClick={onClose} aria-label="Close">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <line x1="2" y1="2" x2="12" y2="12" />
-            <line x1="12" y1="2" x2="2" y2="12" />
-          </svg>
-        </button>
-
-        <div className="sc-header">
-          <span className="sc-brand">REWRITE</span>
-          <span className="sc-divider" />
-          <span className="sc-type">Writing Score</span>
-        </div>
-
-        <div className="sc-hero">
-          <div className="sc-hero-scores">
-            <ScoreRing score={overall.score} size={100} />
-            <RadarChart
-              scores={{
-                voice: feedback.scores.voice,
-                imagery: feedback.scores.imagery,
-                structure: feedback.scores.structure,
-                pacing: feedback.scores.pacing,
-              }}
-              size={140}
-              showLabels
-            />
-          </div>
-          <div className="sc-hero-info">
-            <span className="sc-grade">{overall.label}</span>
-            <p className="sc-verdict">{feedback.verdict}</p>
-          </div>
-        </div>
-
-        <div className="sc-criteria">
-          {SCORE_CRITERIA.map(({ key, label, icon }) => {
-            const value = feedback.scores[key]
-            if (value === null) return (
-              <div key={key} className="sc-criterion sc-criterion-na">
-                <div className="sc-criterion-header">
-                  <span className="sc-criterion-icon">{icon}</span>
-                  <span className="sc-criterion-label">{label}</span>
-                  <span className="sc-criterion-value sc-na">N/A</span>
-                </div>
-                <div className="sc-bar">
-                  <div className="sc-bar-fill sc-bar-na" style={{ width: '100%' }} />
-                </div>
-              </div>
-            )
-            return (
-              <div key={key} className="sc-criterion">
-                <div className="sc-criterion-header">
-                  <span className="sc-criterion-icon">{icon}</span>
-                  <span className="sc-criterion-label">{label}</span>
-                  <span
-                    className="sc-criterion-value"
-                    style={{ color: getScoreColor(value) }}
-                  >
-                    {value}
-                  </span>
-                </div>
-                <div className="sc-bar">
-                  <div
-                    className="sc-bar-fill"
-                    style={{
-                      width: `${value}%`,
-                      backgroundColor: getScoreColor(value),
-                    }}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {feedback.divergences && (
-          <div className="sc-divergences">
-            {(Object.entries(feedback.divergences) as [keyof DivergenceAnalysis, string | null][])
-              .filter(([, text]) => text !== null)
-              .map(([dim, text]) => {
-                const config = CATEGORIES[dim]
-                return (
-                  <div key={dim} className="sc-divergence-item" style={{ borderLeftColor: config.color }}>
-                    <span className="sc-divergence-label" style={{ color: config.color }}>
-                      {config.label}
-                    </span>
-                    <p className="sc-divergence-text">{text}</p>
-                  </div>
-                )
-              })}
-          </div>
-        )}
-
-        {feedback.actionable_observation && (
-          <div className="sc-actionable">
-            <span className="sc-actionable-label">Try next time</span>
-            <p className="sc-actionable-text">{feedback.actionable_observation}</p>
-          </div>
-        )}
-
-        <div className="sc-constraint">
-          <span className="sc-constraint-label">Exercise</span>
-          <p className="sc-constraint-text">{constraint}</p>
-        </div>
-
-        <div className="sc-footer">
-          <span className="sc-watermark">rewrite — learn to write by imitation</span>
-        </div>
+    <div className="ea-feedback-panel">
+      <div className="ea-feedback-verdict">
+        <p className="ea-verdict-text">{feedback.verdict}</p>
       </div>
+
+      {(strongPoints.length > 0 || weakPoints.length > 0) && (
+        <div className="ea-points-row">
+          {strongPoints.length > 0 && (
+            <div className="ea-points-group ea-strong-points">
+              <h4 className="ea-points-heading">What works</h4>
+              <ul className="ea-points-list">
+                {strongPoints.map((point, i) => (
+                  <li key={i} className="ea-point-item ea-point-strong">{point}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {weakPoints.length > 0 && (
+            <div className="ea-points-group ea-weak-points">
+              <h4 className="ea-points-heading">What to work on</h4>
+              <ul className="ea-points-list">
+                {weakPoints.map((point, i) => (
+                  <li key={i} className="ea-point-item ea-point-weak">{point}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {feedback.analysis && (
+        <div className="ea-feedback-analysis">
+          <p className="ea-feedback-text">{feedback.analysis}</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -531,18 +395,12 @@ function WriteSidebar({
                   .filter(([, text]) => text !== null)
                   .map(([dim, text]) => {
                     const config = CATEGORIES[dim]
-                    const score = feedback.scores[dim]
                     return (
                       <div key={dim} className="ea-divergence-item" style={{ borderLeftColor: config.color }}>
                         <div className="ea-divergence-header">
                           <span className="ea-divergence-label" style={{ color: config.color }}>
                             {config.label}
                           </span>
-                          {score !== null && (
-                            <span className="ea-divergence-score" style={{ color: getScoreColor(score) }}>
-                              {score}/100
-                            </span>
-                          )}
                         </div>
                         <p className="ea-divergence-text">{text}</p>
                       </div>
@@ -552,17 +410,17 @@ function WriteSidebar({
             </div>
           )}
 
-          {feedback.actionable_observation && (
+          {feedback.next_step && (
             <div className="ea-sidebar-section ea-sidebar-actionable">
               <h3 className="ea-sidebar-heading">Try this next time</h3>
-              <p className="ea-actionable-text">{feedback.actionable_observation}</p>
+              <p className="ea-actionable-text">{feedback.next_step}</p>
             </div>
           )}
 
           <div className="ea-sidebar-section ea-sidebar-feedback">
             <h3 className="ea-sidebar-heading">Full analysis</h3>
             <div className="ea-sidebar-feedback-content">
-              <p className="ea-feedback-text">{feedback.feedback}</p>
+              <p className="ea-feedback-text">{feedback.analysis}</p>
             </div>
           </div>
 
@@ -571,7 +429,7 @@ function WriteSidebar({
               originalText={originalText}
               constraint={analysis.constraint}
               userText={userText}
-              feedbackSummary={feedback.feedback}
+              feedbackSummary={feedback.analysis}
             />
           </div>
         </>
@@ -640,39 +498,6 @@ function WriteSidebar({
   )
 }
 
-interface FeedbackScores {
-  voice: number | null
-  imagery: number | null
-  structure: number | null
-  pacing: number | null
-  constraint: number
-}
-
-interface DivergenceAnalysis {
-  voice: string | null
-  imagery: string | null
-  structure: string | null
-  pacing: string | null
-}
-
-interface UserFeedback {
-  segments: ExtractAnalysisType['segments']
-  summary: string[]
-  feedback: string
-  scores: FeedbackScores
-  divergences?: DivergenceAnalysis
-  actionable_observation?: string
-  verdict: string
-}
-
-interface Submission {
-  id: string
-  user_text: string | null
-  feedback: UserFeedback | null
-  word_count: number | null
-  completed_at: string
-}
-
 export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId, initialUserText }: ExtractAnalysisProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -689,9 +514,10 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [showScoreCard, setShowScoreCard] = useState(false)
+  const [showFeedbackCard, setShowFeedbackCard] = useState(false)
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
+  const feedbackCardRef = useRef<HTMLDivElement>(null)
 
   const fetchSubmissions = useCallback(async () => {
     if (!passageId || !constraint) return
@@ -719,7 +545,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
 
   function handleLoadSubmission(s: Submission) {
     setUserText(s.user_text ?? '')
-    setFeedback(s.feedback as UserFeedback | null)
+    setFeedback(normalizeFeedback(s.feedback))
     setFeedbackError(null)
   }
 
@@ -805,7 +631,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       }
       const data = (await res.json()) as UserFeedback
       setFeedback(data)
-      if (data.scores) setShowScoreCard(true)
+      setShowFeedbackCard(true)
       await saveCompletion(data)
       try {
         sessionStorage.removeItem('rewrite-draft')
@@ -888,6 +714,16 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   function handleCategoryToggle(cat: CraftCategory) {
     setActiveCategory((prev) => (prev === cat ? null : cat))
   }
+
+  useEffect(() => {
+    if (showFeedbackCard) {
+      function handleKey(e: KeyboardEvent) {
+        if (e.key === 'Escape') setShowFeedbackCard(false)
+      }
+      document.addEventListener('keydown', handleKey)
+      return () => document.removeEventListener('keydown', handleKey)
+    }
+  }, [showFeedbackCard])
 
   if (isLoading) {
     return (
@@ -990,7 +826,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
               className="ea-test-btn"
               onClick={handleTest}
               disabled={testLoading || feedbackLoading}
-              title="Generate a passage that should score 100/100 for this constraint"
+              title="Generate an example passage for this constraint"
             >
               {testLoading ? 'Generating…' : 'Test'}
             </button>
@@ -1001,16 +837,16 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
             >
               {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
             </button>
-            {feedback?.scores && (
+            {feedback && (
               <button
                 className="ea-scorecard-btn"
-                onClick={() => setShowScoreCard(true)}
+                onClick={() => setShowFeedbackCard(true)}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <path d="M8 12h8M8 8h8M8 16h4" />
                 </svg>
-                Score Card
+                Feedback
               </button>
             )}
           </div>
@@ -1031,12 +867,93 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           userText={userText}
         />
       </div>
-      {showScoreCard && feedback?.scores && analysis && (
-        <ScoreCardPopup
-          feedback={feedback}
-          constraint={analysis.constraint}
-          onClose={() => setShowScoreCard(false)}
-        />
+      {showFeedbackCard && feedback && analysis && (
+        <div className="sc-overlay" onClick={() => setShowFeedbackCard(false)}>
+          <div
+            className="sc-card"
+            ref={feedbackCardRef}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="sc-close" onClick={() => setShowFeedbackCard(false)} aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="2" y1="2" x2="12" y2="12" />
+                <line x1="12" y1="2" x2="2" y2="12" />
+              </svg>
+            </button>
+
+            <div className="sc-header">
+              <span className="sc-brand">REWRITE</span>
+              <span className="sc-divider" />
+              <span className="sc-type">Writing Feedback</span>
+            </div>
+
+            <div className="sc-hero">
+              <div className="sc-hero-info">
+                <p className="sc-verdict">{feedback.verdict}</p>
+              </div>
+            </div>
+
+            {((feedback.strong_points ?? []).length > 0 || (feedback.weak_points ?? []).length > 0) && (
+              <div className="sc-points-section">
+                {(feedback.strong_points ?? []).length > 0 && (
+                  <div className="sc-points-group sc-strong-points">
+                    <h3 className="sc-points-heading">What works</h3>
+                    <ul className="sc-points-list">
+                      {(feedback.strong_points ?? []).map((point, i) => (
+                        <li key={i} className="sc-point-item sc-point-strong">{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {(feedback.weak_points ?? []).length > 0 && (
+                  <div className="sc-points-group sc-weak-points">
+                    <h3 className="sc-points-heading">What to work on</h3>
+                    <ul className="sc-points-list">
+                      {(feedback.weak_points ?? []).map((point, i) => (
+                        <li key={i} className="sc-point-item sc-point-weak">{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {feedback.divergences && (
+              <div className="sc-divergences">
+                {(Object.entries(feedback.divergences) as [keyof DivergenceAnalysis, string | null][])
+                  .filter(([, text]) => text !== null)
+                  .map(([dim, text]) => {
+                    const config = CATEGORIES[dim]
+                    return (
+                      <div key={dim} className="sc-divergence-item" style={{ borderLeftColor: config.color }}>
+                        <span className="sc-divergence-label" style={{ color: config.color }}>
+                          {config.label}
+                        </span>
+                        <p className="sc-divergence-text">{text}</p>
+                      </div>
+                    )
+                  })}
+              </div>
+            )}
+
+            {feedback.next_step && (
+              <div className="sc-actionable">
+                <span className="sc-actionable-label">Try next time</span>
+                <p className="sc-actionable-text">{feedback.next_step}</p>
+              </div>
+            )}
+
+            <div className="sc-constraint">
+              <span className="sc-constraint-label">Exercise</span>
+              <p className="sc-constraint-text">{analysis.constraint}</p>
+            </div>
+
+            <div className="sc-footer">
+              <span className="sc-watermark">rewrite — learn to write by imitation</span>
+            </div>
+          </div>
+        </div>
       )}
       {showUpgradePrompt && (
         <div className="sc-overlay" onClick={() => setShowUpgradePrompt(false)}>
@@ -1054,13 +971,13 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
             <h2 className="upgrade-prompt-title">Get coached on your writing</h2>
             <p className="upgrade-prompt-text">
               The free tier lets you rewrite and compare. The Core plan adds what makes the difference:
-              AI analysis of every rewrite, craft scores across four dimensions, a personal practice record,
+              AI analysis of every rewrite, detailed feedback on your strengths and weaknesses,
               and follow-up chat to go deeper on any passage.
             </p>
             <ul className="upgrade-prompt-features">
               <li>Detailed divergence analysis — where and why your instincts differ</li>
-              <li>Craft scores that track your progress over time</li>
-              <li>One specific, actionable observation per session</li>
+              <li>Strong points and weak points on every submission</li>
+              <li>One specific, actionable next step per session</li>
               <li>Follow-up chat to deepen understanding</li>
             </ul>
             <a href="/pricing" className="upgrade-prompt-btn">

@@ -8,7 +8,7 @@ const SYSTEM_PROMPT = `You are helping a writer learn by imitation. You will rec
 - An ORIGINAL extract (a published literary passage)
 - A CONSTRAINT (the writing exercise the user was given)
 
-Your job: write a short passage that would receive a perfect score (100/100) when evaluated against this constraint.
+Your job: write a short passage that masterfully executes this constraint.
 
 Requirements:
 - Execute the constraint flawlessly. If it asks for a change (e.g. first person, different pacing, stripped imagery), do exactly that.

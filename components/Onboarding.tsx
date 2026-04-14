@@ -35,13 +35,13 @@ const steps: Step[] = [
   {
     icon: '◉',
     title: 'Get coached',
-    description: 'Receive dimension-by-dimension analysis of where your instincts diverged from the original, a craft score across four axes, and one actionable thing to try next time.',
-    detail: 'Track your scores over time. See which dimensions you improve in. Ask follow-up questions to go deeper.',
+    description: 'See what works in your writing and what to improve. Get a clear analysis of where your instincts diverged from the original, and one concrete thing to try next time.',
+    detail: 'No scores, no numbers — just honest feedback that helps you grow. Ask follow-up questions to go deeper.',
   },
   {
     icon: '◎',
     title: 'Where should you start?',
-    description: "Take a quick writing assessment \u2014 write a short passage and we'll map your strengths and blind spots across the dimensions of craft. The results will point you toward the sessions and exercises that matter most.",
+    description: "Take a quick writing assessment \u2014 write a short passage and we'll show you your natural strengths and the areas where you can grow. The results will point you toward the sessions and exercises that matter most.",
     detail: "It only takes a few minutes. Or skip it and dive straight into practice.",
     isFinal: true,
   },

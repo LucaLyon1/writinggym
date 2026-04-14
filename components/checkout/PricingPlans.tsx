@@ -40,7 +40,7 @@ const PLANS: PricingPlan[] = [
     features: [
       'Unlimited sessions',
       'AI analysis of every rewrite',
-      'Craft score tracking across all four dimensions',
+      'Detailed feedback — strong points, weak points, and what to try next',
       'Personal practice record',
       'Follow-up chat after every analysis',
       'Structured session mode with focus axes',

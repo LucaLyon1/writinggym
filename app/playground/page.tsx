@@ -82,7 +82,7 @@ export default function PlaygroundPage() {
   const [text, setText] = useState('')
   const [analysis, setAnalysis] = useState<AuthorAnalysis | null>(null)
   const [feedback, setFeedback] = useState<FeedbackForScoreCard | null>(null)
-  const [showScoreCard, setShowScoreCard] = useState(false)
+  const [showFeedbackCard, setShowFeedbackCard] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -138,7 +138,7 @@ export default function PlaygroundPage() {
       }
 
       setFeedback(data as FeedbackForScoreCard)
-      setShowScoreCard(true)
+      setShowFeedbackCard(true)
     } catch {
       setError('Network error. Please try again.')
     } finally {
@@ -151,7 +151,7 @@ export default function PlaygroundPage() {
     setText('')
     setAnalysis(null)
     setFeedback(null)
-    setShowScoreCard(false)
+    setShowFeedbackCard(false)
     setError(null)
   }
 
@@ -162,7 +162,7 @@ export default function PlaygroundPage() {
         <p className="pg-subtitle">
           {mode === 'guided'
             ? 'Pick a prompt, write a paragraph or two, and discover which author your voice resembles.'
-            : 'Write freely and get craft feedback — scores, verdict, and actionable suggestions.'}
+            : 'Write freely and get craft feedback — what works, what to improve, and one thing to try next.'}
         </p>
         <div className="pg-mode-toggle">
           <button
@@ -212,8 +212,8 @@ export default function PlaygroundPage() {
 
           {error && <p className="pg-error">{error}</p>}
 
-          {showScoreCard && feedback && (
-            <ScoreCard feedback={feedback} onClose={() => setShowScoreCard(false)} />
+          {showFeedbackCard && feedback && (
+            <ScoreCard feedback={feedback} onClose={() => setShowFeedbackCard(false)} />
           )}
         </div>
       ) : !selectedPrompt ? (

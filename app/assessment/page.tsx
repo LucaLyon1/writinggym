@@ -23,7 +23,7 @@ export default function AssessmentPage() {
   function handleAnalyse() {
     if (!text.trim()) return
     setLoading(true)
-    // TODO: call /api/scores and render strength/weakness cards
+    // TODO: call /api/playground-feedback and render strength/weakness feedback
     setTimeout(() => setLoading(false), 1500)
   }
 
@@ -35,13 +35,13 @@ export default function AssessmentPage() {
         <header className="assess-header">
           <h1 className="assess-title">Find your craft profile</h1>
           <p className="assess-lead">
-            Write a short passage — a few hundred words is enough — and we'll map
-            your natural strengths and blind spots across the dimensions of craft:
-            voice, rhythm, imagery, structure, dialogue, interiority.
+            Write a short passage — a few hundred words is enough — and we'll
+            show you your natural strengths and the areas where you can grow
+            as a writer.
           </p>
           <p className="assess-lead assess-lead-secondary">
-            The results will point you toward the practice sessions and master
-            passages that matter most for your growth right now.
+            No scores, no numbers — just honest feedback that points you toward
+            the practice sessions and exercises that matter most for your growth right now.
           </p>
         </header>
 
