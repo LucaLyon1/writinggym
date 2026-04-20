@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ExtractAnalysis } from '@/types/extract'
+import type { Json } from '@/types/database.types'
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { constraintKey } from '@/lib/constraint-key'
-import { checkAnalysisQuota, recordAnalysisRequest, isPaidUser } from '@/lib/plan'
+import {
+  checkAnalysisQuota,
+  recordAnalysisRequest,
+  recordSessionCompletion,
+  isPaidUser,
+} from '@/lib/plan'
 
 const SYSTEM_PROMPT = `You are a literary craft analyst giving honest, constructive feedback to a writer attempting a stylistic exercise.
 
@@ -169,6 +176,14 @@ export interface UserFeedback {
   verdict: string
 }
 
+async function hasUsedLifetimeFreeAnalysis(userId: string): Promise<boolean> {
+  const { count } = await supabaseAdmin
+    .from('analysis_requests')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  return (count ?? 0) > 0
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -189,27 +204,36 @@ export async function POST(request: Request) {
   }
 
   const paid = await isPaidUser(user.id)
+
+  // Free users get one lifetime "aha" analysis before the paywall.
+  let isFreePreview = false
   if (!paid) {
-    return NextResponse.json(
-      {
-        error: 'AI analysis is available on the Core plan. Upgrade to get detailed feedback and craft coaching on every rewrite.',
-        upgradeUrl: '/pricing',
-        requiresUpgrade: true,
-      },
-      { status: 403 }
-    )
+    const alreadyUsed = await hasUsedLifetimeFreeAnalysis(user.id)
+    if (alreadyUsed) {
+      return NextResponse.json(
+        {
+          error:
+            'You\'ve used your free analysis. Upgrade to Core for unlimited detailed feedback on every rewrite.',
+          upgradeUrl: '/pricing',
+          requiresUpgrade: true,
+        },
+        { status: 403 }
+      )
+    }
+    isFreePreview = true
   }
 
-  const quota = await checkAnalysisQuota(user.id)
-
-  if (!quota.allowed) {
-    return NextResponse.json(
-      {
-        error: `You've used ${quota.used}/${quota.limit} analyses this week. Contact support if you need more.`,
-        quota: { used: quota.used, limit: quota.limit },
-      },
-      { status: 429 }
-    )
+  if (paid) {
+    const quota = await checkAnalysisQuota(user.id)
+    if (!quota.allowed) {
+      return NextResponse.json(
+        {
+          error: `You've used ${quota.used}/${quota.limit} analyses this week. Contact support if you need more.`,
+          quota: { used: quota.used, limit: quota.limit },
+        },
+        { status: 429 }
+      )
+    }
   }
 
   const body = (await request.json()) as {
@@ -271,11 +295,41 @@ export async function POST(request: Request) {
       )
     }
 
+    // Record the analysis request (counts toward quota and the free-lifetime gate).
     if (body.passageId) {
-      await recordAnalysisRequest(user.id, body.passageId, constraintKey(body.constraint))
+      await recordAnalysisRequest(
+        user.id,
+        body.passageId,
+        constraintKey(body.constraint)
+      )
     }
 
-    return NextResponse.json(result)
+    // Persist the completion server-side so the expensive Claude result
+    // can't be lost to a client navigation or network error.
+    if (body.passageId) {
+      const trimmed = body.userText.trim()
+      const wordCount = trimmed === '' ? 0 : trimmed.split(/\s+/).length
+      const key = constraintKey(body.constraint)
+      const { error: insertError } = await supabaseAdmin
+        .from('passage_completions')
+        .insert({
+          passage_id: body.passageId,
+          constraint_key: key,
+          user_id: user.id,
+          user_text: trimmed,
+          word_count: wordCount,
+          feedback: result as unknown as Json,
+          completed_at: new Date().toISOString(),
+        })
+      if (insertError) {
+        console.error('Failed to persist completion:', insertError)
+      }
+      await recordSessionCompletion(user.id, body.passageId, wordCount).catch(
+        (err) => console.error('Failed to record session completion:', err)
+      )
+    }
+
+    return NextResponse.json({ ...result, freePreview: isFreePreview })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json(

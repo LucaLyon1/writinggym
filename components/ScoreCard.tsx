@@ -53,7 +53,7 @@ export function ScoreCard({
         </button>
 
         <div className="sc-header">
-          <span className="sc-brand">REWRITE</span>
+          <span className="sc-brand">PROSELAB</span>
           <span className="sc-divider" />
           <span className="sc-type">Writing Feedback</span>
         </div>
@@ -124,7 +124,7 @@ export function ScoreCard({
         )}
 
         <div className="sc-footer">
-          <span className="sc-watermark">rewrite — learn to write by imitation</span>
+          <span className="sc-watermark">proselab — learn to write by imitation</span>
         </div>
       </div>
     </div>

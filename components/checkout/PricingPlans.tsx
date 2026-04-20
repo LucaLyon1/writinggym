@@ -38,6 +38,7 @@ const PLANS: PricingPlan[] = [
     label: 'Core',
     price: '$12/month',
     features: [
+      '7-day free trial — cancel anytime',
       'Unlimited sessions',
       'AI analysis of every rewrite',
       'Detailed feedback — strong points, weak points, and what to try next',
@@ -46,11 +47,12 @@ const PLANS: PricingPlan[] = [
       'Structured session mode with focus axes',
       'Full extract library',
     ],
-    cta: 'Start writing better',
+    cta: 'Start 7-day free trial',
     lookupKey: 'core',
     product: 'core',
     mode: 'subscription',
     useManagedPayments: true,
+    trialDays: 7,
     isPopular: true,
   },
   {
@@ -58,6 +60,7 @@ const PLANS: PricingPlan[] = [
     label: 'Core — Annual',
     price: '$99/year',
     features: [
+      '7-day free trial — cancel anytime',
       'Everything in Core',
       'Save $45 per year',
       'Choose your preferred voice for listening to text aloud',
@@ -67,6 +70,7 @@ const PLANS: PricingPlan[] = [
     product: 'core-annual',
     mode: 'subscription',
     useManagedPayments: true,
+    trialDays: 7,
     isPopular: false,
   },
 ]
@@ -164,9 +168,7 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
                       : 'plans-btn plans-btn-primary'
                   }
                 >
-                  {plan.trialDays
-                    ? `START ${plan.trialDays}-DAY FREE TRIAL`
-                    : plan.cta}
+                  {plan.cta}
                 </CheckoutButton>
               ) : (
                 <div className="plans-card-cta">

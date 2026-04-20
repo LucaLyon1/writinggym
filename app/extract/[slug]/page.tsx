@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { passages } from '@/data/passages'
 import { AnalysisView } from '@/components/AnalysisView'
 
-const DRAFT_KEY = 'rewrite-draft'
+const DRAFT_KEY = 'proselab-draft'
 
 export default function ExtractPage() {
   const params = useParams()

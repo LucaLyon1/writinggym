@@ -259,6 +259,7 @@ interface UserFeedback {
   divergences?: DivergenceAnalysis
   next_step?: string
   verdict: string
+  freePreview?: boolean
 }
 
 interface Submission {
@@ -340,7 +341,6 @@ function WriteSidebar({
   feedback,
   feedbackLoading,
   feedbackError,
-  saveError,
   originalText,
   userText,
 }: {
@@ -354,7 +354,6 @@ function WriteSidebar({
   feedback: UserFeedback | null
   feedbackLoading: boolean
   feedbackError: string | null
-  saveError: string | null
   originalText: string
   userText: string
 }) {
@@ -379,14 +378,20 @@ function WriteSidebar({
         </div>
       )}
 
-      {saveError && (
-        <div className="ea-sidebar-section">
-          <p className="ea-feedback-error">{saveError}</p>
-        </div>
-      )}
-
       {feedback && !feedbackLoading && (
         <>
+          {feedback.freePreview && (
+            <div className="ea-sidebar-section ea-free-preview-banner">
+              <span className="ea-free-preview-label">Free preview</span>
+              <p className="ea-free-preview-text">
+                This was your free analysis. Start a 7-day free trial of Core to
+                get feedback like this on every rewrite.
+              </p>
+              <a href="/pricing" className="ea-free-preview-cta">
+                Start 7-day free trial →
+              </a>
+            </div>
+          )}
           {feedback.divergences && (
             <div className="ea-sidebar-section ea-sidebar-divergences">
               <h3 className="ea-sidebar-heading">Where you diverged</h3>
@@ -510,7 +515,6 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const [testLoading, setTestLoading] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -580,7 +584,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       const nextPath = pathname ?? '/'
       try {
         sessionStorage.setItem(
-          'rewrite-draft',
+          'proselab-draft',
           JSON.stringify({ pathname: nextPath, userText: userText.trim() })
         )
       } catch {
@@ -608,7 +612,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
         const nextPath = pathname ?? '/'
         try {
           sessionStorage.setItem(
-            'rewrite-draft',
+            'proselab-draft',
             JSON.stringify({ pathname: nextPath, userText: userText.trim() })
           )
         } catch {
@@ -632,9 +636,9 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       const data = (await res.json()) as UserFeedback
       setFeedback(data)
       setShowFeedbackCard(true)
-      await saveCompletion(data)
+      fetchSubmissions()
       try {
-        sessionStorage.removeItem('rewrite-draft')
+        sessionStorage.removeItem('proselab-draft')
       } catch {
         // sessionStorage may be unavailable
       }
@@ -642,29 +646,6 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       setFeedbackError(err instanceof Error ? err.message : 'Failed to get feedback')
     } finally {
       setFeedbackLoading(false)
-    }
-  }
-
-  async function saveCompletion(feedbackData: UserFeedback) {
-    if (!passageId || !constraint || !analysis) return
-    setSaveError(null)
-    try {
-      const res = await fetch('/api/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          passageId,
-          constraint,
-          userText: userText.trim(),
-          wordCount,
-          feedback: feedbackData,
-        }),
-      })
-      const data = (await res.json()) as { error?: string }
-      if (!res.ok) throw new Error(data.error ?? 'Failed to save')
-      fetchSubmissions()
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save')
     }
   }
 
@@ -862,7 +843,6 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           feedback={feedback}
           feedbackLoading={feedbackLoading}
           feedbackError={feedbackError}
-          saveError={saveError}
           originalText={fullText}
           userText={userText}
         />
@@ -882,7 +862,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
             </button>
 
             <div className="sc-header">
-              <span className="sc-brand">REWRITE</span>
+              <span className="sc-brand">PROSELAB</span>
               <span className="sc-divider" />
               <span className="sc-type">Writing Feedback</span>
             </div>
@@ -950,7 +930,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
             </div>
 
             <div className="sc-footer">
-              <span className="sc-watermark">rewrite — learn to write by imitation</span>
+              <span className="sc-watermark">proselab — learn to write by imitation</span>
             </div>
           </div>
         </div>
@@ -968,20 +948,19 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
                 <line x1="12" y1="2" x2="2" y2="12" />
               </svg>
             </button>
-            <h2 className="upgrade-prompt-title">Get coached on your writing</h2>
+            <h2 className="upgrade-prompt-title">You&rsquo;ve used your free analysis</h2>
             <p className="upgrade-prompt-text">
-              The free tier lets you rewrite and compare. The Core plan adds what makes the difference:
-              AI analysis of every rewrite, detailed feedback on your strengths and weaknesses,
-              and follow-up chat to go deeper on any passage.
+              Hope it was useful. Keep practicing with unlimited detailed feedback
+              on every rewrite — start a 7-day free trial of Core.
             </p>
             <ul className="upgrade-prompt-features">
-              <li>Detailed divergence analysis — where and why your instincts differ</li>
-              <li>Strong points and weak points on every submission</li>
+              <li>Unlimited AI feedback on every rewrite</li>
+              <li>Divergence analysis — where and why your instincts differ from the master</li>
               <li>One specific, actionable next step per session</li>
               <li>Follow-up chat to deepen understanding</li>
             </ul>
             <a href="/pricing" className="upgrade-prompt-btn">
-              See plans — from $12/month
+              Start 7-day free trial
             </a>
           </div>
         </div>
