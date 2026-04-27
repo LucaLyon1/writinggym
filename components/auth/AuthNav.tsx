@@ -21,9 +21,6 @@ export async function AuthNav() {
         <Link href="/profile" className="auth-nav-link">
           Profile
         </Link>
-        <Link href="/pricing" className="auth-nav-link auth-nav-pricing">
-          Pricing
-        </Link>
         <form action={logout}>
           <button type="submit" className="auth-nav-btn">
             Sign out
@@ -43,9 +40,6 @@ export async function AuthNav() {
       </Link>
       <Link href="/assessment" className="auth-nav-link">
         Assessment
-      </Link>
-      <Link href="/pricing" className="auth-nav-link auth-nav-pricing">
-        Pricing
       </Link>
       <Link href="/login" className="auth-nav-link">
         Sign in

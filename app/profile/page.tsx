@@ -83,6 +83,11 @@ export default async function ProfilePage() {
             >
               {entitlements.plan_label} plan
             </span>
+            {entitlements.plan_id === 'free' && (
+              <Link href="/pricing" className="btn-primary profile-header-upgrade">
+                Upgrade
+              </Link>
+            )}
           </div>
           <p className="profile-subtitle">
             {totalCount} passage
@@ -93,11 +98,7 @@ export default async function ProfilePage() {
         <section className="profile-quotas" aria-label="Usage quotas and stats">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <h2 className="profile-quotas-title" style={{ marginBottom: 0 }}>Your plan</h2>
-            {entitlements.plan_id === 'free' ? (
-              <Link href="/pricing" className="profile-manage-subscription">
-                Upgrade →
-              </Link>
-            ) : (
+            {entitlements.plan_id !== 'free' && (
               <ManageSubscriptionButton className="profile-manage-subscription">
                 Manage subscription →
               </ManageSubscriptionButton>

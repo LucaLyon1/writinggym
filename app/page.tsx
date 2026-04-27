@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Passage } from '@/data/passages'
 import { ExtractBrowser } from '@/components/ExtractBrowser'
@@ -24,6 +25,15 @@ function HomeContent() {
                 Browse passages from masters. Open an extract, rewrite it, get
                 coached.
               </p>
+              <div className="home-playground-cta">
+                <p className="home-playground-cta-text">
+                  Prefer to practice on your own passage? The playground is where
+                  you paste text and get coaching without picking an extract.
+                </p>
+                <Link href="/playground" className="btn-primary home-playground-cta-btn">
+                  Open the playground
+                </Link>
+              </div>
             </div>
           }
         />
