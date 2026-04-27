@@ -67,13 +67,21 @@ export async function POST(request: Request) {
     passageId: string
     constraint: string
     userText: string
-    wordCount: number
-    feedback: { segments: unknown[]; summary: string[]; feedback: string }
+    wordCount?: number
+    feedback?: { segments: unknown[]; summary: string[]; feedback: string } | null
   }
 
-  if (!body.passageId || !body.constraint || !body.feedback) {
+  if (!body.passageId || !body.constraint) {
     return NextResponse.json(
-      { error: 'Missing required fields: passageId, constraint, feedback' },
+      { error: 'Missing required fields: passageId, constraint' },
+      { status: 400 }
+    )
+  }
+
+  const trimmed = typeof body.userText === 'string' ? body.userText.trim() : ''
+  if (trimmed.length === 0) {
+    return NextResponse.json(
+      { error: 'Add some text before submitting.' },
       { status: 400 }
     )
   }
@@ -91,16 +99,27 @@ export async function POST(request: Request) {
   }
 
   const key = constraintKey(body.constraint)
+  const wordCount =
+    body.wordCount ??
+    (trimmed === '' ? 0 : trimmed.split(/\s+/).length)
 
-  const { error } = await supabase.from('passage_completions').insert({
-    passage_id: body.passageId,
-    constraint_key: key,
-    user_id: user.id,
-    user_text: body.userText ?? null,
-    word_count: body.wordCount ?? null,
-    feedback: body.feedback as unknown as Json,
-    completed_at: new Date().toISOString(),
-  })
+  const feedbackPayload: Json | null = body.feedback
+    ? (body.feedback as unknown as Json)
+    : null
+
+  const { data: inserted, error } = await supabase
+    .from('passage_completions')
+    .insert({
+      passage_id: body.passageId,
+      constraint_key: key,
+      user_id: user.id,
+      user_text: trimmed,
+      word_count: wordCount,
+      feedback: feedbackPayload,
+      completed_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
 
   if (error) {
     return NextResponse.json(
@@ -110,9 +129,9 @@ export async function POST(request: Request) {
   }
 
   // Update streaks, daily stats, and profile counters
-  await recordSessionCompletion(user.id, body.passageId, body.wordCount).catch(
+  await recordSessionCompletion(user.id, body.passageId, wordCount).catch(
     (err) => console.error('Failed to record session completion:', err)
   )
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ id: inserted.id, success: true })
 }

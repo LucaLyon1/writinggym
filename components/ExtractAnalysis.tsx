@@ -52,54 +52,41 @@ function AnnotatedText({
         return (
           <span
             key={i}
-            className="ea-highlight"
-            style={{
-              backgroundColor: dimmed ? 'transparent' : config.bg,
-              borderBottom: dimmed ? 'none' : `2px solid ${config.border}`,
-              opacity: dimmed ? 0.35 : 1,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              borderRadius: '2px',
-              padding: '1px 2px',
-              outline: isHovered ? `1px solid ${config.border}` : 'none',
-            }}
+            className="ea-highlight-wrap"
             onMouseEnter={() => onHover(i)}
             onMouseLeave={() => onHover(null)}
           >
-            {seg.text}
+            <span
+              className="ea-highlight"
+              style={{
+                backgroundColor: dimmed ? 'transparent' : config.bg,
+                borderBottom: dimmed ? 'none' : `2px solid ${config.border}`,
+                opacity: dimmed ? 0.35 : 1,
+                cursor: 'help',
+                transition: 'all 0.2s ease',
+                borderRadius: '2px',
+                padding: '1px 2px',
+                outline: isHovered ? `1px solid ${config.border}` : 'none',
+              }}
+            >
+              {seg.text}
+            </span>
+            <span
+              className="ea-seg-tooltip"
+              style={{ borderTopColor: config.color }}
+            >
+              <span
+                className="ea-annotation-label"
+                style={{ color: config.color }}
+              >
+                {config.label}
+              </span>
+              <p className="ea-annotation-note">{seg.annotation.note}</p>
+            </span>
           </span>
         )
       })}
     </p>
-  )
-}
-
-function AnnotationPanel({ segments, hoveredIndex }: { segments: Segment[]; hoveredIndex: number | null }) {
-  if (hoveredIndex === null || !segments[hoveredIndex]?.annotation) {
-    return (
-      <div className="ea-annotation-placeholder">
-        Hover a highlighted passage to see the annotation →
-      </div>
-    )
-  }
-
-  const seg = segments[hoveredIndex]
-  const annotation = seg.annotation!
-  const config = CATEGORIES[annotation.category]
-
-  return (
-    <div
-      className="ea-annotation-card"
-      style={{ borderLeftColor: config.color }}
-    >
-      <span
-        className="ea-annotation-label"
-        style={{ color: config.color }}
-      >
-        {config.label}
-      </span>
-      <p className="ea-annotation-note">{annotation.note}</p>
-    </div>
   )
 }
 
@@ -194,53 +181,55 @@ function ReadItButton({
   )
 }
 
-function SummarySidebar({
+function AnalyseFollowBlock({
   analysis,
-  onReady,
+  onContinue,
 }: {
   analysis: ExtractAnalysisType
-  onReady: () => void
+  onContinue: () => void
 }) {
   return (
-    <aside className="ea-sidebar">
-      <div className="ea-sidebar-section">
-        <h3 className="ea-sidebar-heading">What&rsquo;s happening here</h3>
-        <div className="ea-summary-list">
-          {analysis.summary.map((sentence, i) => (
-            <p key={i} className="ea-summary-item">{sentence}</p>
-          ))}
-        </div>
+    <section className="ea-analyse-follow" aria-label="Analysis summary">
+      <h3 className="ea-sidebar-heading">What&rsquo;s happening here</h3>
+      <div className="ea-summary-list">
+        {analysis.summary.map((sentence, i) => (
+          <p key={i} className="ea-summary-item">
+            {sentence}
+          </p>
+        ))}
       </div>
+      <button
+        type="button"
+        className="ea-ready-btn ea-analyse-cta"
+        onClick={onContinue}
+      >
+        Continue to your writing exercise →
+      </button>
+    </section>
+  )
+}
 
-      <div className="ea-sidebar-section">
-        <h3 className="ea-sidebar-heading">Craft categories</h3>
-        <div className="ea-legend">
-          {CATEGORY_KEYS.map((key) => {
-            const config = CATEGORIES[key]
-            return (
-              <div key={key} className="ea-legend-item">
-                <span
-                  className="ea-legend-swatch"
-                  style={{ backgroundColor: config.color }}
-                />
-                <div>
-                  <span className="ea-legend-label">{config.label}</span>
-                  <span className="ea-legend-desc">{config.description}</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="ea-constraint-card">
-        <span className="ea-constraint-label">Your exercise</span>
-        <p className="ea-constraint-text">{analysis.constraint}</p>
-        <button className="ea-ready-btn" onClick={onReady}>
-          I&rsquo;m ready to write →
+function WriteConstraintBlock({
+  constraint,
+  onBackToAnalysis,
+}: {
+  constraint: string
+  onBackToAnalysis: () => void
+}) {
+  return (
+    <header className="ea-write-constraint">
+      <div className="ea-write-constraint-top">
+        <button
+          type="button"
+          className="ea-return-to-analysis"
+          onClick={onBackToAnalysis}
+        >
+          ← Return to analysis
         </button>
       </div>
-    </aside>
+      <h3 className="ea-sidebar-heading">Your exercise</h3>
+      <p className="ea-constraint-reminder">{constraint}</p>
+    </header>
   )
 }
 
@@ -339,8 +328,6 @@ function WriteSidebar({
   deletingId,
   formatDate,
   feedback,
-  feedbackLoading,
-  feedbackError,
   originalText,
   userText,
 }: {
@@ -352,33 +339,12 @@ function WriteSidebar({
   deletingId: string | null
   formatDate: (iso: string) => string
   feedback: UserFeedback | null
-  feedbackLoading: boolean
-  feedbackError: string | null
   originalText: string
   userText: string
 }) {
-  const annotatedSegments = analysis.segments.filter((s) => s.annotation)
-
   return (
-    <aside className="ea-sidebar">
-      <div className="ea-sidebar-section">
-        <h3 className="ea-sidebar-heading">Your exercise</h3>
-        <p className="ea-constraint-reminder">{analysis.constraint}</p>
-      </div>
-
-      {feedbackLoading && (
-        <div className="ea-sidebar-section">
-          <p className="ea-feedback-loading">Analysing your writing…</p>
-        </div>
-      )}
-
-      {feedbackError && (
-        <div className="ea-sidebar-section">
-          <p className="ea-feedback-error">{feedbackError}</p>
-        </div>
-      )}
-
-      {feedback && !feedbackLoading && (
+    <div className="ea-sidebar">
+      {feedback && (
         <>
           {feedback.freePreview && (
             <div className="ea-sidebar-section ea-free-preview-banner">
@@ -440,32 +406,12 @@ function WriteSidebar({
         </>
       )}
 
-      <div className="ea-sidebar-section">
-        <h3 className="ea-sidebar-heading">Annotations</h3>
-        <div className="ea-annotations-compact">
-          {annotatedSegments.map((seg, i) => {
-            const config = CATEGORIES[seg.annotation!.category]
-            return (
-              <div key={i} className="ea-compact-note">
-                <span
-                  className="ea-compact-label"
-                  style={{ color: config.color }}
-                >
-                  {config.label}
-                </span>
-                <p className="ea-compact-text">{seg.annotation!.note}</p>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
       <div className="ea-sidebar-section ea-submissions-section">
         <h3 className="ea-sidebar-heading">Previous submissions</h3>
         {submissionsLoading ? (
           <p className="ea-submissions-loading">Loading…</p>
         ) : submissions.length === 0 ? (
-          <p className="ea-submissions-empty">No submissions yet. Get feedback on your writing to see it here.</p>
+          <p className="ea-submissions-empty">No saved drafts yet. Submit your writing to see it here — you can save without requesting analysis.</p>
         ) : (
           <ul className="ea-submissions-list">
             {submissions.map((s) => (
@@ -499,7 +445,7 @@ function WriteSidebar({
           </ul>
         )}
       </div>
-    </aside>
+    </div>
   )
 }
 
@@ -509,7 +455,6 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [phase, setPhase] = useState<Phase>(initialUserText ? 'write' : 'loading')
   const [activeCategory, setActiveCategory] = useState<CraftCategory | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const [extractExpanded, setExtractExpanded] = useState(false)
   const [userText, setUserText] = useState(initialUserText ?? '')
   const [feedback, setFeedback] = useState<UserFeedback | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
@@ -520,6 +465,9 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showFeedbackCard, setShowFeedbackCard] = useState(false)
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
+  const [submittedCompletionId, setSubmittedCompletionId] = useState<string | null>(null)
+  const [submittedTextSnapshot, setSubmittedTextSnapshot] = useState('')
+  const [submitLoading, setSubmitLoading] = useState(false)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
   const feedbackCardRef = useRef<HTMLDivElement>(null)
 
@@ -548,9 +496,12 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   }, [phase, passageId, constraint, fetchSubmissions])
 
   function handleLoadSubmission(s: Submission) {
-    setUserText(s.user_text ?? '')
+    const text = s.user_text ?? ''
+    setUserText(text)
     setFeedback(normalizeFeedback(s.feedback))
     setFeedbackError(null)
+    setSubmittedTextSnapshot(text.trim())
+    setSubmittedCompletionId(s.id)
   }
 
   async function handleDeleteSubmission(id: string) {
@@ -559,6 +510,10 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       const res = await fetch(`/api/completions/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setSubmissions((prev) => prev.filter((s) => s.id !== id))
+        if (id === submittedCompletionId) {
+          setSubmittedCompletionId(null)
+          setSubmittedTextSnapshot('')
+        }
       }
     } finally {
       setDeletingId(null)
@@ -567,15 +522,109 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
 
   const wordCount = useMemo(() => countWords(userText), [userText])
 
+  const isSubmittedVersion =
+    submittedCompletionId !== null && userText.trim() === submittedTextSnapshot
+  const canSubmit =
+    !submitLoading &&
+    userText.trim().length > 0 &&
+    !isSubmittedVersion
+  const canAnalyze =
+    !feedbackLoading &&
+    !submitLoading &&
+    feedback == null &&
+    submittedCompletionId != null &&
+    isSubmittedVersion &&
+    userText.trim().length >= 50
+
   const fullText = useMemo(
     () => analysis?.segments.map((s) => s.text).join('') ?? '',
     [analysis]
   )
 
+  async function handleSubmit() {
+    if (!analysis || !userText.trim()) return
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      const nextPath = pathname ?? '/'
+      try {
+        sessionStorage.setItem(
+          'proselab-draft',
+          JSON.stringify({ pathname: nextPath, userText: userText.trim() })
+        )
+      } catch {
+        // sessionStorage may be unavailable
+      }
+      const signupUrl = `/signup?next=${encodeURIComponent(nextPath)}`
+      router.push(signupUrl)
+      return
+    }
+    if (!passageId) return
+    setFeedbackError(null)
+    setSubmitLoading(true)
+    try {
+      const res = await fetch('/api/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passageId,
+          constraint: analysis.constraint,
+          userText: userText.trim(),
+          wordCount,
+        }),
+      })
+      if (res.status === 401) {
+        const nextPath = pathname ?? '/'
+        try {
+          sessionStorage.setItem(
+            'proselab-draft',
+            JSON.stringify({ pathname: nextPath, userText: userText.trim() })
+          )
+        } catch {
+          // sessionStorage may be unavailable
+        }
+        router.push(`/signup?next=${encodeURIComponent(nextPath)}`)
+        return
+      }
+      if (res.status === 403) {
+        const data = (await res.json()) as { requiresUpgrade?: boolean; error?: string }
+        if (data.requiresUpgrade) {
+          setShowUpgradePrompt(true)
+          return
+        }
+      }
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string }
+        throw new Error(data.error ?? 'Failed to save your writing')
+      }
+      const data = (await res.json()) as { id: string; success: boolean }
+      setSubmittedCompletionId(data.id)
+      setSubmittedTextSnapshot(userText.trim())
+      fetchSubmissions()
+      try {
+        sessionStorage.removeItem('proselab-draft')
+      } catch {
+        // sessionStorage may be unavailable
+      }
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : 'Failed to save your writing')
+    } finally {
+      setSubmitLoading(false)
+    }
+  }
+
   async function handleAnalyze() {
     if (!analysis || !userText.trim()) return
     if (userText.trim().length < 50) {
       setFeedbackError('Write at least 50 characters before requesting feedback.')
+      return
+    }
+    if (!submittedCompletionId) {
+      setFeedbackError('Submit your writing before requesting analysis.')
+      return
+    }
+    if (userText.trim() !== submittedTextSnapshot) {
+      setFeedbackError('Submit your writing before requesting analysis.')
       return
     }
     const supabase = createClient()
@@ -606,6 +655,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
           originalText: fullText,
           constraint: analysis.constraint,
           passageId: passageId ?? undefined,
+          completionId: submittedCompletionId,
         }),
       })
       if (res.status === 401) {
@@ -668,6 +718,8 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       if (data.example) {
         setUserText(data.example)
         setFeedback(null)
+        setSubmittedCompletionId(null)
+        setSubmittedTextSnapshot('')
       }
     } catch (err) {
       setFeedbackError(err instanceof Error ? err.message : 'Failed to generate example')
@@ -733,10 +785,56 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   if (phase === 'analyse') {
     return (
       <div className="ea-root">
-        <div className="ea-columns">
-          <main className="ea-main">
+        <div className="ea-analyse-layout">
+          <div className="ea-analyse-unified">
+            <main className="ea-main ea-analyse-main">
+              <div className="ea-toolbar">
+                <CategoryPills
+                  active={activeCategory}
+                  onToggle={handleCategoryToggle}
+                />
+                <ReadItButton
+                  text={fullText}
+                  speak={speak}
+                  stop={stop}
+                  speaking={speaking}
+                  loading={speechLoading}
+                  categoryId={categoryId}
+                />
+              </div>
+              <div className="ea-extract-quote">
+                <AnnotatedText
+                  segments={analysis.segments}
+                  activeCategory={activeCategory}
+                  hoveredIndex={hoveredIndex}
+                  onHover={setHoveredIndex}
+                />
+              </div>
+            </main>
+            <AnalyseFollowBlock
+              analysis={analysis}
+              onContinue={() => setPhase('write')}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="ea-root">
+      <div className="ea-analyse-layout">
+        <div className="ea-analyse-unified ea-write-unified">
+          <WriteConstraintBlock
+            constraint={analysis.constraint}
+            onBackToAnalysis={() => setPhase('analyse')}
+          />
+          <main className="ea-main ea-analyse-main">
             <div className="ea-toolbar">
-              <CategoryPills active={activeCategory} onToggle={handleCategoryToggle} />
+              <CategoryPills
+                active={activeCategory}
+                onToggle={handleCategoryToggle}
+              />
               <ReadItButton
                 text={fullText}
                 speak={speak}
@@ -746,106 +844,101 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
                 categoryId={categoryId}
               />
             </div>
-            <AnnotatedText
-              segments={analysis.segments}
-              activeCategory={activeCategory}
-              hoveredIndex={hoveredIndex}
-              onHover={setHoveredIndex}
-            />
-            <AnnotationPanel segments={analysis.segments} hoveredIndex={hoveredIndex} />
-          </main>
-          <SummarySidebar analysis={analysis} onReady={() => setPhase('write')} />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="ea-root">
-      <div className="ea-columns">
-        <main className="ea-main ea-write-main">
-          <div className={`ea-extract-reference${extractExpanded ? ' ea-extract-expanded' : ''}`}>
-            <div className="ea-extract-reference-header">
-              <h3 className="ea-extract-reference-heading">Original extract</h3>
-              <div className="ea-extract-reference-actions">
-                <button
-                  className="ea-return-to-analysis"
-                  onClick={() => setPhase('analyse')}
-                >
-                  ← Return to analysis
-                </button>
-                <button
-                  className="ea-extract-toggle"
-                  onClick={() => setExtractExpanded((v) => !v)}
-                >
-                  {extractExpanded ? 'Collapse' : 'Expand'}
-                </button>
-              </div>
+            <div className="ea-extract-quote">
+              <AnnotatedText
+                segments={analysis.segments}
+                activeCategory={activeCategory}
+                hoveredIndex={hoveredIndex}
+                onHover={setHoveredIndex}
+              />
             </div>
-            <p className="ea-extract-reference-text">{fullText}</p>
-            {!extractExpanded && <div className="ea-extract-fade" />}
-          </div>
-          <textarea
-            className="ea-textarea"
-            value={userText}
-            onChange={(e) => setUserText(e.target.value)}
-            placeholder="Begin here…"
-          />
-          <div className="ea-write-footer">
-            <span className="ea-word-count">{wordCount} words</span>
-            <ReadItButton
-              text={userText}
-              speak={speak}
-              stop={stop}
-              speaking={speaking}
-              loading={speechLoading}
-              disabled={!userText.trim()}
-              categoryId={categoryId}
-            />
-            <button
-              type="button"
-              className="ea-test-btn"
-              onClick={handleTest}
-              disabled={testLoading || feedbackLoading}
-              title="Generate an example passage for this constraint"
-            >
-              {testLoading ? 'Generating…' : 'Test'}
-            </button>
-            <button
-              className="ea-analyze-btn"
-              onClick={handleAnalyze}
-              disabled={feedbackLoading || userText.trim().length < 50}
-            >
-              {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
-            </button>
-            {feedback && (
-              <button
-                className="ea-scorecard-btn"
-                onClick={() => setShowFeedbackCard(true)}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M8 12h8M8 8h8M8 16h4" />
-                </svg>
-                Feedback
-              </button>
+          </main>
+          <section className="ea-write-follow" aria-label="Your response">
+            {feedbackLoading && (
+              <p className="ea-feedback-loading">Analysing your writing…</p>
             )}
-          </div>
-        </main>
-        <WriteSidebar
-          analysis={analysis}
-          submissions={submissions}
-          submissionsLoading={submissionsLoading}
-          onLoadSubmission={handleLoadSubmission}
-          onDeleteSubmission={handleDeleteSubmission}
-          deletingId={deletingId}
-          formatDate={formatSubmissionDate}
-          feedback={feedback}
-          feedbackLoading={feedbackLoading}
-          feedbackError={feedbackError}
-          originalText={fullText}
-          userText={userText}
-        />
+            {feedbackError && !feedbackLoading && (
+              <p className="ea-feedback-error">{feedbackError}</p>
+            )}
+            <textarea
+              className="ea-textarea"
+              value={userText}
+              onChange={(e) => {
+                const v = e.target.value
+                setUserText(v)
+                if (v.trim() !== submittedTextSnapshot) {
+                  setSubmittedCompletionId(null)
+                  setFeedback(null)
+                }
+              }}
+              placeholder="Begin here…"
+            />
+            <div className="ea-write-footer">
+              <span className="ea-word-count">{wordCount} words</span>
+              <ReadItButton
+                text={userText}
+                speak={speak}
+                stop={stop}
+                speaking={speaking}
+                loading={speechLoading}
+                disabled={!userText.trim()}
+                categoryId={categoryId}
+              />
+              <button
+                type="button"
+                className="ea-test-btn"
+                onClick={handleTest}
+                disabled={testLoading || feedbackLoading || submitLoading}
+                title="Generate an example passage for this constraint"
+              >
+                {testLoading ? 'Generating…' : 'Test'}
+              </button>
+              <button
+                type="button"
+                className="ea-submit-btn"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                title="Save to your account. Required before you can run analysis."
+              >
+                {submitLoading ? 'Saving…' : 'Submit'}
+              </button>
+              <button
+                className="ea-analyze-btn"
+                onClick={handleAnalyze}
+                disabled={!canAnalyze}
+                title="Submit the current text first, then you can get AI feedback on it"
+              >
+                {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
+              </button>
+              {feedback && (
+                <button
+                  className="ea-scorecard-btn"
+                  onClick={() => setShowFeedbackCard(true)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path d="M8 12h8M8 8h8M8 16h4" />
+                  </svg>
+                  Feedback
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+        <div className="ea-write-below">
+          <WriteSidebar
+            analysis={analysis}
+            submissions={submissions}
+            submissionsLoading={submissionsLoading}
+            onLoadSubmission={handleLoadSubmission}
+            onDeleteSubmission={handleDeleteSubmission}
+            deletingId={deletingId}
+            formatDate={formatSubmissionDate}
+            feedback={feedback}
+            originalText={fullText}
+            userText={userText}
+          />
+        </div>
       </div>
       {showFeedbackCard && feedback && analysis && (
         <div className="sc-overlay" onClick={() => setShowFeedbackCard(false)}>

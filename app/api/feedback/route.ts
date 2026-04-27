@@ -241,6 +241,7 @@ export async function POST(request: Request) {
     originalText: string
     constraint: string
     passageId?: string
+    completionId?: string
   }
 
   if (!body.userText || !body.originalText || !body.constraint) {
@@ -248,6 +249,44 @@ export async function POST(request: Request) {
       { error: 'Missing required fields: userText, originalText, constraint' },
       { status: 400 }
     )
+  }
+
+  if (body.passageId && !body.completionId) {
+    return NextResponse.json(
+      { error: 'Submit your writing before requesting analysis.' },
+      { status: 400 }
+    )
+  }
+
+  if (body.passageId && body.completionId) {
+    const compKey = constraintKey(body.constraint)
+    const { data: row, error: rowError } = await supabase
+      .from('passage_completions')
+      .select('id, passage_id, constraint_key, user_text')
+      .eq('id', body.completionId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (rowError || !row) {
+      return NextResponse.json(
+        { error: 'Submission not found, or you no longer have access to it. Submit your writing again.' },
+        { status: 400 }
+      )
+    }
+
+    if (row.passage_id !== body.passageId || row.constraint_key !== compKey) {
+      return NextResponse.json(
+        { error: 'This submission does not match this extract.' },
+        { status: 400 }
+      )
+    }
+
+    if (row.user_text?.trim() !== body.userText.trim()) {
+      return NextResponse.json(
+        { error: 'Your text changed since the last save. Submit again before analysing.' },
+        { status: 400 }
+      )
+    }
   }
 
   if (body.userText.trim().length < 50) {
@@ -304,29 +343,26 @@ export async function POST(request: Request) {
       )
     }
 
-    // Persist the completion server-side so the expensive Claude result
-    // can't be lost to a client navigation or network error.
-    if (body.passageId) {
+    if (body.passageId && body.completionId) {
       const trimmed = body.userText.trim()
       const wordCount = trimmed === '' ? 0 : trimmed.split(/\s+/).length
-      const key = constraintKey(body.constraint)
-      const { error: insertError } = await supabaseAdmin
+      const { error: updateError } = await supabase
         .from('passage_completions')
-        .insert({
-          passage_id: body.passageId,
-          constraint_key: key,
-          user_id: user.id,
+        .update({
+          feedback: result as unknown as Json,
           user_text: trimmed,
           word_count: wordCount,
-          feedback: result as unknown as Json,
-          completed_at: new Date().toISOString(),
         })
-      if (insertError) {
-        console.error('Failed to persist completion:', insertError)
+        .eq('id', body.completionId)
+        .eq('user_id', user.id)
+
+      if (updateError) {
+        console.error('Failed to update completion with feedback:', updateError)
+        return NextResponse.json(
+          { error: 'Failed to save your feedback. Try again in a moment.' },
+          { status: 500 }
+        )
       }
-      await recordSessionCompletion(user.id, body.passageId, wordCount).catch(
-        (err) => console.error('Failed to record session completion:', err)
-      )
     }
 
     return NextResponse.json({ ...result, freePreview: isFreePreview })
