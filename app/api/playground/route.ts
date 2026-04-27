@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@/lib/supabase/server'
+import { constraintKey } from '@/lib/constraint-key'
+import { PLAYGROUND_PASSAGE_PREFIX } from '@/lib/playground-passage'
+import type { Json } from '@/types/database.types'
 
 const SYSTEM_PROMPT = `You are a literary style analyst. You will receive a short writing sample (1-2 paragraphs) from a user.
 
@@ -47,11 +51,71 @@ export async function POST(request: Request) {
   const body = (await request.json()) as {
     text: string
     prompt: string
+    passageId?: string
+    completionId?: string
   }
 
   if (!body.text || !body.prompt) {
     return NextResponse.json(
       { error: 'Missing required fields: text, prompt' },
+      { status: 400 }
+    )
+  }
+
+  if (
+    !body.passageId?.startsWith(PLAYGROUND_PASSAGE_PREFIX) ||
+    !body.completionId
+  ) {
+    return NextResponse.json(
+      { error: 'Submit your writing before requesting analysis.' },
+      { status: 400 }
+    )
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return NextResponse.json(
+      { error: 'Sign in to analyze your writing.' },
+      { status: 401 }
+    )
+  }
+
+  const compKey = constraintKey(body.prompt)
+  const { data: row, error: rowError } = await supabase
+    .from('passage_completions')
+    .select('id, passage_id, constraint_key, user_text')
+    .eq('id', body.completionId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (rowError || !row) {
+    return NextResponse.json(
+      {
+        error:
+          'Submission not found, or you no longer have access to it. Submit your writing again.',
+      },
+      { status: 400 }
+    )
+  }
+
+  if (row.passage_id !== body.passageId || row.constraint_key !== compKey) {
+    return NextResponse.json(
+      { error: 'This submission does not match this exercise.' },
+      { status: 400 }
+    )
+  }
+
+  if (row.user_text?.trim() !== body.text.trim()) {
+    return NextResponse.json(
+      {
+        error:
+          'Your text changed since the last save. Submit again before analysing.',
+      },
       { status: 400 }
     )
   }
@@ -89,7 +153,27 @@ export async function POST(request: Request) {
     const cleaned = stripMarkdownFences(textBlock.text)
 
     try {
-      const analysis = JSON.parse(cleaned)
+      const analysis = JSON.parse(cleaned) as Record<string, unknown>
+      const trimmed = body.text.trim()
+      const wordCount = trimmed === '' ? 0 : trimmed.split(/\s+/).length
+      const { error: updateError } = await supabase
+        .from('passage_completions')
+        .update({
+          feedback: analysis as unknown as Json,
+          user_text: trimmed,
+          word_count: wordCount,
+        })
+        .eq('id', body.completionId)
+        .eq('user_id', user.id)
+
+      if (updateError) {
+        console.error('Failed to save playground analysis:', updateError)
+        return NextResponse.json(
+          { error: 'Failed to save your analysis. Try again in a moment.' },
+          { status: 500 }
+        )
+      }
+
       return NextResponse.json(analysis)
     } catch {
       return NextResponse.json(

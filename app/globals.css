@@ -2230,6 +2230,13 @@ body {
   border: 1px solid #f0c4bf;
 }
 
+.tile-footer.tile-footer--end {
+  justify-content: flex-end;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 /* ── Difficulty dot in sidebar ────────────────────────────── */
 .difficulty-dot {
   display: inline-block;
@@ -2740,6 +2747,10 @@ body {
   padding-left: 0;
   padding-right: 0;
   margin-bottom: 0.75rem;
+}
+
+.home-gallery-main .home-hero.home-gallery-hero .pg-mode-toggle {
+  margin-top: 1.25rem;
 }
 
 .home-gallery-main .passage-grid {
@@ -5580,6 +5591,69 @@ button.profile-manage-subscription:disabled {
   padding: 2rem 1.5rem 4rem;
 }
 
+.pg-root--session {
+  padding-top: 1.25rem;
+}
+
+.pg-root--with-sidebar {
+  max-width: 1040px;
+}
+
+.pg-guided-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 840px) {
+  .pg-guided-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: start;
+    gap: 1.5rem 1.25rem;
+  }
+
+  .pg-guided-sidebar {
+    position: sticky;
+    top: calc(var(--auth-header-height) + 0.5rem);
+    max-height: calc(100dvh - var(--auth-header-height) - 1.5rem);
+    overflow-y: auto;
+  }
+}
+
+.pg-session-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.pg-return-prompts {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.35rem 0;
+  text-align: left;
+  transition: opacity 0.15s ease;
+}
+
+.pg-return-prompts:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.pg-return-prompts:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .pg-hero {
   text-align: center;
   padding: 2.5rem 0 2rem;
@@ -5705,6 +5779,11 @@ button.profile-manage-subscription:disabled {
   color: var(--accent);
   display: block;
   margin-bottom: 0.35rem;
+}
+
+.pg-active-prompt .pg-prompt-title {
+  margin-bottom: 0.35rem;
+  font-size: 1.05rem;
 }
 
 .pg-active-text {
