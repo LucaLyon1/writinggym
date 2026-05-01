@@ -259,6 +259,13 @@ interface Submission {
   completed_at: string
 }
 
+interface PublicSubmission {
+  id: string
+  user_text: string | null
+  word_count: number | null
+  completed_at: string
+}
+
 // Old feedback had { scores, feedback (string), verdict, actionable_observation, divergences }
 // New feedback has  { strong_points, weak_points, analysis, verdict, next_step, divergences }
 function normalizeFeedback(raw: Record<string, unknown> | null): UserFeedback | null {
@@ -330,6 +337,8 @@ function WriteSidebar({
   feedback,
   originalText,
   userText,
+  publicSubmissions,
+  publicSubmissionsLoading,
 }: {
   analysis: ExtractAnalysisType
   submissions: Submission[]
@@ -341,6 +350,8 @@ function WriteSidebar({
   feedback: UserFeedback | null
   originalText: string
   userText: string
+  publicSubmissions: PublicSubmission[]
+  publicSubmissionsLoading: boolean
 }) {
   return (
     <div className="ea-sidebar">
@@ -445,6 +456,35 @@ function WriteSidebar({
           </ul>
         )}
       </div>
+
+      <div className="ea-sidebar-section ea-public-submissions-section">
+        <h3 className="ea-sidebar-heading">Other writers</h3>
+        {publicSubmissionsLoading ? (
+          <p className="ea-submissions-loading">Loading…</p>
+        ) : publicSubmissions.length === 0 ? (
+          <p className="ea-submissions-empty">No public rewrites yet. Be the first to share yours.</p>
+        ) : (
+          <ul className="ea-submissions-list">
+            {publicSubmissions.map((s) => (
+              <li key={s.id} className="ea-submission-item ea-public-submission-item">
+                <div className="ea-submission-meta">
+                  <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
+                  {s.word_count != null && (
+                    <span className="ea-submission-words">{s.word_count} words</span>
+                  )}
+                </div>
+                {s.user_text && (
+                  <p className="ea-public-submission-text">
+                    {s.user_text.length > 220
+                      ? s.user_text.slice(0, 220) + '…'
+                      : s.user_text}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }
@@ -463,6 +503,8 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [publicSubmissions, setPublicSubmissions] = useState<PublicSubmission[]>([])
+  const [publicSubmissionsLoading, setPublicSubmissionsLoading] = useState(false)
   const [showFeedbackCard, setShowFeedbackCard] = useState(false)
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [submittedCompletionId, setSubmittedCompletionId] = useState<string | null>(null)
@@ -491,11 +533,30 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
     }
   }, [passageId, constraint])
 
+  const fetchPublicSubmissions = useCallback(async () => {
+    if (!passageId || !constraint) return
+    setPublicSubmissionsLoading(true)
+    try {
+      const res = await fetch(
+        `/api/completions/public?passageId=${encodeURIComponent(passageId)}&constraint=${encodeURIComponent(constraint)}`
+      )
+      if (res.ok) {
+        const data = (await res.json()) as PublicSubmission[]
+        setPublicSubmissions(data)
+      }
+    } catch {
+      setPublicSubmissions([])
+    } finally {
+      setPublicSubmissionsLoading(false)
+    }
+  }, [passageId, constraint])
+
   useEffect(() => {
     if (phase === 'write' && passageId && constraint) {
       fetchSubmissions()
+      fetchPublicSubmissions()
     }
-  }, [phase, passageId, constraint, fetchSubmissions])
+  }, [phase, passageId, constraint, fetchSubmissions, fetchPublicSubmissions])
 
   function handleLoadSubmission(s: Submission) {
     const text = s.user_text ?? ''
@@ -841,8 +902,9 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
 
   return (
     <div className="ea-root">
-      <div className="ea-analyse-layout">
-        <div className="ea-analyse-unified ea-write-unified">
+      <div className="ea-analyse-layout ea-write-layout">
+        <div className="ea-write-main">
+          <div className="ea-analyse-unified ea-write-unified">
           <WriteConstraintBlock
             constraint={analysis.constraint}
             onBackToAnalysis={() => setPhase('analyse')}
@@ -942,8 +1004,9 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
               )}
             </div>
           </section>
+          </div>
         </div>
-        <div className="ea-write-below">
+        <aside className="ea-write-sidebar-col">
           <WriteSidebar
             analysis={analysis}
             submissions={submissions}
@@ -955,8 +1018,10 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
             feedback={feedback}
             originalText={fullText}
             userText={userText}
+            publicSubmissions={publicSubmissions}
+            publicSubmissionsLoading={publicSubmissionsLoading}
           />
-        </div>
+        </aside>
       </div>
       {showFeedbackCard && feedback && analysis && (
         <div className="sc-overlay" onClick={() => setShowFeedbackCard(false)}>

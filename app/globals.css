@@ -774,6 +774,64 @@ body {
   overflow: visible;
 }
 
+/* ── Two-column write layout ────────────────────────────────── */
+.ea-analyse-layout.ea-write-layout {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1.5rem;
+  max-width: 82rem;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ea-write-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ea-write-sidebar-col {
+  width: 268px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 2rem;
+}
+
+.ea-write-sidebar-col .ea-sidebar {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  overflow: visible;
+  padding: 1.25rem 1.25rem;
+  gap: 1.75rem;
+}
+
+/* ── Public submissions ─────────────────────────────────────── */
+.ea-public-submissions-section {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.ea-public-submissions-section .ea-sidebar-heading {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.ea-public-submission-item {
+  gap: 0.5rem !important;
+}
+
+.ea-public-submission-text {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+  font-style: italic;
+}
+
 .ea-main {
   padding: 2.5rem 3rem;
   overflow-y: auto;
@@ -1792,6 +1850,15 @@ body {
 
 /* ── EA Responsive ──────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .ea-analyse-layout.ea-write-layout {
+    flex-direction: column;
+  }
+
+  .ea-write-sidebar-col {
+    width: 100%;
+    position: static;
+  }
+
   .ea-columns {
     grid-template-columns: 1fr;
   }
@@ -1863,6 +1930,10 @@ body {
 
   .ea-write-below .ea-sidebar {
     padding: 1.15rem 0.6rem;
+  }
+
+  .ea-write-sidebar-col .ea-sidebar {
+    padding: 1rem 0.6rem;
   }
 }
 
