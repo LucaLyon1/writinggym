@@ -468,6 +468,8 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [submittedCompletionId, setSubmittedCompletionId] = useState<string | null>(null)
   const [submittedTextSnapshot, setSubmittedTextSnapshot] = useState('')
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareLoading, setShareLoading] = useState(false)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
   const feedbackCardRef = useRef<HTMLDivElement>(null)
 
@@ -601,6 +603,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       setSubmittedCompletionId(data.id)
       setSubmittedTextSnapshot(userText.trim())
       fetchSubmissions()
+      setShowShareModal(true)
       try {
         sessionStorage.removeItem('proselab-draft')
       } catch {
@@ -610,6 +613,21 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
       setFeedbackError(err instanceof Error ? err.message : 'Failed to save your writing')
     } finally {
       setSubmitLoading(false)
+    }
+  }
+
+  async function handleShare(isPublic: boolean) {
+    if (!submittedCompletionId) return
+    setShareLoading(true)
+    try {
+      await fetch(`/api/completions/${submittedCompletionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_public: isPublic }),
+      })
+    } finally {
+      setShareLoading(false)
+      setShowShareModal(false)
     }
   }
 
@@ -1024,6 +1042,44 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
 
             <div className="sc-footer">
               <span className="sc-watermark">proselab — learn to write by imitation</span>
+            </div>
+          </div>
+        </div>
+      )}
+      {showShareModal && (
+        <div className="sc-overlay" onClick={() => !shareLoading && setShowShareModal(false)}>
+          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="sc-close"
+              onClick={() => setShowShareModal(false)}
+              disabled={shareLoading}
+              aria-label="Close"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="2" y1="2" x2="12" y2="12" />
+                <line x1="12" y1="2" x2="2" y2="12" />
+              </svg>
+            </button>
+            <div className="share-modal-icon" aria-hidden>✦</div>
+            <h2 className="share-modal-title">Share your rewrite?</h2>
+            <p className="share-modal-text">
+              Make this submission visible to others. You can change this at any time from your profile.
+            </p>
+            <div className="share-modal-actions">
+              <button
+                className="share-modal-btn share-modal-btn-primary"
+                onClick={() => handleShare(true)}
+                disabled={shareLoading}
+              >
+                {shareLoading ? 'Saving…' : 'Share publicly'}
+              </button>
+              <button
+                className="share-modal-btn share-modal-btn-ghost"
+                onClick={() => handleShare(false)}
+                disabled={shareLoading}
+              >
+                Keep private
+              </button>
             </div>
           </div>
         </div>

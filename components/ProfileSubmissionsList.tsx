@@ -34,6 +34,54 @@ function getFeedbackSummary(feedback: unknown): string | null {
   return null
 }
 
+function VisibilityToggle({ id, initialIsPublic }: { id: string; initialIsPublic: boolean }) {
+  const [isPublic, setIsPublic] = useState(initialIsPublic)
+  const [loading, setLoading] = useState(false)
+
+  async function toggle() {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/completions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_public: !isPublic }),
+      })
+      if (res.ok) setIsPublic((prev) => !prev)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className={`profile-card-visibility${isPublic ? ' profile-card-visibility-public' : ''}`}
+      onClick={toggle}
+      disabled={loading}
+      title={isPublic ? 'Visible to others — click to make private' : 'Private — click to share publicly'}
+    >
+      {isPublic ? (
+        <>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="12" cy="12" r="3" />
+            <path d="M2 12C4.5 6 8.5 3 12 3s7.5 3 10 9c-2.5 6-6.5 9-10 9s-7.5-3-10-9z" />
+          </svg>
+          Public
+        </>
+      ) : (
+        <>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+            <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+            <line x1="1" y1="1" x2="23" y2="23" />
+          </svg>
+          Private
+        </>
+      )}
+    </button>
+  )
+}
+
 function SubmissionCard({
   c,
   passage,
@@ -81,6 +129,7 @@ function SubmissionCard({
           <span className="profile-card-word-count">{c.word_count} words</span>
         )}
         <div className="profile-card-actions">
+          <VisibilityToggle id={c.id} initialIsPublic={c.is_public} />
           {passage && (
             <Link href={`/extract/${passage.id}`} className="profile-card-link">
               Try again →

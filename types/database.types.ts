@@ -1,3 +1,6 @@
+Need to install the following packages:
+supabase@2.98.0
+Ok to proceed? (y) 
 export type Json =
   | string
   | number
@@ -133,6 +136,7 @@ export type Database = {
           constraint_key: string
           feedback: Json | null
           id: string
+          is_public: boolean
           passage_id: string
           user_id: string
           user_text: string | null
@@ -143,6 +147,7 @@ export type Database = {
           constraint_key: string
           feedback?: Json | null
           id?: string
+          is_public?: boolean
           passage_id: string
           user_id: string
           user_text?: string | null
@@ -153,6 +158,7 @@ export type Database = {
           constraint_key?: string
           feedback?: Json | null
           id?: string
+          is_public?: boolean
           passage_id?: string
           user_id?: string
           user_text?: string | null
@@ -467,6 +473,22 @@ export type Database = {
       get_free_category_ids: { Args: never; Returns: string[] }
       get_user_entitlements: { Args: { p_user_id: string }; Returns: Json }
       get_user_plan: { Args: { p_user_id: string }; Returns: string }
+      get_user_usage_count: {
+        Args: {
+          p_period_type?: string
+          p_usage_type: string
+          p_user_id: string
+        }
+        Returns: number
+      }
+      increment_user_usage: {
+        Args: {
+          p_period_type?: string
+          p_usage_type: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       record_analysis_request: {
         Args: {
           p_constraint_key: string
