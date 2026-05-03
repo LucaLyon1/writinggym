@@ -4,6 +4,55 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { passages } from '@/data/passages'
 
+function ExplorePreviewModal({
+  item,
+  onClose,
+}: {
+  item: ExploreItem
+  onClose: () => void
+}) {
+  const passageMap = new Map(passages.map((p) => [p.id, p]))
+  const passage = passageMap.get(item.passage_id)
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <div className="sc-overlay" onClick={onClose}>
+      <div className="submission-preview-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="sc-close" onClick={onClose} aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <line x1="2" y1="2" x2="12" y2="12" />
+            <line x1="12" y1="2" x2="2" y2="12" />
+          </svg>
+        </button>
+        <div className="submission-preview-meta">
+          {passage && (
+            <Link href={`/extract/${passage.id}`} className="explore-card-title" onClick={onClose}>
+              <em>{passage.title}</em>
+              <span className="explore-card-author" style={{ marginLeft: '0.35rem' }}>— {passage.author}</span>
+            </Link>
+          )}
+          {item.word_count != null && (
+            <span className="submission-preview-words">{item.word_count} words</span>
+          )}
+          <UpvoteButton
+            completionId={item.id}
+            initialCount={item.upvote_count}
+            initialUpvoted={item.viewer_has_upvoted}
+          />
+        </div>
+        <p className="submission-preview-text">{item.user_text ?? ''}</p>
+      </div>
+    </div>
+  )
+}
+
 interface ExploreItem {
   id: string
   user_text: string | null
@@ -76,7 +125,7 @@ function UpvoteButton({
   )
 }
 
-function ExploreCard({ item }: { item: ExploreItem }) {
+function ExploreCard({ item, onOpen }: { item: ExploreItem; onOpen: () => void }) {
   const passageMap = new Map(passages.map((p) => [p.id, p]))
   const passage = passageMap.get(item.passage_id)
 
@@ -101,9 +150,9 @@ function ExploreCard({ item }: { item: ExploreItem }) {
       </header>
 
       {item.user_text && (
-        <p className="explore-card-text">
-          {item.user_text}
-        </p>
+        <button type="button" className="explore-card-text-btn" onClick={onOpen}>
+          <p className="explore-card-text">{item.user_text}</p>
+        </button>
       )}
 
       <footer className="explore-card-footer">
@@ -133,6 +182,7 @@ export function ExploreList({
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [loading, setLoading] = useState(false)
   const [total] = useState(initialTotal)
+  const [activeItem, setActiveItem] = useState<ExploreItem | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   const loadMore = useCallback(async () => {
@@ -177,11 +227,14 @@ export function ExploreList({
       <p className="explore-count">{total} rewrite{total !== 1 ? 's' : ''} shared</p>
       <div className="explore-grid">
         {items.map((item) => (
-          <ExploreCard key={item.id} item={item} />
+          <ExploreCard key={item.id} item={item} onOpen={() => setActiveItem(item)} />
         ))}
       </div>
       <div ref={sentinelRef} className="explore-sentinel" aria-hidden />
       {loading && <p className="explore-loading">Loading…</p>}
+      {activeItem && (
+        <ExplorePreviewModal item={activeItem} onClose={() => setActiveItem(null)} />
+      )}
     </>
   )
 }

@@ -6505,6 +6505,20 @@ button.profile-manage-subscription:disabled {
   flex-shrink: 0;
 }
 
+.explore-card-text-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.explore-card-text-btn:hover .explore-card-text {
+  color: var(--ink);
+}
+
 .explore-card-text {
   font-family: var(--font-body);
   font-size: 0.88rem;
@@ -6516,6 +6530,7 @@ button.profile-manage-subscription:disabled {
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.15s;
 }
 
 .explore-card-footer {
