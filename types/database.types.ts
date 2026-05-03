@@ -424,6 +424,42 @@ export type Database = {
           },
         ]
       }
+      upvotes: {
+        Row: {
+          completion_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completion_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completion_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upvotes_completion_id_fkey"
+            columns: ["completion_id"]
+            isOneToOne: false
+            referencedRelation: "passage_completions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_pack_access: {
         Row: {
           pack_id: string

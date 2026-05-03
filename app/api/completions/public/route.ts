@@ -21,16 +21,14 @@ export async function GET(request: NextRequest) {
 
   const baseQuery = supabase
     .from('passage_completions')
-    .select('id, user_text, word_count, completed_at')
+    .select('id, user_text, word_count, completed_at, upvotes(count)')
     .eq('passage_id', passageId)
     .eq('constraint_key', key)
     .eq('is_public', true)
     .order('completed_at', { ascending: false })
     .limit(10)
 
-  const { data, error } = user
-    ? await baseQuery.neq('user_id', user.id)
-    : await baseQuery
+  const { data, error } = await baseQuery
 
   if (error) {
     return NextResponse.json(
@@ -39,5 +37,28 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  return NextResponse.json(data ?? [])
+  const completions = data ?? []
+
+  // If signed in, fetch which of these completions the viewer has upvoted
+  let viewerUpvotedIds = new Set<string>()
+  if (user && completions.length > 0) {
+    const ids = completions.map((c) => c.id)
+    const { data: myUpvotes } = await supabase
+      .from('upvotes')
+      .select('completion_id')
+      .eq('user_id', user.id)
+      .in('completion_id', ids)
+    viewerUpvotedIds = new Set((myUpvotes ?? []).map((u) => u.completion_id))
+  }
+
+  const result = completions.map((c) => ({
+    id: c.id,
+    user_text: c.user_text,
+    word_count: c.word_count,
+    completed_at: c.completed_at,
+    upvote_count: (c.upvotes as unknown as { count: number }[])[0]?.count ?? 0,
+    viewer_has_upvoted: viewerUpvotedIds.has(c.id),
+  }))
+
+  return NextResponse.json(result)
 }

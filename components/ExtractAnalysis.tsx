@@ -264,6 +264,55 @@ interface PublicSubmission {
   user_text: string | null
   word_count: number | null
   completed_at: string
+  upvote_count: number
+  viewer_has_upvoted: boolean
+}
+
+function UpvoteButton({
+  completionId,
+  initialCount,
+  initialUpvoted,
+}: {
+  completionId: string
+  initialCount: number
+  initialUpvoted: boolean
+}) {
+  const [count, setCount] = useState(initialCount)
+  const [upvoted, setUpvoted] = useState(initialUpvoted)
+  const [loading, setLoading] = useState(false)
+
+  async function toggle() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/upvotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completionId }),
+      })
+      if (res.ok) {
+        const data = (await res.json()) as { upvoted: boolean; count: number }
+        setUpvoted(data.upvoted)
+        setCount(data.count)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className={`upvote-btn${upvoted ? ' upvote-btn-active' : ''}`}
+      onClick={toggle}
+      disabled={loading}
+      title={upvoted ? 'Remove upvote' : 'Upvote this rewrite'}
+    >
+      <svg width="11" height="11" viewBox="0 0 24 24" fill={upvoted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M12 19V5M5 12l7-7 7 7" />
+      </svg>
+      {count > 0 ? count : null}
+    </button>
+  )
 }
 
 // Old feedback had { scores, feedback (string), verdict, actionable_observation, divergences }
@@ -326,6 +375,51 @@ function FeedbackPanel({ feedback }: { feedback: UserFeedback }) {
   )
 }
 
+function SubmissionPreviewModal({
+  submission,
+  formatDate,
+  onClose,
+}: {
+  submission: Submission | PublicSubmission
+  formatDate: (iso: string) => string
+  onClose: () => void
+}) {
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  return (
+    <div className="sc-overlay" onClick={onClose}>
+      <div className="submission-preview-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="sc-close" onClick={onClose} aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <line x1="2" y1="2" x2="12" y2="12" />
+            <line x1="12" y1="2" x2="2" y2="12" />
+          </svg>
+        </button>
+        <div className="submission-preview-meta">
+          <span className="submission-preview-date">{formatDate(submission.completed_at)}</span>
+          {submission.word_count != null && (
+            <span className="submission-preview-words">{submission.word_count} words</span>
+          )}
+          {'upvote_count' in submission && (
+            <UpvoteButton
+              completionId={submission.id}
+              initialCount={submission.upvote_count}
+              initialUpvoted={submission.viewer_has_upvoted}
+            />
+          )}
+        </div>
+        <p className="submission-preview-text">{submission.user_text ?? ''}</p>
+      </div>
+    </div>
+  )
+}
+
 function WriteSidebar({
   analysis,
   submissions,
@@ -353,6 +447,9 @@ function WriteSidebar({
   publicSubmissions: PublicSubmission[]
   publicSubmissionsLoading: boolean
 }) {
+  const [previewSubmission, setPreviewSubmission] = useState<Submission | PublicSubmission | null>(null)
+  const [visibleCount, setVisibleCount] = useState(2)
+
   return (
     <div className="ea-sidebar">
       {feedback && (
@@ -424,8 +521,9 @@ function WriteSidebar({
         ) : submissions.length === 0 ? (
           <p className="ea-submissions-empty">No saved drafts yet. Submit your writing to see it here — you can save without requesting analysis.</p>
         ) : (
+          <>
           <ul className="ea-submissions-list">
-            {submissions.map((s) => (
+            {submissions.slice(0, visibleCount).map((s) => (
               <li key={s.id} className="ea-submission-item">
                 <div className="ea-submission-meta">
                   <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
@@ -433,7 +531,23 @@ function WriteSidebar({
                     <span className="ea-submission-words">{s.word_count} words</span>
                   )}
                 </div>
+                {s.user_text && (
+                  <p className="ea-submission-preview">
+                    {s.user_text.length > 100
+                      ? s.user_text.slice(0, 100) + '…'
+                      : s.user_text}
+                  </p>
+                )}
                 <div className="ea-submission-actions">
+                  {s.user_text && s.user_text.length > 100 && (
+                    <button
+                      type="button"
+                      className="ea-submission-load"
+                      onClick={() => setPreviewSubmission(s)}
+                    >
+                      Read
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="ea-submission-load"
@@ -454,6 +568,16 @@ function WriteSidebar({
               </li>
             ))}
           </ul>
+          {submissions.length > visibleCount && (
+            <button
+              type="button"
+              className="ea-submissions-show-more"
+              onClick={() => setVisibleCount((n) => n + 2)}
+            >
+              Show more ({submissions.length - visibleCount} remaining)
+            </button>
+          )}
+          </>
         )}
       </div>
 
@@ -475,16 +599,40 @@ function WriteSidebar({
                 </div>
                 {s.user_text && (
                   <p className="ea-public-submission-text">
-                    {s.user_text.length > 220
-                      ? s.user_text.slice(0, 220) + '…'
+                    {s.user_text.length > 100
+                      ? s.user_text.slice(0, 100) + '…'
                       : s.user_text}
                   </p>
                 )}
+                <div className="ea-submission-actions">
+                  <UpvoteButton
+                    completionId={s.id}
+                    initialCount={s.upvote_count}
+                    initialUpvoted={s.viewer_has_upvoted}
+                  />
+                  {s.user_text && s.user_text.length > 100 && (
+                    <button
+                      type="button"
+                      className="ea-submission-load"
+                      onClick={() => setPreviewSubmission(s)}
+                    >
+                      Read
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {previewSubmission && (
+        <SubmissionPreviewModal
+          submission={previewSubmission}
+          formatDate={formatDate}
+          onClose={() => setPreviewSubmission(null)}
+        />
+      )}
     </div>
   )
 }

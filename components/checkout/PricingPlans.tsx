@@ -4,10 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { CheckoutButton } from './CheckoutButton'
 
+type BillingCycle = 'yearly' | 'monthly'
+
 interface PricingPlan {
   id: string
   label: string
   price: string
+  priceNote?: string
   features: string[]
   cta: string
   ctaHref?: string
@@ -19,61 +22,68 @@ interface PricingPlan {
   isPopular?: boolean
 }
 
-const PLANS: PricingPlan[] = [
-  {
-    id: 'free',
-    label: 'Free',
-    price: 'Free',
+const FREE_PLAN: PricingPlan = {
+  id: 'free',
+  label: 'Free',
+  price: 'Free',
+  features: [
+    '1 session per day',
+    'Full rewrite + side-by-side comparison',
+    'Browse the full extract library',
+  ],
+  cta: 'Get started',
+  ctaHref: '/signup',
+  isPopular: false,
+}
+
+const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
+  yearly: {
+    id: 'pro-annual',
+    label: 'Pro',
+    price: '$6.58',
+    priceNote: 'Billed $79 annually — save 17%',
     features: [
-      '1 session per day',
-      'Full rewrite + side-by-side comparison',
-      'Browse the full extract library',
-    ],
-    cta: 'Get started free',
-    ctaHref: '/signup',
-    isPopular: false,
-  },
-  {
-    id: 'core',
-    label: 'Core',
-    price: '$12/month',
-    features: [
-      '7-day free trial — cancel anytime',
       'Unlimited sessions',
       'AI analysis of every rewrite',
-      'Detailed feedback — strong points, weak points, and what to try next',
+      'Detailed feedback — strong points, weak points, what to try next',
       'Personal practice record',
       'Follow-up chat after every analysis',
       'Structured session mode with focus axes',
+      'Choose your preferred voice for text-to-speech',
       'Full extract library',
+      'Cancel anytime',
     ],
-    cta: 'Start 7-day free trial',
-    lookupKey: 'core',
-    product: 'core',
+    cta: 'Get Pro',
+    lookupKey: 'pro-annual',
+    product: 'pro-annual',
     mode: 'subscription',
     useManagedPayments: true,
-    trialDays: 7,
     isPopular: true,
   },
-  {
-    id: 'core-annual',
-    label: 'Core — Annual',
-    price: '$99/year',
+  monthly: {
+    id: 'pro',
+    label: 'Pro',
+    price: '$7.99',
+    priceNote: undefined,
     features: [
-      '7-day free trial — cancel anytime',
-      'Everything in Core',
-      'Save $45 per year',
-      'Choose your preferred voice for listening to text aloud',
+      'Unlimited sessions',
+      'AI analysis of every rewrite',
+      'Detailed feedback — strong points, weak points, what to try next',
+      'Personal practice record',
+      'Follow-up chat after every analysis',
+      'Structured session mode with focus axes',
+      'Choose your preferred voice for text-to-speech',
+      'Full extract library',
+      'Cancel anytime',
     ],
-    cta: 'Best value — save 37%',
-    lookupKey: 'core-annual',
-    product: 'core-annual',
+    cta: 'Get Pro',
+    lookupKey: 'pro',
+    product: 'pro',
     mode: 'subscription',
     useManagedPayments: true,
-    trialDays: 7,
-    isPopular: false,
+    isPopular: true,
   },
-]
+}
 
 interface PricingPlansProps {
   currentPlanId?: string | null
@@ -81,6 +91,10 @@ interface PricingPlansProps {
 
 export function PricingPlans({ currentPlanId }: PricingPlansProps) {
   const [showCanceled, setShowCanceled] = useState(false)
+  const [billing, setBilling] = useState<BillingCycle>('yearly')
+
+  const proPlan = PRO_PLANS[billing]
+  const plans = [FREE_PLAN, proPlan]
 
   const isCurrentPlan = (planId: string) => {
     if (!currentPlanId && planId === 'free') return true
@@ -117,8 +131,27 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
           Checkout was canceled. You can try again when you&apos;re ready.
         </div>
       )}
+
+      <div className="plans-toggle-wrap">
+        <button
+          className={`plans-toggle-btn${billing === 'yearly' ? ' plans-toggle-btn-active' : ''}`}
+          onClick={() => setBilling('yearly')}
+          aria-pressed={billing === 'yearly'}
+        >
+          Yearly
+          <span className="plans-toggle-badge">Save 17%</span>
+        </button>
+        <button
+          className={`plans-toggle-btn${billing === 'monthly' ? ' plans-toggle-btn-active' : ''}`}
+          onClick={() => setBilling('monthly')}
+          aria-pressed={billing === 'monthly'}
+        >
+          Monthly
+        </button>
+      </div>
+
       <section className="plans-grid" aria-label="Available plans">
-        {PLANS.map((plan) => {
+        {plans.map((plan) => {
           const isCurrent = isCurrentPlan(plan.id)
           return (
             <article
@@ -133,7 +166,19 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
               )}
               <div className="plans-card-header">
                 <h2 className="plans-card-title">{plan.label}</h2>
-                <p className="plans-card-price">{plan.price}</p>
+                <p className="plans-card-price">
+                  {plan.id === 'free' ? (
+                    plan.price
+                  ) : (
+                    <>
+                      {plan.price}
+                      <span className="plans-card-price-unit"> / month</span>
+                    </>
+                  )}
+                </p>
+                {plan.priceNote && (
+                  <p className="plans-card-price-note">{plan.priceNote}</p>
+                )}
               </div>
 
               <ul className="plans-features" aria-label="Plan features">
@@ -162,11 +207,7 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
                   trialDays={plan.trialDays}
                   successPath="/pricing/success"
                   cancelPath="/pricing"
-                  className={
-                    plan.id === 'free'
-                      ? 'plans-btn plans-btn-outline'
-                      : 'plans-btn plans-btn-primary'
-                  }
+                  className="plans-btn plans-btn-primary"
                 >
                   {plan.cta}
                 </CheckoutButton>
@@ -174,11 +215,7 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
                 <div className="plans-card-cta">
                   <Link
                     href={plan.ctaHref ?? '/signup'}
-                    className={
-                      plan.id === 'free'
-                        ? 'plans-btn plans-btn-outline'
-                        : 'plans-btn plans-btn-primary'
-                    }
+                    className="plans-btn plans-btn-outline"
                   >
                     {plan.cta}
                   </Link>
