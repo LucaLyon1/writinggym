@@ -31,12 +31,12 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
   return (
     <div className="gate-overlay" role="dialog" aria-modal="true" aria-labelledby="gate-title">
       <div className="gate-modal">
-        <p className="gate-eyebrow">Early access</p>
+        <p className="gate-eyebrow">Unlock full access</p>
         <h2 id="gate-title" className="gate-title">
-          ProseLab is in<br /><em>paid access only</em>
+          Upgrade now to start<br /><em>practicing your writing</em>
         </h2>
         <p className="gate-body">
-          We&apos;re not accepting free users during this phase. Upgrade to Pro to start training your writing voice.
+          Get unlimited analyses, detailed feedback, and the tools to sharpen your writing voice — starting today.
         </p>
         <Link href="/pricing" className="gate-cta">
           See plans &amp; pricing
