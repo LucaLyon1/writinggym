@@ -7,6 +7,7 @@ import { addContactToAudience } from '@/lib/resend'
 
 export type AuthState = {
   error?: string
+  /** Restore when re-enabling Supabase "Confirm email" + returning success from signup. */
   success?: string
 }
 
@@ -25,18 +26,34 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
     return { error: 'Password must be at least 6 characters' }
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  const emailRedirectTo =
-    next && next.startsWith('/')
-      ? `${siteUrl}/email-verified?next=${encodeURIComponent(next)}`
-      : `${siteUrl}/email-verified`
+  /*
+   * Launch: no confirmation email — auto sign-in (requires Confirm email OFF in Supabase).
+   * Previous flow (re-enable when you turn email confirmation back on):
+   *
+   *   const siteUrl =
+   *     process.env.NEXT_PUBLIC_SITE_URL ??
+   *     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+   *   const emailRedirectTo =
+   *     next && next.startsWith('/')
+   *       ? `${siteUrl}/email-verified?next=${encodeURIComponent(next)}`
+   *       : `${siteUrl}/email-verified`
+   *
+   *   const { error } = await supabase.auth.signUp({
+   *     email,
+   *     password,
+   *     options: { emailRedirectTo },
+   *   })
+   *   // … then return instead of redirect:
+   *   return {
+   *     success:
+   *       'Check your email for the confirmation link. You can also sign in if your account is already confirmed.',
+   *   }
+   */
 
-  const { error } = await supabase.auth.signUp({
+  // Requires "Confirm email" disabled in Supabase Auth so signUp returns a session.
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo },
   })
 
   if (error) {
@@ -46,9 +63,20 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
   addContactToAudience(email)
 
   revalidatePath('/', 'layout')
+
+  if (data.session) {
+    redirect(next)
+  }
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+
+  if (!signInError) {
+    redirect(next)
+  }
+
   return {
-    success:
-      'Check your email for the confirmation link. You can also sign in if your account is already confirmed.',
+    error:
+      'Account was created but we could not sign you in automatically. Try signing in from the login page.',
   }
 }
 

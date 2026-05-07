@@ -106,11 +106,12 @@ export function SignupForm({ next }: { next?: string }) {
             {state.error}
           </p>
         )}
-        {state?.success && (
-          <p className="auth-success" role="status">
-            {state.success}
-          </p>
-        )}
+        {/* When email confirmation is back: signup may return success instead of redirecting.
+            {state?.success && (
+              <p className="auth-success" role="status">
+                {state.success}
+              </p>
+            )} */}
         <button type="submit" className="auth-submit" disabled={isPending}>
           {isPending ? 'Creating account…' : 'Sign up'}
         </button>
