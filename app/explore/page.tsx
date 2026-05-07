@@ -77,7 +77,7 @@ export default async function ExplorePage() {
         <header className="explore-header">
           <h1 className="explore-title">Explore rewrites</h1>
           <p className="explore-subtitle">
-            See how other writers tackled the same extracts. Ordered by upvotes.
+            See how other writers tackled the same extracts.
           </p>
         </header>
         <ExploreList

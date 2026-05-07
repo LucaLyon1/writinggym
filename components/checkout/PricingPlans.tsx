@@ -38,7 +38,7 @@ const FREE_PLAN: PricingPlan = {
 
 const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
   yearly: {
-    id: 'pro-annual',
+    id: 'pre-release-yearly',
     label: 'Pro',
     price: '$6.58',
     priceNote: 'Billed $79 annually — save 17%',
@@ -54,14 +54,14 @@ const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
       'Cancel anytime',
     ],
     cta: 'Get Pro',
-    lookupKey: 'pro-annual',
-    product: 'pro-annual',
+    lookupKey: 'pre-release-yearly',
+    product: 'pre-release-yearly',
     mode: 'subscription',
     useManagedPayments: true,
     isPopular: true,
   },
   monthly: {
-    id: 'pro',
+    id: 'pre-release-monthly',
     label: 'Pro',
     price: '$7.99',
     priceNote: undefined,
@@ -77,8 +77,8 @@ const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
       'Cancel anytime',
     ],
     cta: 'Get Pro',
-    lookupKey: 'pro',
-    product: 'pro',
+    lookupKey: 'pre-release-monthly',
+    product: 'pre-release-monthly',
     mode: 'subscription',
     useManagedPayments: true,
     isPopular: true,
