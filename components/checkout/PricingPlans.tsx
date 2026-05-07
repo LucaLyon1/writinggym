@@ -94,7 +94,7 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
   const [billing, setBilling] = useState<BillingCycle>('yearly')
 
   const proPlan = PRO_PLANS[billing]
-  const plans = [FREE_PLAN, proPlan]
+  const plans = [proPlan]
 
   const isCurrentPlan = (planId: string) => {
     if (!currentPlanId && planId === 'free') return true
