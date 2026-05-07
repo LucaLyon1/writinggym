@@ -4,6 +4,8 @@ import Script from "next/script";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
+import { FreeUserGate } from "@/components/FreeUserGate";
+import { createClient } from "@/lib/supabase/server";
 
 // Import Cormorant Garamond font from Google Fonts (local or CDN)
 import { Cormorant_Garamond } from "next/font/google";
@@ -26,11 +28,38 @@ export const metadata: Metadata = {
   manifest: "/favicon/site.webmanifest",
 };
 
-export default function RootLayout({
+async function getIsFreeUser(): Promise<boolean> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+
+    const { data: sub, error } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle()
+
+    if (error) {
+      console.error('[FreeUserGate] subscriptions query error:', error)
+      return true
+    }
+
+    return !sub
+  } catch (e) {
+    console.error('[FreeUserGate] unexpected error:', e)
+    return true
+  }
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const isFreeUser = await getIsFreeUser()
+
   return (
     <html lang="en" className={`light ${GeistMono.variable} ${cormorantGaramond.variable}`}>
       <body>
@@ -42,6 +71,7 @@ export default function RootLayout({
           </Link>
           <AuthNav />
         </header>
+        <FreeUserGate isFreeUser={isFreeUser} />
         {children}
         <Script
           id="cookieyes"
