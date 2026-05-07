@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
           quantity,
         },
       ],
+      discounts: [{ promotion_code: 'promo_1TSEtJ5iFHeX6F2Uly3LJgtR' }],
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
