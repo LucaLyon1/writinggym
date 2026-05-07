@@ -161,9 +161,6 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
               {isCurrent && (
                 <span className="plans-badge plans-badge-current">Your plan</span>
               )}
-              {plan.isPopular && !isCurrent && (
-                <span className="plans-badge">Most popular</span>
-              )}
               <div className="plans-card-header">
                 <h2 className="plans-card-title">{plan.label}</h2>
                 <p className="plans-card-price">
