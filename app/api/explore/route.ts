@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { COMPLETION_AUTHOR_PROFILE_SELECT, completionAuthorFromProfileEmbed } from '@/lib/completion-author'
 
 const PAGE_SIZE = 12
 
@@ -16,7 +17,9 @@ export async function GET(request: NextRequest) {
   // the scalable upgrade path when the dataset grows.
   const { data, error } = await supabase
     .from('passage_completions')
-    .select('id, user_text, word_count, completed_at, passage_id, constraint_key, upvotes(count)')
+    .select(
+      `id, user_text, word_count, completed_at, passage_id, constraint_key, upvotes(count), ${COMPLETION_AUTHOR_PROFILE_SELECT}`
+    )
     .eq('is_public', true)
 
   if (error) {
@@ -32,19 +35,29 @@ export async function GET(request: NextRequest) {
     constraint_key: string
     upvote_count: number
     viewer_has_upvoted: boolean
+    username: string | null
+    current_streak: number
+    show_streak_badge: boolean
+    is_founding_member: boolean
   }
 
   const sorted: Row[] = (data ?? [])
-    .map((c) => ({
-      id: c.id,
-      user_text: c.user_text,
-      word_count: c.word_count,
-      completed_at: c.completed_at,
-      passage_id: c.passage_id,
-      constraint_key: c.constraint_key,
-      upvote_count: (c.upvotes as unknown as { count: number }[])[0]?.count ?? 0,
-      viewer_has_upvoted: false,
-    }))
+    .map((c) => {
+      const author = completionAuthorFromProfileEmbed(
+        (c as { profiles?: unknown }).profiles
+      )
+      return {
+        id: c.id,
+        user_text: c.user_text,
+        word_count: c.word_count,
+        completed_at: c.completed_at,
+        passage_id: c.passage_id,
+        constraint_key: c.constraint_key,
+        upvote_count: (c.upvotes as unknown as { count: number }[])[0]?.count ?? 0,
+        viewer_has_upvoted: false,
+        ...author,
+      }
+    })
     .sort(
       (a, b) =>
         b.upvote_count - a.upvote_count ||

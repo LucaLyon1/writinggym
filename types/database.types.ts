@@ -261,12 +261,14 @@ export type Database = {
           email_reminders: boolean
           goal: string | null
           id: string
+          is_founding_member: boolean
           last_active_date: string | null
           longest_streak: number
           preferred_categories: string[]
           preferred_difficulty: string | null
           preferred_length: string | null
           preferred_tags: string[]
+          selected_badge: string | null
           show_streak_badge: boolean
           total_passages_done: number
           total_sessions: number
@@ -279,12 +281,14 @@ export type Database = {
           email_reminders?: boolean
           goal?: string | null
           id: string
+          is_founding_member?: boolean
           last_active_date?: string | null
           longest_streak?: number
           preferred_categories?: string[]
           preferred_difficulty?: string | null
           preferred_length?: string | null
           preferred_tags?: string[]
+          selected_badge?: string | null
           show_streak_badge?: boolean
           total_passages_done?: number
           total_sessions?: number
@@ -297,12 +301,14 @@ export type Database = {
           email_reminders?: boolean
           goal?: string | null
           id?: string
+          is_founding_member?: boolean
           last_active_date?: string | null
           longest_streak?: number
           preferred_categories?: string[]
           preferred_difficulty?: string | null
           preferred_length?: string | null
           preferred_tags?: string[]
+          selected_badge?: string | null
           show_streak_badge?: boolean
           total_passages_done?: number
           total_sessions?: number

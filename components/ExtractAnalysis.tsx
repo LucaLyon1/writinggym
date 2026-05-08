@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { CraftCategory, ExtractAnalysis as ExtractAnalysisType, Segment } from '@/types/extract'
+import { PublicAuthorAttribution } from '@/components/PublicAuthorAttribution'
+import type { CompletionAuthorPayload } from '@/lib/completion-author'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
 import { FollowUpChat } from '@/components/FollowUpChat'
@@ -259,7 +261,7 @@ interface Submission {
   completed_at: string
 }
 
-interface PublicSubmission {
+interface PublicSubmission extends CompletionAuthorPayload {
   id: string
   user_text: string | null
   word_count: number | null
@@ -402,6 +404,9 @@ function SubmissionPreviewModal({
           </svg>
         </button>
         <div className="submission-preview-meta">
+          {'upvote_count' in submission && (
+            <PublicAuthorAttribution author={submission} className="public-author-attribution submission-preview-author" />
+          )}
           <span className="submission-preview-date">{formatDate(submission.completed_at)}</span>
           {submission.word_count != null && (
             <span className="submission-preview-words">{submission.word_count} words</span>
@@ -591,7 +596,8 @@ function WriteSidebar({
           <ul className="ea-submissions-list">
             {publicSubmissions.map((s) => (
               <li key={s.id} className="ea-submission-item ea-public-submission-item">
-                <div className="ea-submission-meta">
+                <div className="ea-submission-meta ea-public-submission-meta">
+                  <PublicAuthorAttribution author={s} />
                   <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
                   {s.word_count != null && (
                     <span className="ea-submission-words">{s.word_count} words</span>

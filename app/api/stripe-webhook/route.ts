@@ -12,6 +12,8 @@ const PRODUCT_TAGS: Record<string, string> = {
   book: '14115500',
 }
 
+const PRE_RELEASE_PRODUCTS = new Set(['yearly_99', 'monthly_9.99'])
+
 function getSubscriptionPeriod(subscription: Stripe.Subscription) {
   const item = subscription.items.data[0]
   return {
@@ -207,6 +209,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.error('[webhook] Supabase upsert FAILED:', JSON.stringify(error))
   } else {
     console.log(`[webhook] Subscription saved for user ${userId}, plan ${planId}, status ${subscription.status}`)
+  }
+
+  if (PRE_RELEASE_PRODUCTS.has(product)) {
+    const { error: badgeError } = await supabaseAdmin
+      .from('profiles')
+      .update({ is_founding_member: true })
+      .eq('id', userId)
+    if (badgeError) {
+      console.error('[webhook] Failed to set founding member badge:', badgeError.message)
+    } else {
+      console.log(`[webhook] Founding member badge set for user ${userId}`)
+    }
   }
 }
 

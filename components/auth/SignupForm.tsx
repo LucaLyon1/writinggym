@@ -71,6 +71,23 @@ export function SignupForm({ next }: { next?: string }) {
       <form action={formAction} className="auth-form">
         {next && <input type="hidden" name="next" value={next} />}
         <div className="auth-field">
+          <label htmlFor="username" className="auth-label">
+            Username
+          </label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            autoComplete="username"
+            placeholder="e.g. alex_writer"
+            className="auth-input"
+            disabled={isPending}
+            minLength={3}
+            maxLength={32}
+          />
+        </div>
+        <div className="auth-field">
           <label htmlFor="email" className="auth-label">
             Email
           </label>

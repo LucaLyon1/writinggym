@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { constraintKey } from '@/lib/constraint-key'
+import { COMPLETION_AUTHOR_PROFILE_SELECT, completionAuthorFromProfileEmbed } from '@/lib/completion-author'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   const baseQuery = supabase
     .from('passage_completions')
-    .select('id, user_text, word_count, completed_at, upvotes(count)')
+    .select(`id, user_text, word_count, completed_at, upvotes(count), ${COMPLETION_AUTHOR_PROFILE_SELECT}`)
     .eq('passage_id', passageId)
     .eq('constraint_key', key)
     .eq('is_public', true)
@@ -51,14 +52,20 @@ export async function GET(request: NextRequest) {
     viewerUpvotedIds = new Set((myUpvotes ?? []).map((u) => u.completion_id))
   }
 
-  const result = completions.map((c) => ({
-    id: c.id,
-    user_text: c.user_text,
-    word_count: c.word_count,
-    completed_at: c.completed_at,
-    upvote_count: (c.upvotes as unknown as { count: number }[])[0]?.count ?? 0,
-    viewer_has_upvoted: viewerUpvotedIds.has(c.id),
-  }))
+  const result = completions.map((c) => {
+    const author = completionAuthorFromProfileEmbed(
+      (c as { profiles?: unknown }).profiles
+    )
+    return {
+      id: c.id,
+      user_text: c.user_text,
+      word_count: c.word_count,
+      completed_at: c.completed_at,
+      upvote_count: (c.upvotes as unknown as { count: number }[])[0]?.count ?? 0,
+      viewer_has_upvoted: viewerUpvotedIds.has(c.id),
+      ...author,
+    }
+  })
 
   return NextResponse.json(result)
 }

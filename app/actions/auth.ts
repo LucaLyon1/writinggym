@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { addContactToAudience } from '@/lib/resend'
+import { validateUsername } from '@/lib/username'
 
 export type AuthState = {
   error?: string
@@ -17,6 +18,11 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const next = (formData.get('next') as string) || '/'
+
+  const usernameResult = validateUsername(formData.get('username'))
+  if (!usernameResult.ok) {
+    return { error: usernameResult.error }
+  }
 
   if (!email || !password) {
     return { error: 'Email and password are required' }
@@ -58,6 +64,27 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
 
   if (error) {
     return { error: error.message }
+  }
+
+  const userId = data.user?.id
+  if (!userId) {
+    return { error: 'Account was created but we could not set up your profile. Please contact support.' }
+  }
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ username: usernameResult.username })
+    .eq('id', userId)
+
+  if (profileError) {
+    if (profileError.code === '23505') {
+      return { error: 'This username is already taken.' }
+    }
+    return {
+      error:
+        profileError.message ||
+        'Account was created but we could not save your username. Try updating it from your profile.',
+    }
   }
 
   addContactToAudience(email)

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { passages } from '@/data/passages'
+import { PublicAuthorAttribution } from '@/components/PublicAuthorAttribution'
 
 function ExplorePreviewModal({
   item,
@@ -32,6 +33,15 @@ function ExplorePreviewModal({
           </svg>
         </button>
         <div className="submission-preview-meta">
+          <PublicAuthorAttribution
+            author={{
+              username: item.username,
+              current_streak: item.current_streak,
+              show_streak_badge: item.show_streak_badge,
+              is_founding_member: item.is_founding_member,
+            }}
+            className="public-author-attribution submission-preview-author"
+          />
           {passage && (
             <Link href={`/extract/${passage.id}`} className="explore-card-title" onClick={onClose}>
               <em>{passage.title}</em>
@@ -62,6 +72,10 @@ interface ExploreItem {
   constraint_key: string
   upvote_count: number
   viewer_has_upvoted: boolean
+  username: string | null
+  current_streak: number
+  show_streak_badge: boolean
+  is_founding_member: boolean
 }
 
 interface ExploreResponse {
@@ -143,6 +157,15 @@ function ExploreCard({ item, onOpen }: { item: ExploreItem; onOpen: () => void }
           ) : (
             <span className="explore-card-title">Unknown passage</span>
           )}
+          <PublicAuthorAttribution
+            author={{
+              username: item.username,
+              current_streak: item.current_streak,
+              show_streak_badge: item.show_streak_badge,
+              is_founding_member: item.is_founding_member,
+            }}
+            className="public-author-attribution explore-card-writer-attribution"
+          />
         </div>
         <time className="explore-card-date" dateTime={item.completed_at}>
           {formatDate(item.completed_at)}
