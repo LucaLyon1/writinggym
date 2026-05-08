@@ -1,42 +1,41 @@
 import Link from 'next/link'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-const PRODUCT_LABELS: Record<string, string> = {
-  core: 'Core',
-  premium: 'Premium',
-}
-
-async function resolvePlanId(product: string): Promise<string | null> {
+async function resolvePlanFromProduct(
+  product: string
+): Promise<{ id: string; label: string } | null> {
   const { data: planByLookupKey } = await supabaseAdmin
     .from('plans')
-    .select('id')
+    .select('id, label')
     .eq('stripe_lookup_key', product)
     .maybeSingle()
 
-  if (planByLookupKey) return planByLookupKey.id
+  if (planByLookupKey) return planByLookupKey
 
   const { data: plan } = await supabaseAdmin
     .from('plans')
-    .select('id')
+    .select('id, label')
     .ilike('label', product)
     .maybeSingle()
 
-  if (plan) return plan.id
+  if (plan) return plan
 
   const { data: planById } = await supabaseAdmin
     .from('plans')
-    .select('id')
+    .select('id, label')
     .eq('id', product)
     .maybeSingle()
 
-  return planById?.id ?? null
+  return planById
 }
 
-async function ensureSubscription(session: Stripe.Checkout.Session) {
+async function ensureSubscription(
+  session: Stripe.Checkout.Session,
+  plan: { id: string } | null
+) {
   if (session.mode !== 'subscription') return
 
   const userId = session.client_reference_id || session.metadata?.user_id
@@ -52,10 +51,9 @@ async function ensureSubscription(session: Stripe.Checkout.Session) {
   if (existing) return
 
   const product = session.metadata?.product
-  if (!product) return
+  if (!product || !plan) return
 
-  const planId = await resolvePlanId(product)
-  if (!planId) return
+  const planId = plan.id
 
   const stripeSubscriptionId = typeof session.subscription === 'string'
     ? session.subscription
@@ -100,10 +98,11 @@ export default async function PricingSuccessPage({ searchParams }: SuccessPagePr
     try {
       const session = await stripe.checkout.sessions.retrieve(session_id)
       const product = session.metadata?.product
-      planLabel = product ? PRODUCT_LABELS[product] ?? product : null
+      const plan = product ? await resolvePlanFromProduct(product) : null
+      planLabel = plan?.label ?? null
       customerEmail = session.customer_details?.email ?? null
 
-      await ensureSubscription(session)
+      await ensureSubscription(session, plan)
     } catch (err) {
       console.error('[success] Failed to verify session:', err)
     }
