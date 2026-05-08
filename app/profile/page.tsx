@@ -100,7 +100,7 @@ export default async function ProfilePage() {
           </div>
           <div className="profile-hero-plan">
             <span className={`profile-plan-badge ${entitlements.plan_id !== 'free' ? 'profile-plan-badge-paid' : 'profile-plan-badge-free'}`}>
-              {entitlements.plan_label} plan
+              {entitlements.plan_label}
             </span>
             {entitlements.plan_id === 'free' ? (
               <Link href="/pricing" className="profile-hero-upgrade">
