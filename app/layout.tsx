@@ -4,6 +4,7 @@ import Script from "next/script";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
+import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,11 +29,11 @@ export const metadata: Metadata = {
   manifest: "/favicon/site.webmanifest",
 };
 
-async function getIsFreeUser(): Promise<boolean> {
+async function getAuthState(): Promise<{ isAuthenticated: boolean; isFreeUser: boolean }> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return false
+    if (!user) return { isAuthenticated: false, isFreeUser: false }
 
     const { data: sub, error } = await supabase
       .from('subscriptions')
@@ -43,13 +44,13 @@ async function getIsFreeUser(): Promise<boolean> {
 
     if (error) {
       console.error('[FreeUserGate] subscriptions query error:', error)
-      return true
+      return { isAuthenticated: true, isFreeUser: true }
     }
 
-    return !sub
+    return { isAuthenticated: true, isFreeUser: !sub }
   } catch (e) {
     console.error('[FreeUserGate] unexpected error:', e)
-    return true
+    return { isAuthenticated: false, isFreeUser: true }
   }
 }
 
@@ -58,7 +59,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isFreeUser = await getIsFreeUser()
+  const { isAuthenticated, isFreeUser } = await getAuthState()
 
   return (
     <html lang="en" className={`light ${GeistMono.variable} ${cormorantGaramond.variable}`}>
@@ -73,6 +74,7 @@ export default async function RootLayout({
         </header>
         <FreeUserGate isFreeUser={isFreeUser} />
         {children}
+        {isAuthenticated && <CrispChat />}
         <Script
           id="cookieyes"
           type="text/javascript"
