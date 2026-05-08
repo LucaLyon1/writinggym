@@ -30,6 +30,14 @@ function getSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
 }
 
 async function resolvePlanId(product: string): Promise<string | null> {
+  const { data: planByLookupKey } = await supabaseAdmin
+    .from('plans')
+    .select('id')
+    .eq('stripe_lookup_key', product)
+    .maybeSingle()
+
+  if (planByLookupKey) return planByLookupKey.id
+
   const { data: plan } = await supabaseAdmin
     .from('plans')
     .select('id')

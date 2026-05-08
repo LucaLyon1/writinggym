@@ -115,9 +115,9 @@ export async function POST(request: NextRequest) {
       sessionOptions.automatic_tax = { enabled: true }
     }
 
-    if (mode === 'subscription' && trialDays) {
+    if (mode === 'subscription') {
       sessionOptions.subscription_data = {
-        trial_period_days: trialDays,
+        ...(trialDays ? { trial_period_days: trialDays } : {}),
         metadata: {
           product: product || lookupKey || 'unknown',
           ...(user ? { user_id: user.id } : {}),
