@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Stripe from 'stripe'
+import { RefreshLayoutAfterPurchase } from './RefreshLayoutAfterPurchase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -110,6 +111,7 @@ export default async function PricingSuccessPage({ searchParams }: SuccessPagePr
 
   return (
     <div className="plans-root">
+      {session_id ? <RefreshLayoutAfterPurchase /> : null}
       <div className="plans-inner">
         <Link href="/" className="plans-back-link">
           ← Back to home
