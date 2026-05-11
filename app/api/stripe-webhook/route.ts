@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -209,6 +210,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.error('[webhook] Supabase upsert FAILED:', JSON.stringify(error))
   } else {
     console.log(`[webhook] Subscription saved for user ${userId}, plan ${planId}, status ${subscription.status}`)
+    const posthog = getPostHogClient()
+    posthog.capture({
+      distinctId: userId,
+      event: 'subscription_activated',
+      properties: {
+        plan_id: planId,
+        product,
+        status: subscription.status,
+        stripe_subscription_id: stripeSubscriptionId,
+        customer_email: session.customer_details?.email ?? null,
+      },
+    })
+    await posthog.shutdown()
   }
 
   if (PRE_RELEASE_PRODUCTS.has(product)) {
@@ -292,6 +306,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     console.error('[webhook] Failed to cancel subscription:', error)
   } else {
     console.log(`[webhook] Subscription canceled for user ${existing.user_id}`)
+    const posthog = getPostHogClient()
+    posthog.capture({
+      distinctId: existing.user_id,
+      event: 'subscription_canceled',
+      properties: { stripe_subscription_id: subscription.id },
+    })
+    await posthog.shutdown()
   }
 }
 
@@ -357,6 +378,13 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     console.error('[webhook] Failed to mark subscription past_due:', error)
   } else {
     console.log(`[webhook] Subscription marked past_due for user ${existing.user_id}`)
+    const posthog = getPostHogClient()
+    posthog.capture({
+      distinctId: existing.user_id,
+      event: 'invoice_payment_failed',
+      properties: { stripe_subscription_id: stripeSubscriptionId },
+    })
+    await posthog.shutdown()
   }
 }
 

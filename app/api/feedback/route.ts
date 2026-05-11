@@ -11,6 +11,7 @@ import {
   recordSessionCompletion,
   isPaidUser,
 } from '@/lib/plan'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 const SYSTEM_PROMPT = `You are a literary craft analyst giving honest, constructive feedback to a writer attempting a stylistic exercise.
 
@@ -210,6 +211,9 @@ export async function POST(request: Request) {
   if (!paid) {
     const alreadyUsed = await hasUsedLifetimeFreeAnalysis(user.id)
     if (alreadyUsed) {
+      const posthogPaywall = getPostHogClient()
+      posthogPaywall.capture({ distinctId: user.id, event: 'free_analysis_paywall_hit', properties: {} })
+      await posthogPaywall.shutdown()
       return NextResponse.json(
         {
           error:
@@ -364,6 +368,19 @@ export async function POST(request: Request) {
         )
       }
     }
+
+    const posthog = getPostHogClient()
+    posthog.capture({
+      distinctId: user.id,
+      event: 'writing_analyzed',
+      properties: {
+        passage_id: body.passageId ?? null,
+        completion_id: body.completionId ?? null,
+        free_preview: isFreePreview,
+        word_count: body.userText.trim().split(/\s+/).length,
+      },
+    })
+    await posthog.shutdown()
 
     return NextResponse.json({ ...result, freePreview: isFreePreview })
   } catch (err) {

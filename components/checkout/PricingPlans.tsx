@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import { CheckoutButton } from './CheckoutButton'
 
 type BillingCycle = 'yearly' | 'monthly'
@@ -135,7 +136,7 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
       <div className="plans-toggle-wrap">
         <button
           className={`plans-toggle-btn${billing === 'yearly' ? ' plans-toggle-btn-active' : ''}`}
-          onClick={() => setBilling('yearly')}
+          onClick={() => { setBilling('yearly'); posthog.capture('billing_cycle_toggled', { cycle: 'yearly' }) }}
           aria-pressed={billing === 'yearly'}
         >
           Yearly
@@ -143,7 +144,7 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
         </button>
         <button
           className={`plans-toggle-btn${billing === 'monthly' ? ' plans-toggle-btn-active' : ''}`}
-          onClick={() => setBilling('monthly')}
+          onClick={() => { setBilling('monthly'); posthog.capture('billing_cycle_toggled', { cycle: 'monthly' }) }}
           aria-pressed={billing === 'monthly'}
         >
           Monthly

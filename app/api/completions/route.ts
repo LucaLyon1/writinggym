@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { constraintKey } from '@/lib/constraint-key'
 import type { Json } from '@/types/database.types'
 import { recordSessionCompletion, checkDailySessionQuota } from '@/lib/plan'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -132,6 +133,18 @@ export async function POST(request: Request) {
   await recordSessionCompletion(user.id, body.passageId, wordCount).catch(
     (err) => console.error('Failed to record session completion:', err)
   )
+
+  const posthog = getPostHogClient()
+  posthog.capture({
+    distinctId: user.id,
+    event: 'writing_submitted',
+    properties: {
+      passage_id: body.passageId,
+      word_count: wordCount,
+      completion_id: inserted.id,
+    },
+  })
+  await posthog.shutdown()
 
   return NextResponse.json({ id: inserted.id, success: true })
 }

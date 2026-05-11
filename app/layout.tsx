@@ -7,6 +7,7 @@ import { AuthNav } from "@/components/auth/AuthNav";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
 import { createClient } from "@/lib/supabase/server";
+import { PostHogIdentify } from "@/components/PostHogIdentify";
 
 // Import Cormorant Garamond font from Google Fonts (local or CDN)
 import { Cormorant_Garamond } from "next/font/google";
@@ -72,6 +73,7 @@ export default async function RootLayout({
           </Link>
           <AuthNav />
         </header>
+        <PostHogIdentify />
         <FreeUserGate isFreeUser={isFreeUser} />
         {children}
         {isAuthenticated && <CrispChat />}

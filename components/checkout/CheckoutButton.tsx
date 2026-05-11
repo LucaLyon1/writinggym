@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 
 interface CheckoutButtonProps {
   lookupKey: string
@@ -34,6 +35,8 @@ export function CheckoutButton({
   const handleCheckout = async () => {
     setLoading(true)
     setError(null)
+
+    posthog.capture('checkout_initiated', { product, lookup_key: lookupKey, mode })
 
     try {
       const response = await fetch('/api/create-checkout-session', {

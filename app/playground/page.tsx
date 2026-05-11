@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { ScoreCard, type FeedbackForScoreCard } from '@/components/ScoreCard'
 import { CraftPromptGallery } from '@/components/CraftPromptGallery'
 import { craftPlaygroundPrompts } from '@/data/playground-prompts'
@@ -200,6 +201,11 @@ export default function PlaygroundPage() {
       const data = (await res.json()) as { id: string; success: boolean }
       setSubmittedCompletionId(data.id)
       setSubmittedTextSnapshot(text.trim())
+      posthog.capture('playground_writing_submitted', {
+        prompt_id: prompt.id,
+        word_count: wordCount,
+        completion_id: data.id,
+      })
       void fetchSubmissions()
       try {
         sessionStorage.removeItem('proselab-draft')
@@ -282,6 +288,12 @@ export default function PlaygroundPage() {
       }
 
       setAnalysis(data as AuthorAnalysis)
+      posthog.capture('playground_analysis_requested', {
+        prompt_id: prompt.id,
+        word_count: wordCount,
+        author_match: (data as AuthorAnalysis).author,
+        confidence: (data as AuthorAnalysis).confidence,
+      })
       void fetchSubmissions()
       try {
         sessionStorage.removeItem('proselab-draft')

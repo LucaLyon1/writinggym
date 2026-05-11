@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { addContactToAudience } from '@/lib/resend'
 import { validateUsername } from '@/lib/username'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export type AuthState = {
   error?: string
@@ -89,6 +90,11 @@ export async function signup(_prevState: AuthState | undefined, formData: FormDa
 
   addContactToAudience(email)
 
+  const posthogSignup = getPostHogClient()
+  posthogSignup.identify({ distinctId: userId, properties: { email, username: usernameResult.username } })
+  posthogSignup.capture({ distinctId: userId, event: 'user_signed_up', properties: { email, username: usernameResult.username } })
+  await posthogSignup.shutdown()
+
   revalidatePath('/', 'layout')
 
   if (data.session) {
@@ -118,10 +124,18 @@ export async function login(_prevState: AuthState | undefined, formData: FormDat
     return { error: 'Email and password are required' }
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data: loginData, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     return { error: error.message }
+  }
+
+  const loginUserId = loginData.user?.id
+  if (loginUserId) {
+    const posthogLogin = getPostHogClient()
+    posthogLogin.identify({ distinctId: loginUserId, properties: { email } })
+    posthogLogin.capture({ distinctId: loginUserId, event: 'user_logged_in', properties: { email } })
+    await posthogLogin.shutdown()
   }
 
   revalidatePath('/', 'layout')
