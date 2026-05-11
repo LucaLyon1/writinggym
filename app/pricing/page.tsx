@@ -72,17 +72,6 @@ export default async function PricingPage() {
 
   return (
     <div className="plans-root">
-      <div className="plans-banner" role="status" aria-live="polite">
-        <span className="plans-banner-label">Pre-release pricing</span>
-        <span className="plans-banner-sep" aria-hidden>
-          ·
-        </span>
-        <span className="plans-banner-text">
-          code <code className="plans-banner-code">PRERELEASE26</code> already
-          applied at checkout
-        </span>
-      </div>
-
       <div className="plans-inner">
         <Link href="/" className="plans-back-link">
           ← Back to home
@@ -95,8 +84,8 @@ export default async function PricingPage() {
             <em>plan</em>
           </h1>
           <p className="plans-subtitle">
-            ProseLab is in pre-release. Lock in early-bird pricing — 20% off
-            the launch rate, for as long as you stay subscribed.
+            Unlimited sessions, AI analysis on every rewrite, and the full
+            extract library. Cancel anytime.
           </p>
         </header>
 

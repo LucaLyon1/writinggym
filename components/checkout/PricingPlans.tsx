@@ -41,8 +41,8 @@ const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
   yearly: {
     id: 'pre-release-yearly',
     label: 'ProseLab Core',
-    price: '$6.58',
-    priceNote: 'Billed $79 annually — save 17%',
+    price: '$8.25',
+    priceNote: 'Billed $99 annually — save 17%',
     features: [
       'Unlimited sessions',
       'AI analysis of every rewrite',
@@ -64,7 +64,7 @@ const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
   monthly: {
     id: 'pre-release-monthly',
     label: 'ProseLab Core',
-    price: '$7.99',
+    price: '$9.99',
     priceNote: 'Billed monthly',
     features: [
       'Unlimited sessions',
@@ -176,20 +176,6 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
                 </p>
                 {plan.priceNote && (
                   <p className="plans-card-price-note">{plan.priceNote}</p>
-                )}
-                {plan.lookupKey && (
-                  <p className="plans-card-applied" aria-live="polite">
-                    <span className="plans-card-applied-check" aria-hidden>
-                      ✓
-                    </span>
-                    <span>
-                      code{' '}
-                      <code className="plans-card-applied-code">
-                        PRERELEASE26
-                      </code>{' '}
-                      applied — 20% off
-                    </span>
-                  </p>
                 )}
               </div>
 
