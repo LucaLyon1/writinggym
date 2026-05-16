@@ -3065,9 +3065,9 @@ body {
   background: var(--accent-soft);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .auth-nav .auth-nav-link {
-    display: none;
+    display: none !important;
   }
 }
 
