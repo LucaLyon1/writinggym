@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
+import { logout } from '@/app/actions/auth'
 
 interface FreeUserGateProps {
   isFreeUser: boolean
@@ -42,6 +43,11 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
         <div className="gate-plans">
           <PricingPlans currentPlanId={null} />
         </div>
+        <form action={logout} className="gate-logout">
+          <button type="submit" className="gate-logout-btn">
+            Wrong account? Sign out
+          </button>
+        </form>
       </div>
     </div>
   )

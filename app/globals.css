@@ -7328,3 +7328,27 @@ body[data-gated] > *:not(.gate-overlay) {
 .gate-cta:hover {
   background: var(--accent-soft);
 }
+
+.gate-logout {
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.gate-logout-btn {
+  background: none;
+  border: none;
+  font-family: var(--plans-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--plans-muted);
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+
+.gate-logout-btn:hover {
+  color: var(--plans-ink);
+}
