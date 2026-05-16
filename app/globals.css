@@ -2818,7 +2818,8 @@ body {
   position: relative;
 }
 
-.profile-hero-password-trigger {
+.profile-hero-password-trigger,
+.profile-hero-signout {
   background: none;
   border: none;
   padding: 0;
@@ -2829,7 +2830,8 @@ body {
   transition: color 0.15s;
 }
 
-.profile-hero-password-trigger:hover {
+.profile-hero-password-trigger:hover,
+.profile-hero-signout:hover {
   color: var(--ink);
 }
 

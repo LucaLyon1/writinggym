@@ -10,6 +10,7 @@ import { ManageSubscriptionButton } from '@/components/checkout/ManageSubscripti
 import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
 import { ProfileSetPassword } from '@/components/profile/ProfileSetPassword'
+import { logout } from '@/app/actions/auth'
 
 type PassageCompletion = Tables<'passage_completions'>
 
@@ -113,6 +114,11 @@ export default async function ProfilePage() {
               </ManageSubscriptionButton>
             )}
             <ProfileSetPassword />
+            <form action={logout}>
+              <button type="submit" className="profile-hero-signout">
+                Sign out →
+              </button>
+            </form>
           </div>
         </header>
 
