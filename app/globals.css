@@ -3617,6 +3617,17 @@ body {
   color: var(--accent);
 }
 
+.profile-trial-pill {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: var(--accent-pale);
+}
+
 
 .profile-stats-section {
   margin-bottom: 2.5rem;

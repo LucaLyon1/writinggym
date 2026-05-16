@@ -6,6 +6,7 @@ import { CompletionHeatmap } from '@/components/CompletionHeatmap'
 import { StreakBadges } from '@/components/StreakBadges'
 import { getCurrentBadge, STREAK_BADGES } from '@/lib/streak-badges'
 import { getUserEntitlements } from '@/lib/plan'
+import { trialDaysLeft } from '@/lib/trial'
 import { ManageSubscriptionButton } from '@/components/checkout/ManageSubscriptionButton'
 import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
@@ -77,6 +78,9 @@ export default async function ProfilePage() {
     ? STREAK_BADGES.find((b) => b.label === profile.selected_badge) ?? null
     : getCurrentBadge(currentStreak)
 
+  const daysLeft =
+    entitlements.plan_id === 'free' ? trialDaysLeft(user?.created_at) : null
+
   return (
     <div className="profile-root">
       <div className="profile-inner">
@@ -105,6 +109,11 @@ export default async function ProfilePage() {
             <span className={`profile-plan-badge ${entitlements.plan_id !== 'free' ? 'profile-plan-badge-paid' : 'profile-plan-badge-free'}`}>
               {entitlements.plan_label}
             </span>
+            {daysLeft !== null && (
+              <span className="profile-trial-pill" title="Free trial remaining">
+                {daysLeft} day{daysLeft === 1 ? '' : 's'} left
+              </span>
+            )}
             {entitlements.plan_id === 'free' ? (
               <Link href="/pricing" className="profile-hero-upgrade">
                 Upgrade →
