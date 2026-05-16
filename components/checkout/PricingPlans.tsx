@@ -45,13 +45,9 @@ const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
     priceNote: 'Billed $99 annually — save 17%',
     features: [
       'Unlimited sessions',
-      'AI analysis of every rewrite',
-      'Detailed feedback — strong points, weak points, what to try next',
-      'Personal practice record',
-      'Follow-up chat after every analysis',
-      'Structured session mode with focus axes',
-      'Choose your preferred voice for text-to-speech',
+      'AI analysis on every rewrite',
       'Full extract library',
+      'Follow-up chat after every analysis',
       'Cancel anytime',
     ],
     cta: 'Get ProseLab Core',
@@ -68,13 +64,9 @@ const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
     priceNote: 'Billed monthly',
     features: [
       'Unlimited sessions',
-      'AI analysis of every rewrite',
-      'Detailed feedback — strong points, weak points, what to try next',
-      'Personal practice record',
-      'Follow-up chat after every analysis',
-      'Structured session mode with focus axes',
-      'Choose your preferred voice for text-to-speech',
+      'AI analysis on every rewrite',
       'Full extract library',
+      'Follow-up chat after every analysis',
       'Cancel anytime',
     ],
     cta: 'Get ProseLab Core',
@@ -135,7 +127,8 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
 
       <div className="plans-toggle-wrap">
         <button
-          className={`plans-toggle-btn${billing === 'yearly' ? ' plans-toggle-btn-active' : ''}`}
+          type="button"
+          className={`plans-toggle-label${billing === 'yearly' ? ' plans-toggle-label-active' : ''}`}
           onClick={() => { setBilling('yearly'); posthog.capture('billing_cycle_toggled', { cycle: 'yearly' }) }}
           aria-pressed={billing === 'yearly'}
         >
@@ -143,7 +136,23 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
           <span className="plans-toggle-badge">Save 17%</span>
         </button>
         <button
-          className={`plans-toggle-btn${billing === 'monthly' ? ' plans-toggle-btn-active' : ''}`}
+          type="button"
+          role="switch"
+          aria-checked={billing === 'monthly'}
+          aria-label="Toggle billing period"
+          className="plans-toggle-switch"
+          data-state={billing}
+          onClick={() => {
+            const next = billing === 'yearly' ? 'monthly' : 'yearly'
+            setBilling(next)
+            posthog.capture('billing_cycle_toggled', { cycle: next })
+          }}
+        >
+          <span className="plans-toggle-thumb" aria-hidden />
+        </button>
+        <button
+          type="button"
+          className={`plans-toggle-label${billing === 'monthly' ? ' plans-toggle-label-active' : ''}`}
           onClick={() => { setBilling('monthly'); posthog.capture('billing_cycle_toggled', { cycle: 'monthly' }) }}
           aria-pressed={billing === 'monthly'}
         >

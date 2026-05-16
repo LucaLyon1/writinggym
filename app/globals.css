@@ -4243,34 +4243,63 @@ button.profile-manage-subscription:disabled {
 .plans-toggle-wrap {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  background: var(--plans-aged);
-  border-radius: 999px;
-  padding: 0.3rem;
+  justify-content: center;
+  gap: 0.85rem;
   width: fit-content;
   margin: 0 auto 2.5rem;
 }
 
-.plans-toggle-btn {
-  display: flex;
+.plans-toggle-label {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   font-family: var(--plans-mono);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--plans-ink);
+  color: var(--plans-muted);
   background: transparent;
   border: none;
-  border-radius: 999px;
-  padding: 0.45rem 1.1rem;
+  padding: 0.25rem 0.1rem;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s;
+  transition: color 0.18s;
 }
 
-.plans-toggle-btn-active {
-  background: white;
+.plans-toggle-label-active {
   color: var(--plans-ink);
+}
+
+.plans-toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--plans-aged);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.plans-toggle-switch[data-state="monthly"] {
+  background: var(--plans-rust);
+}
+
+.plans-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(26, 22, 19, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.plans-toggle-switch[data-state="monthly"] .plans-toggle-thumb {
+  transform: translateX(16px);
 }
 
 .plans-toggle-badge {
@@ -7167,6 +7196,10 @@ button.profile-manage-subscription:disabled {
 }
 
 /* ─── Free User Gate ─────────────────────────────────────── */
+body[data-gated] {
+  overflow: hidden;
+}
+
 body[data-gated] > *:not(.gate-overlay) {
   filter: blur(8px);
   pointer-events: none;
@@ -7181,7 +7214,9 @@ body[data-gated] > *:not(.gate-overlay) {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: rgba(245, 240, 234, 0.5);
+  background: rgba(26, 22, 19, 0.35);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .gate-modal {
@@ -7193,6 +7228,56 @@ body[data-gated] > *:not(.gate-overlay) {
   width: 100%;
   text-align: center;
   box-shadow: 0 8px 40px rgba(26, 22, 19, 0.12);
+}
+
+.gate-modal-plans {
+  --plans-ink: #1a1714;
+  --plans-paper: #f5f0e8;
+  --plans-aged: #e8dfc8;
+  --plans-rust: #b84c2e;
+  --plans-rust-dark: #8f3a22;
+  --plans-muted: #5c5246;
+  --plans-mono: var(--font-mono);
+
+  max-width: 620px;
+  max-height: calc(100vh - 3rem);
+  padding: 2rem 2rem 1.5rem;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(26, 22, 19, 0.35);
+}
+
+.gate-modal-plans .gate-title {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.gate-plans {
+  text-align: left;
+}
+
+.gate-modal-plans .plans-toggle-wrap {
+  margin: 0 auto 1.5rem;
+}
+
+.gate-modal-plans .plans-grid {
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.gate-modal-plans .plans-card {
+  padding: 1.75rem 1.5rem;
+  gap: 1.25rem;
+}
+
+.gate-modal-plans .plans-btn-primary {
+  background: var(--plans-rust);
+  color: white;
+  border-color: var(--plans-rust);
+}
+
+.gate-modal-plans .plans-btn-primary:hover {
+  background: var(--plans-rust-dark);
+  border-color: var(--plans-rust-dark);
 }
 
 .gate-eyebrow {
