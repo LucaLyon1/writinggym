@@ -9,6 +9,7 @@ import { FirstVisitAuthModal } from "@/components/auth/FirstVisitAuthModal";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
 import { createClient } from "@/lib/supabase/server";
+import { isWithinFreeTrial } from "@/lib/trial";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
 
 // Import Cormorant Garamond font from Google Fonts (local or CDN)
@@ -38,6 +39,8 @@ async function getAuthState(): Promise<{ isAuthenticated: boolean; isFreeUser: b
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { isAuthenticated: false, isFreeUser: false }
 
+    const withinTrial = isWithinFreeTrial(user.created_at)
+
     const { data: sub, error } = await supabase
       .from('subscriptions')
       .select('status')
@@ -47,10 +50,10 @@ async function getAuthState(): Promise<{ isAuthenticated: boolean; isFreeUser: b
 
     if (error) {
       console.error('[FreeUserGate] subscriptions query error:', error)
-      return { isAuthenticated: true, isFreeUser: true }
+      return { isAuthenticated: true, isFreeUser: !withinTrial }
     }
 
-    return { isAuthenticated: true, isFreeUser: !sub }
+    return { isAuthenticated: true, isFreeUser: !sub && !withinTrial }
   } catch (e) {
     console.error('[FreeUserGate] unexpected error:', e)
     return { isAuthenticated: false, isFreeUser: true }
