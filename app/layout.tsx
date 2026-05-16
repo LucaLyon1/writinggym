@@ -8,6 +8,7 @@ import { AuthModalProvider } from "@/components/auth/AuthModal";
 import { FirstVisitAuthModal } from "@/components/auth/FirstVisitAuthModal";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
+import { AppFooterAuto } from "@/components/AppFooter";
 import { createClient } from "@/lib/supabase/server";
 import { isWithinFreeTrial } from "@/lib/trial";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
@@ -83,6 +84,7 @@ export default async function RootLayout({
           {!isAuthenticated && <FirstVisitAuthModal />}
           <FreeUserGate isFreeUser={isFreeUser} />
           {children}
+          <AppFooterAuto />
           {isAuthenticated && <CrispChat />}
         </AuthModalProvider>
         <Script
