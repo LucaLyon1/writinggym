@@ -2784,14 +2784,6 @@ body {
   line-height: 1.5;
 }
 
-.auth-form-hint {
-  font-size: 0.78rem;
-  color: var(--ink-soft);
-  margin: 0.5rem 0 0;
-  text-align: center;
-  line-height: 1.4;
-}
-
 .auth-magic-success {
   display: flex;
   flex-direction: column;
@@ -2878,7 +2870,7 @@ body {
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius);
   font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: 500;
@@ -3004,7 +2996,7 @@ body {
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.04em;

@@ -120,9 +120,6 @@ export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
           <button type="submit" className="auth-submit" disabled={isPending}>
             {isPending ? 'Sending link…' : 'Send sign-in link'}
           </button>
-          <p className="auth-form-hint">
-            We&apos;ll email you a one-tap link. No password needed.
-          </p>
         </form>
       )}
 
