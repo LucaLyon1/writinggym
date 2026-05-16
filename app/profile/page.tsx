@@ -112,6 +112,7 @@ export default async function ProfilePage() {
                 Manage subscription →
               </ManageSubscriptionButton>
             )}
+            <ProfileSetPassword />
           </div>
         </header>
 
@@ -153,8 +154,6 @@ export default async function ProfilePage() {
           </div>
           <StreakBadges currentStreak={currentStreak} selectedBadge={profile?.selected_badge ?? null} />
         </section>
-
-        <ProfileSetPassword />
 
         {/* ── Submissions ── */}
         {!totalCount ? (

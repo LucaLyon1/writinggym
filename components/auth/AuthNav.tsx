@@ -19,14 +19,14 @@ export async function AuthNav() {
         <Link href="/assessment" className="auth-nav-link">
           Assessment
         </Link>
-        <Link href="/profile" className="auth-nav-link">
-          Profile
-        </Link>
         <form action={logout}>
-          <button type="submit" className="auth-nav-btn">
+          <button type="submit" className="auth-nav-link auth-nav-link-btn">
             Sign out
           </button>
         </form>
+        <Link href="/profile" className="auth-nav-btn">
+          Profile
+        </Link>
       </nav>
     )
   }
