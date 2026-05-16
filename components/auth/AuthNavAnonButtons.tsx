@@ -1,26 +1,14 @@
-'use client'
-
-import { useAuthModal } from './AuthModal'
+import Link from 'next/link'
 
 export function AuthNavAnonButtons() {
-  const { open } = useAuthModal()
-
   return (
     <>
-      <button
-        type="button"
-        onClick={() => open('login', 'nav')}
-        className="auth-nav-link auth-nav-link-btn"
-      >
+      <Link href="/login" className="auth-nav-link">
         Sign in
-      </button>
-      <button
-        type="button"
-        onClick={() => open('signup', 'nav')}
-        className="auth-nav-btn"
-      >
+      </Link>
+      <Link href="/signup" className="auth-nav-btn">
         Sign up
-      </button>
+      </Link>
     </>
   )
 }

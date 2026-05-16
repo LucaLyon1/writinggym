@@ -16,7 +16,6 @@ export async function sendMagicLink(
   const supabase = await createClient()
 
   const email = (formData.get('email') as string | null)?.trim()
-  const next = (formData.get('next') as string) || '/'
 
   if (!email) {
     return { error: 'Email is required' }
@@ -25,10 +24,9 @@ export async function sendMagicLink(
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  const emailRedirectTo =
-    next && next.startsWith('/')
-      ? `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
-      : `${siteUrl}/auth/callback`
+  // Always land in the root app after magic-link click; ignore any `next` from
+  // the form so users don't get bounced back to /signup or /pricing.
+  const emailRedirectTo = `${siteUrl}/auth/callback`
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
