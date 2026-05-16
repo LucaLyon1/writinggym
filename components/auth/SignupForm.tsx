@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useActionState } from 'react'
 import Link from 'next/link'
-import { signup, signInWithGoogle } from '@/app/actions/auth'
+import { sendMagicLink, signInWithGoogle } from '@/app/actions/auth'
 
 function GoogleIcon() {
   return (
@@ -28,8 +28,14 @@ function GoogleIcon() {
   )
 }
 
-export function SignupForm({ next }: { next?: string }) {
-  const [state, formAction, isPending] = useActionState(signup, undefined)
+interface SignupFormProps {
+  next?: string
+  hideHeader?: boolean
+  onSwitchMode?: () => void
+}
+
+export function SignupForm({ next, hideHeader, onSwitchMode }: SignupFormProps) {
+  const [state, formAction, isPending] = useActionState(sendMagicLink, undefined)
   const [googleError, setGoogleError] = useState<string | null>(null)
 
   async function handleGoogleSignIn() {
@@ -42,10 +48,14 @@ export function SignupForm({ next }: { next?: string }) {
 
   return (
     <div className="auth-card">
-      <h1 className="auth-title">
-        <span className="auth-logo-mark">✦</span> Create account
-      </h1>
-      <p className="auth-subtitle">Join Proselab to save your progress</p>
+      {!hideHeader && (
+        <>
+          <h1 className="auth-title">
+            <span className="auth-logo-mark">✦</span> Create account
+          </h1>
+          <p className="auth-subtitle">Join Proselab to save your progress</p>
+        </>
+      )}
 
       <div className="auth-form auth-form-oauth">
         <button
@@ -55,7 +65,7 @@ export function SignupForm({ next }: { next?: string }) {
           disabled={isPending}
         >
           <GoogleIcon />
-          Sign in with Google
+          Sign up with Google
         </button>
       </div>
       {googleError && (
@@ -68,77 +78,65 @@ export function SignupForm({ next }: { next?: string }) {
         <span>or</span>
       </div>
 
-      <form action={formAction} className="auth-form">
-        {next && <input type="hidden" name="next" value={next} />}
-        <div className="auth-field">
-          <label htmlFor="username" className="auth-label">
-            Username
-          </label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            required
-            autoComplete="username"
-            placeholder="e.g. alex_writer"
-            className="auth-input"
-            disabled={isPending}
-            minLength={3}
-            maxLength={32}
-          />
-        </div>
-        <div className="auth-field">
-          <label htmlFor="email" className="auth-label">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            placeholder="you@example.com"
-            className="auth-input"
-            disabled={isPending}
-          />
-        </div>
-        <div className="auth-field">
-          <label htmlFor="password" className="auth-label">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            autoComplete="new-password"
-            placeholder="At least 6 characters"
-            className="auth-input"
-            disabled={isPending}
-          />
-        </div>
-        {state?.error && (
-          <p className="auth-error" role="alert">
-            {state.error}
+      {state?.success ? (
+        <div className="auth-magic-success" role="status">
+          <div className="auth-magic-success-icon" aria-hidden>✉️</div>
+          <p className="auth-magic-success-text">{state.success}</p>
+          <p className="auth-magic-success-hint">
+            Didn&apos;t get it? Check spam, or{' '}
+            <button
+              type="button"
+              className="auth-link auth-link-btn"
+              onClick={() => window.location.reload()}
+            >
+              try again
+            </button>
+            .
           </p>
-        )}
-        {/* When email confirmation is back: signup may return success instead of redirecting.
-            {state?.success && (
-              <p className="auth-success" role="status">
-                {state.success}
-              </p>
-            )} */}
-        <button type="submit" className="auth-submit" disabled={isPending}>
-          {isPending ? 'Creating account…' : 'Sign up'}
-        </button>
-      </form>
+        </div>
+      ) : (
+        <form action={formAction} className="auth-form">
+          {next && <input type="hidden" name="next" value={next} />}
+          <div className="auth-field">
+            <label htmlFor="email" className="auth-label">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="auth-input"
+              disabled={isPending}
+            />
+          </div>
+          {state?.error && (
+            <p className="auth-error" role="alert">
+              {state.error}
+            </p>
+          )}
+          <button type="submit" className="auth-submit" disabled={isPending}>
+            {isPending ? 'Sending link…' : 'Send sign-up link'}
+          </button>
+          <p className="auth-form-hint">
+            We&apos;ll email you a one-tap link. Set a password later from your profile.
+          </p>
+        </form>
+      )}
 
       <p className="auth-footer">
         Already have an account?{' '}
-        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="auth-link">
-          Sign in
-        </Link>
+        {onSwitchMode ? (
+          <button type="button" onClick={onSwitchMode} className="auth-link auth-link-btn">
+            Sign in
+          </button>
+        ) : (
+          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="auth-link">
+            Sign in
+          </Link>
+        )}
       </p>
     </div>
   )

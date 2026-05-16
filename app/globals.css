@@ -45,7 +45,6 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   min-height: 100dvh;
-  padding-top: var(--auth-header-height);
 }
 
 /* ─── Layout ─────────────────────────────────────────────── */
@@ -2621,6 +2620,26 @@ body {
   background: var(--paper);
 }
 
+/* Fullscreen, fixed, no-scroll wrapper used by /signup and /login.
+   Sits below the fixed .auth-header (z-index 110) so the nav stays visible. */
+.auth-page-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4.5rem 1.5rem 1.5rem;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.auth-page-fixed .auth-modal.auth-page-modal {
+  margin: 0;
+  box-shadow: none;
+  border: none;
+}
+
 .auth-card {
   width: 100%;
   max-width: 380px;
@@ -2765,6 +2784,95 @@ body {
   line-height: 1.5;
 }
 
+.auth-form-hint {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin: 0.5rem 0 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.auth-magic-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--paper-deep, rgba(26, 22, 19, 0.03));
+}
+
+.auth-magic-success-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.auth-magic-success-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.auth-magic-success-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.profile-password-section {
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--paper);
+}
+
+.profile-password-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.profile-password-toggle:hover {
+  color: var(--accent);
+}
+
+.profile-password-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+.profile-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-password-success {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.profile-password-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
 .auth-submit {
   padding: 0.75rem 1.5rem;
   background: var(--accent);
@@ -2823,10 +2931,8 @@ body {
 }
 
 .auth-header {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 110;
   display: flex;
   align-items: center;
@@ -7280,6 +7386,30 @@ body[data-gated] > *:not(.gate-overlay) {
   border-color: var(--plans-rust-dark);
 }
 
+.gate-logout {
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.gate-logout-btn {
+  background: none;
+  border: none;
+  font-family: var(--plans-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--plans-muted);
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+
+.gate-logout-btn:hover {
+  color: var(--plans-ink);
+}
+
 .gate-eyebrow {
   font-family: var(--font-mono);
   font-size: 0.7rem;
@@ -7329,26 +7459,125 @@ body[data-gated] > *:not(.gate-overlay) {
   background: var(--accent-soft);
 }
 
-.gate-logout {
-  margin-top: 1.25rem;
-  text-align: center;
+/* ─── Auth Modal ────────────────────────────────────────── */
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(26, 22, 19, 0.45);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: auth-modal-fade 0.18s ease-out;
 }
 
-.gate-logout-btn {
+@keyframes auth-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.auth-modal {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 2rem 2rem 1.75rem;
+  max-width: 440px;
+  width: 100%;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(26, 22, 19, 0.35);
+  animation: auth-modal-pop 0.2s ease-out;
+}
+
+@keyframes auth-modal-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  font-family: var(--plans-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--plans-muted);
+  border-radius: 50%;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink-muted);
   cursor: pointer;
-  padding: 0.4rem 0.75rem;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  transition: color 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
-.gate-logout-btn:hover {
-  color: var(--plans-ink);
+.auth-modal-close:hover {
+  background: var(--paper-deep, rgba(26, 22, 19, 0.06));
+  color: var(--ink);
+}
+
+.auth-modal-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  margin: 0 0 1rem;
+}
+
+.auth-modal-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.auth-modal-sub {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+/* Strip the inner .auth-card chrome when rendered inside the modal */
+.auth-modal .auth-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  max-width: none;
+}
+
+.auth-modal .auth-input {
+  background: #ffffff;
+}
+
+/* Button styled as a text link (used inside form footers when switching modes) */
+.auth-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Nav-link button (anonymous nav "Sign in") — inherits .auth-nav-link typography */
+.auth-nav-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  /* Don't reset font — .auth-nav-link sets it */
 }

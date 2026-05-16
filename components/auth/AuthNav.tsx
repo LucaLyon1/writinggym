@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/app/actions/auth'
+import { AuthNavAnonButtons } from './AuthNavAnonButtons'
 
 export async function AuthNav() {
   const supabase = await createClient()
@@ -41,12 +42,7 @@ export async function AuthNav() {
       <Link href="/assessment" className="auth-nav-link">
         Assessment
       </Link>
-      <Link href="/login" className="auth-nav-link">
-        Sign in
-      </Link>
-      <Link href="/signup" className="auth-nav-btn">
-        Sign up
-      </Link>
+      <AuthNavAnonButtons />
     </nav>
   )
 }

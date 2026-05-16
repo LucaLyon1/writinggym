@@ -2,8 +2,18 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 
-/** Must include OAuth/email completion routes so the handler can set session cookies before gating. */
-const PUBLIC_PATHS = ['/', '/login', '/signup', '/pricing', '/auth/callback']
+/** Public paths anonymous users can reach directly. Everything else redirects to /signup. */
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/signup',
+  '/pricing',
+  '/terms',
+  '/privacy',
+  '/cookies',
+  '/email-verified',
+  '/auth/callback',
+]
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some(

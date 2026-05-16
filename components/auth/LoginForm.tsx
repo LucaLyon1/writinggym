@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useActionState } from 'react'
 import Link from 'next/link'
-import { login, signInWithGoogle } from '@/app/actions/auth'
+import { sendMagicLink, signInWithGoogle } from '@/app/actions/auth'
 
 function GoogleIcon() {
   return (
@@ -28,8 +28,14 @@ function GoogleIcon() {
   )
 }
 
-export function LoginForm({ next }: { next?: string }) {
-  const [state, formAction, isPending] = useActionState(login, undefined)
+interface LoginFormProps {
+  next?: string
+  hideHeader?: boolean
+  onSwitchMode?: () => void
+}
+
+export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
+  const [state, formAction, isPending] = useActionState(sendMagicLink, undefined)
   const [googleError, setGoogleError] = useState<string | null>(null)
 
   async function handleGoogleSignIn() {
@@ -42,10 +48,14 @@ export function LoginForm({ next }: { next?: string }) {
 
   return (
     <div className="auth-card">
-      <h1 className="auth-title">
-        <span className="auth-logo-mark">✦</span> Sign in
-      </h1>
-      <p className="auth-subtitle">Welcome back to Proselab</p>
+      {!hideHeader && (
+        <>
+          <h1 className="auth-title">
+            <span className="auth-logo-mark">✦</span> Sign in
+          </h1>
+          <p className="auth-subtitle">Welcome back to Proselab</p>
+        </>
+      )}
 
       <div className="auth-form auth-form-oauth">
         <button
@@ -68,53 +78,65 @@ export function LoginForm({ next }: { next?: string }) {
         <span>or</span>
       </div>
 
-      <form action={formAction} className="auth-form">
-        {next && <input type="hidden" name="next" value={next} />}
-        <div className="auth-field">
-          <label htmlFor="email" className="auth-label">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            placeholder="you@example.com"
-            className="auth-input"
-            disabled={isPending}
-          />
-        </div>
-        <div className="auth-field">
-          <label htmlFor="password" className="auth-label">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            placeholder="••••••••"
-            className="auth-input"
-            disabled={isPending}
-          />
-        </div>
-        {state?.error && (
-          <p className="auth-error" role="alert">
-            {state.error}
+      {state?.success ? (
+        <div className="auth-magic-success" role="status">
+          <div className="auth-magic-success-icon" aria-hidden>✉️</div>
+          <p className="auth-magic-success-text">{state.success}</p>
+          <p className="auth-magic-success-hint">
+            Didn&apos;t get it? Check spam, or{' '}
+            <button
+              type="button"
+              className="auth-link auth-link-btn"
+              onClick={() => window.location.reload()}
+            >
+              try again
+            </button>
+            .
           </p>
-        )}
-        <button type="submit" className="auth-submit" disabled={isPending}>
-          {isPending ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
+        </div>
+      ) : (
+        <form action={formAction} className="auth-form">
+          {next && <input type="hidden" name="next" value={next} />}
+          <div className="auth-field">
+            <label htmlFor="email" className="auth-label">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="auth-input"
+              disabled={isPending}
+            />
+          </div>
+          {state?.error && (
+            <p className="auth-error" role="alert">
+              {state.error}
+            </p>
+          )}
+          <button type="submit" className="auth-submit" disabled={isPending}>
+            {isPending ? 'Sending link…' : 'Send sign-in link'}
+          </button>
+          <p className="auth-form-hint">
+            We&apos;ll email you a one-tap link. No password needed.
+          </p>
+        </form>
+      )}
 
       <p className="auth-footer">
         Don&apos;t have an account?{' '}
-        <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="auth-link">
-          Sign up
-        </Link>
+        {onSwitchMode ? (
+          <button type="button" onClick={onSwitchMode} className="auth-link auth-link-btn">
+            Sign up
+          </button>
+        ) : (
+          <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="auth-link">
+            Sign up
+          </Link>
+        )}
       </p>
     </div>
   )

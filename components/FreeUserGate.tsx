@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
+import posthog from 'posthog-js'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
 import { logout } from '@/app/actions/auth'
 
@@ -25,12 +26,13 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
     } else {
       document.body.setAttribute('data-gated', 'true')
       document.body.style.overflow = 'hidden'
+      posthog.capture('free_user_gate_shown', { pathname })
     }
     return () => {
       document.body.removeAttribute('data-gated')
       document.body.style.overflow = ''
     }
-  }, [isExcluded])
+  }, [isExcluded, pathname])
 
   if (isExcluded) return null
 
@@ -38,13 +40,17 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
     <div className="gate-overlay" role="dialog" aria-modal="true" aria-labelledby="gate-title">
       <div className="gate-modal gate-modal-plans">
         <h2 id="gate-title" className="gate-title">
-          Upgrade now to start<br /><em>practicing your writing</em>
+          Upgrade now to keep<br /><em>practicing your writing</em>
         </h2>
         <div className="gate-plans">
           <PricingPlans currentPlanId={null} />
         </div>
         <form action={logout} className="gate-logout">
-          <button type="submit" className="gate-logout-btn">
+          <button
+            type="submit"
+            className="gate-logout-btn"
+            onClick={() => posthog.capture('gate_logout_clicked', { pathname })}
+          >
             Wrong account? Sign out
           </button>
         </form>

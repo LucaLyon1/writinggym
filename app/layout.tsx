@@ -4,6 +4,8 @@ import Script from "next/script";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
+import { AuthModalProvider } from "@/components/auth/AuthModal";
+import { FirstVisitAuthModal } from "@/components/auth/FirstVisitAuthModal";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
 import { createClient } from "@/lib/supabase/server";
@@ -65,18 +67,21 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`light ${GeistMono.variable} ${cormorantGaramond.variable}`}>
       <body>
-        <header className="auth-header">
-          <Link href="/" className="auth-header-logo">
-            <span style={{ fontFamily: "var(--font-cormorant-garamond), serif" }}>
-              Proselab
-            </span>
-          </Link>
-          <AuthNav />
-        </header>
-        <PostHogIdentify />
-        <FreeUserGate isFreeUser={isFreeUser} />
-        {children}
-        {isAuthenticated && <CrispChat />}
+        <AuthModalProvider>
+          <header className="auth-header">
+            <Link href="/" className="auth-header-logo">
+              <span style={{ fontFamily: "Georgia, serif", fontWeight: 700 }}>
+                Proselab
+              </span>
+            </Link>
+            <AuthNav />
+          </header>
+          <PostHogIdentify />
+          {!isAuthenticated && <FirstVisitAuthModal />}
+          <FreeUserGate isFreeUser={isFreeUser} />
+          {children}
+          {isAuthenticated && <CrispChat />}
+        </AuthModalProvider>
         <Script
           id="cookieyes"
           type="text/javascript"

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { redirect } from 'next/navigation'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
 import { createClient } from '@/lib/supabase/server'
 
@@ -65,8 +64,7 @@ async function getCurrentPlanId(): Promise<string | null> {
 
 export default async function PricingPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login?next=/pricing')
+  await supabase.auth.getUser()
 
   const currentPlanId = await getCurrentPlanId()
 

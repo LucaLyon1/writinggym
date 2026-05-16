@@ -9,6 +9,7 @@ import { getUserEntitlements } from '@/lib/plan'
 import { ManageSubscriptionButton } from '@/components/checkout/ManageSubscriptionButton'
 import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
+import { ProfileSetPassword } from '@/components/profile/ProfileSetPassword'
 
 type PassageCompletion = Tables<'passage_completions'>
 
@@ -20,7 +21,7 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/login')
+    redirect('/signup?next=/profile')
   }
 
   const [entitlements, profileResult, statsResult, firstPageResult] = await Promise.all([
@@ -152,6 +153,8 @@ export default async function ProfilePage() {
           </div>
           <StreakBadges currentStreak={currentStreak} selectedBadge={profile?.selected_badge ?? null} />
         </section>
+
+        <ProfileSetPassword />
 
         {/* ── Submissions ── */}
         {!totalCount ? (

@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { LoginForm } from '@/components/auth/LoginForm'
+import { AuthPageFrame } from '@/components/auth/AuthPageFrame'
 
 export default async function LoginPage({
   searchParams,
@@ -7,12 +6,5 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>
 }) {
   const { next } = await searchParams
-  return (
-    <div className="auth-page">
-      <LoginForm next={next} />
-      <Link href="/" className="auth-back">
-        ← Back to Proselab
-      </Link>
-    </div>
-  )
+  return <AuthPageFrame mode="login" next={next} />
 }

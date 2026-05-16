@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
 const STORAGE_KEY = 'proselab-onboarding-done'
 
@@ -49,18 +49,27 @@ const steps: Step[] = [
 
 export function Onboarding() {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [visible, setVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward')
   const [animating, setAnimating] = useState(false)
 
   useEffect(() => {
+    const forceWelcome = searchParams.get('welcome') === '1'
     const done = localStorage.getItem(STORAGE_KEY)
-    if (!done) {
+    if (forceWelcome || !done) {
       setVisible(true)
       document.body.style.overflow = 'hidden'
     }
-  }, [])
+    if (forceWelcome) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('welcome')
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    }
+  }, [searchParams, pathname, router])
 
   const dismiss = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, '1')

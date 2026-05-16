@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { SignupForm } from '@/components/auth/SignupForm'
+import { AuthPageFrame } from '@/components/auth/AuthPageFrame'
 
 export default async function SignupPage({
   searchParams,
@@ -7,12 +6,5 @@ export default async function SignupPage({
   searchParams: Promise<{ next?: string }>
 }) {
   const { next } = await searchParams
-  return (
-    <div className="auth-page">
-      <SignupForm next={next} />
-      <Link href="/" className="auth-back">
-        ← Back to Proselab
-      </Link>
-    </div>
-  )
+  return <AuthPageFrame mode="signup" next={next} />
 }
