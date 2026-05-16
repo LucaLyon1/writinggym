@@ -381,12 +381,6 @@ export default function PlaygroundPage() {
             onSelect={(p) => setSelectedPrompt(p.id)}
             hero={
               <div className="home-hero home-gallery-hero">
-                <h1 className="home-title">Writing Playground</h1>
-                <p className="home-subtitle">
-                  Browse craft prompts the same way you browse extracts — filter
-                  by category, search, then open a prompt and write. See which
-                  author your voice resembles.
-                </p>
                 {modeToggle}
               </div>
             }

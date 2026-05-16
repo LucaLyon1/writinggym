@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import posthog from 'posthog-js'
 import { LoginForm } from './LoginForm'
 import { SignupForm } from './SignupForm'
+import { AppFooter } from '@/components/AppFooter'
 
 interface AuthPageFrameProps {
   mode: 'signup' | 'login'
@@ -57,6 +58,9 @@ export function AuthPageFrame({ mode, next }: AuthPageFrameProps) {
         ) : (
           <LoginForm next={next} hideHeader />
         )}
+      </div>
+      <div className="auth-page-footer">
+        <AppFooter />
       </div>
     </div>
   )

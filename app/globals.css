@@ -2627,17 +2627,26 @@ body {
   inset: 0;
   z-index: 100;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 4.5rem 1.5rem 1.5rem;
+  padding: 4.5rem 1.5rem 4rem;
   background: var(--paper);
   overflow: hidden;
 }
 
 .auth-page-fixed .auth-modal.auth-page-modal {
-  margin: 0;
+  margin: 3rem 0 auto;
   box-shadow: none;
   border: none;
+}
+
+.auth-page-footer {
+  width: 100%;
+}
+
+.auth-page-footer .app-footer {
+  justify-content: center;
+  padding: 0;
 }
 
 .auth-card {
