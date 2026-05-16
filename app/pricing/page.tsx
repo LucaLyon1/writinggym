@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
 import { createClient } from '@/lib/supabase/server'
+import { AppFooter } from '@/components/AppFooter'
 
 interface FaqItem {
   q: string
@@ -126,6 +127,7 @@ export default async function PricingPage() {
           </p>
         </footer>
       </div>
+      <AppFooter />
     </div>
   )
 }

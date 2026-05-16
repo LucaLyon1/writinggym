@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Stripe from 'stripe'
 import { RefreshLayoutAfterPurchase } from './RefreshLayoutAfterPurchase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { AppFooter } from '@/components/AppFooter'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -151,6 +152,7 @@ export default async function PricingSuccessPage({ searchParams }: SuccessPagePr
           </Link>
         </div>
       </div>
+      <AppFooter />
     </div>
   )
 }

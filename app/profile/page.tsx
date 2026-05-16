@@ -11,6 +11,7 @@ import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
 import { ProfileSetPassword } from '@/components/profile/ProfileSetPassword'
 import { logout } from '@/app/actions/auth'
+import { AppFooter } from '@/components/AppFooter'
 
 type PassageCompletion = Tables<'passage_completions'>
 
@@ -175,6 +176,7 @@ export default async function ProfilePage() {
           />
         )}
       </div>
+      <AppFooter />
     </div>
   )
 }

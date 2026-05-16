@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ExploreList } from '@/components/ExploreList'
 import { COMPLETION_AUTHOR_PROFILE_SELECT, completionAuthorFromProfileEmbed } from '@/lib/completion-author'
+import { AppFooter } from '@/components/AppFooter'
 
 const PAGE_SIZE = 12
 
@@ -99,6 +100,7 @@ export default async function ExplorePage() {
           initialTotal={total}
         />
       </div>
+      <AppFooter />
     </div>
   )
 }

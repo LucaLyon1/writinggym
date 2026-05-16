@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { passages, categories } from '@/data/passages'
 import type { Passage } from '@/data/passages'
+import { AppFooter } from '@/components/AppFooter'
 
 const PROMPTS = [
   'Describe a place you know well — a room, a street, a landscape — in a single paragraph.',
@@ -259,6 +260,7 @@ export default function AssessmentPage() {
           </div>
         )}
       </div>
+      <AppFooter />
     </div>
   )
 }

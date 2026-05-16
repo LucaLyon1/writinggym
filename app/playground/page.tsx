@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { ScoreCard, type FeedbackForScoreCard } from '@/components/ScoreCard'
 import { CraftPromptGallery } from '@/components/CraftPromptGallery'
+import { AppFooter } from '@/components/AppFooter'
 import { craftPlaygroundPrompts } from '@/data/playground-prompts'
 import { CATEGORIES } from '@/lib/categories'
 import { createClient } from '@/lib/supabase/client'
@@ -611,6 +612,7 @@ export default function PlaygroundPage() {
           </div>
         </div>
       )}
+      <AppFooter />
     </div>
   )
 }

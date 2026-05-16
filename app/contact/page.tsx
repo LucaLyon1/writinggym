@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { AppFooter } from "@/components/AppFooter";
 
 export const metadata: Metadata = {
   title: "Contact | Proselab",
@@ -84,6 +85,7 @@ export default function ContactPage() {
           <Link href="/cookies">Cookie Policy</Link>
         </nav>
       </div>
+      <AppFooter />
     </div>
   );
 }

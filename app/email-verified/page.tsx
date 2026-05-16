@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { AppFooter } from '@/components/AppFooter'
 
 export default async function EmailVerifiedPage({
   searchParams,
@@ -35,6 +36,7 @@ export default async function EmailVerifiedPage({
       <Link href="/" className="auth-back">
         ← Back to Proselab
       </Link>
+      <AppFooter />
     </div>
   )
 }

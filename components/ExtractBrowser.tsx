@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { passages, categories, tags } from '@/data/passages'
 import type { Difficulty, Passage } from '@/data/passages'
+import { AppFooter } from '@/components/AppFooter'
 
 const DIFFICULTY_META: Record<Difficulty, { label: string; icon: string }> = {
   accessible: { label: 'Accessible', icon: '◇' },
@@ -242,6 +243,8 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
               )
             })}
           </div>
+
+          <AppFooter />
         </main>
       </div>
     </div>

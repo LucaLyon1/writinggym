@@ -8,6 +8,7 @@ import {
   craftPlaygroundPrompts,
   type CraftPlaygroundPrompt,
 } from '@/data/playground-prompts'
+import { AppFooter } from '@/components/AppFooter'
 
 interface CraftPromptGalleryProps {
   onSelect: (prompt: CraftPlaygroundPrompt) => void
@@ -187,6 +188,8 @@ export function CraftPromptGallery({ onSelect, hero }: CraftPromptGalleryProps) 
               )
             })}
           </div>
+
+          <AppFooter />
         </main>
       </div>
     </div>

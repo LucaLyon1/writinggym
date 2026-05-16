@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { passages } from '@/data/passages'
 import { AnalysisView } from '@/components/AnalysisView'
+import { AppFooter } from '@/components/AppFooter'
 
 const DRAFT_KEY = 'proselab-draft'
 
@@ -45,11 +46,14 @@ export default function ExtractPage() {
   }
 
   return (
-    <AnalysisView
-      key={passage.id}
-      passage={passage}
-      onBack={() => router.push('/')}
-      initialUserText={initialUserText}
-    />
+    <>
+      <AnalysisView
+        key={passage.id}
+        passage={passage}
+        onBack={() => router.push('/')}
+        initialUserText={initialUserText}
+      />
+      <AppFooter />
+    </>
   )
 }

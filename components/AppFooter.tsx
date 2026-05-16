@@ -1,15 +1,3 @@
-'use client'
-
-import { usePathname } from 'next/navigation'
-
-const HIDDEN_ON: ReadonlySet<string> = new Set(['/login', '/signup'])
-
-export function AppFooterAuto() {
-  const pathname = usePathname()
-  if (HIDDEN_ON.has(pathname)) return null
-  return <AppFooter />
-}
-
 export function AppFooter() {
   return (
     <footer className="app-footer">

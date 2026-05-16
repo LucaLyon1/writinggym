@@ -3065,6 +3065,12 @@ body {
   background: var(--accent-soft);
 }
 
+@media (max-width: 640px) {
+  .auth-nav .auth-nav-link {
+    display: none;
+  }
+}
+
 .auth-nav-primary {
   font-weight: 600;
   color: var(--accent) !important;
