@@ -2223,8 +2223,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--line);
+  margin-top: 1.5rem;
+  padding-bottom: 1rem;
 }
 
 .category-title {
@@ -2368,7 +2368,7 @@ body {
 
 /* ── Search bar ───────────────────────────────────────────── */
 .search-bar {
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.6rem;
 }
 
 .search-input {
@@ -2378,7 +2378,7 @@ body {
   font-family: var(--font-body);
   font-size: 0.9rem;
   color: var(--ink);
-  background: var(--paper-warm);
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: 0.35rem;
   outline: none;
@@ -2928,12 +2928,35 @@ body {
 .app-footer {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 1.25rem 1.5rem 2rem;
+  padding: 2rem 1.5rem;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: var(--ink-faint);
+}
+
+.cat-btn-link {
+  text-decoration: none;
+}
+
+.cat-btn-arrow {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.cat-btn-link:hover .cat-btn-arrow {
+  color: var(--accent);
+  transform: translate(1px, -1px);
+}
+
+.browser-sidebar-toggle,
+.browser-sidebar-backdrop {
+  display: none;
 }
 
 .app-footer-link {
@@ -3395,19 +3418,66 @@ body {
     grid-template-columns: 1fr;
     height: auto;
     overflow: visible;
+    position: relative;
   }
 
-  .browser-sidebar {
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 1rem 1.25rem;
+  .browser-sidebar,
+  .home-gallery-main .browser-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(280px, 80vw);
+    min-height: 0;
+    z-index: 60;
+    border-right: 1px solid var(--line);
+    padding: calc(var(--auth-header-height) + 1rem) 1.25rem 1.5rem;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 2px 0 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .browser-body.sidebar-open .browser-sidebar,
+  .home-gallery-main .browser-body.sidebar-open .browser-sidebar {
+    transform: translateX(0);
+  }
+
+  .browser-sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
     gap: 0.4rem;
+    justify-self: start;
+    margin: 1.25rem 1.25rem 0;
+    padding: 0.45rem 0.8rem;
+    background: var(--paper-warm);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.15s;
   }
 
-  .sidebar-label {
-    display: none;
+  .browser-sidebar-toggle:hover {
+    background: var(--paper-deep);
+  }
+
+  .browser-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(0, 0, 0, 0.32);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+
+  .browser-body.sidebar-open .browser-sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .browser-main {

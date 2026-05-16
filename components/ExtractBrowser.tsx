@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useMemo, useEffect, type ReactNode } from 'react'
+import Link from 'next/link'
 import { passages, categories, tags } from '@/data/passages'
 import type { Difficulty, Passage } from '@/data/passages'
+import { AppFooter } from '@/components/AppFooter'
 
 const DIFFICULTY_META: Record<Difficulty, { label: string; icon: string }> = {
   accessible: { label: 'Accessible', icon: '◇' },
@@ -40,6 +42,7 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [completedByPassage, setCompletedByPassage] = useState<
     Record<string, number>
   >({})
@@ -50,6 +53,22 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
       .then((data) => (data ? setCompletedByPassage(data) : null))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!sidebarOpen) return
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth
+    const previousOverflow = document.body.style.overflow
+    const previousPadding = document.body.style.paddingRight
+    document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    }
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.body.style.paddingRight = previousPadding
+    }
+  }, [sidebarOpen])
 
   const passageCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -75,23 +94,40 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
 
   return (
     <div className="browser-root browser-embedded">
-      <div className="browser-body">
+      <div className={`browser-body ${sidebarOpen ? 'sidebar-open' : ''}`}>
+        <button
+          type="button"
+          className="browser-sidebar-toggle"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open filters"
+        >
+          <span aria-hidden="true">☰</span> Filters
+        </button>
+        <div
+          className="browser-sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
         <nav className="browser-sidebar">
           <span className="sidebar-label">Categories</span>
           <button
             className={`cat-btn ${!activeCategoryId ? 'active' : ''}`}
-            onClick={() => setActiveCategoryId(null)}
+            onClick={() => {
+              setActiveCategoryId(null)
+              setSidebarOpen(false)
+            }}
           >
-            <span className="cat-btn-label">All</span>
+            <span className="cat-btn-label">All Passages</span>
             <span className="cat-btn-count">{passages.length}</span>
           </button>
           {categories.map((cat) => (
             <button
               key={cat.id}
               className={`cat-btn ${activeCategoryId === cat.id ? 'active' : ''}`}
-              onClick={() =>
+              onClick={() => {
                 setActiveCategoryId(activeCategoryId === cat.id ? null : cat.id)
-              }
+                setSidebarOpen(false)
+              }}
             >
               <span className="cat-btn-label">{cat.label}</span>
               <span className="cat-btn-count">{passageCounts[cat.id] || 0}</span>
@@ -103,7 +139,10 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
             <button
               key={d}
               className={`cat-btn ${activeDifficulty === d ? 'active' : ''}`}
-              onClick={() => setActiveDifficulty(activeDifficulty === d ? null : d)}
+              onClick={() => {
+                setActiveDifficulty(activeDifficulty === d ? null : d)
+                setSidebarOpen(false)
+              }}
             >
               <span className="cat-btn-label">
                 <span className={`difficulty-dot difficulty-${d}`} />
@@ -114,16 +153,30 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
               </span>
             </button>
           ))}
+
+          <span className="sidebar-label" style={{ marginTop: '1.25rem' }}>Other pages</span>
+          <Link href="/explore" className="cat-btn cat-btn-link">
+            <span className="cat-btn-label">Explore community</span>
+            <span className="cat-btn-arrow" aria-hidden="true">↗</span>
+          </Link>
+          <Link href="/assessment" className="cat-btn cat-btn-link">
+            <span className="cat-btn-label">Assessment</span>
+            <span className="cat-btn-arrow" aria-hidden="true">↗</span>
+          </Link>
         </nav>
 
         <main className="browser-main">
           {hero}
-          {activeCategory && (
-            <div className="category-header">
-              <h2 className="category-title">{activeCategory.label}</h2>
-              <p className="category-desc">{activeCategory.description}</p>
-            </div>
-          )}
+          <div className="category-header">
+            <h2 className="category-title">
+              {activeCategory ? activeCategory.label : 'All Passages'}
+            </h2>
+            <p className="category-desc">
+              {activeCategory
+                ? activeCategory.description
+                : 'Browse passages from masters, study your choice and try rewriting based on a prompt. Get your efforts analysed and learn how to improve.'}
+            </p>
+          </div>
 
           <div className="search-bar">
             <input
@@ -190,6 +243,8 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
               )
             })}
           </div>
+
+          <AppFooter />
         </main>
       </div>
     </div>
