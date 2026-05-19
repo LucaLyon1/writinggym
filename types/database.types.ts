@@ -264,6 +264,7 @@ export type Database = {
           is_founding_member: boolean
           last_active_date: string | null
           longest_streak: number
+          post_trial_choice_at: string | null
           preferred_categories: string[]
           preferred_difficulty: string | null
           preferred_length: string | null
@@ -284,6 +285,7 @@ export type Database = {
           is_founding_member?: boolean
           last_active_date?: string | null
           longest_streak?: number
+          post_trial_choice_at?: string | null
           preferred_categories?: string[]
           preferred_difficulty?: string | null
           preferred_length?: string | null
@@ -304,6 +306,7 @@ export type Database = {
           is_founding_member?: boolean
           last_active_date?: string | null
           longest_streak?: number
+          post_trial_choice_at?: string | null
           preferred_categories?: string[]
           preferred_difficulty?: string | null
           preferred_length?: string | null

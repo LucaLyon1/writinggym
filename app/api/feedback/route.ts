@@ -3,14 +3,15 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { ExtractAnalysis } from '@/types/extract'
 import type { Json } from '@/types/database.types'
 import { createClient } from '@/lib/supabase/server'
-import { supabaseAdmin } from '@/lib/supabase-admin'
 import { constraintKey } from '@/lib/constraint-key'
 import {
   checkAnalysisQuota,
+  countFreeWeeklyAnalyses,
+  FREE_WEEKLY_ANALYSIS_LIMIT,
   recordAnalysisRequest,
-  recordSessionCompletion,
   isPaidUser,
 } from '@/lib/plan'
+import { isWithinFreeTrial } from '@/lib/trial'
 import { getPostHogClient } from '@/lib/posthog-server'
 
 const SYSTEM_PROMPT = `You are a literary craft analyst giving honest, constructive feedback to a writer attempting a stylistic exercise.
@@ -177,14 +178,6 @@ export interface UserFeedback {
   verdict: string
 }
 
-async function hasUsedLifetimeFreeAnalysis(userId: string): Promise<boolean> {
-  const { count } = await supabaseAdmin
-    .from('analysis_requests')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-  return (count ?? 0) > 0
-}
-
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -206,28 +199,30 @@ export async function POST(request: Request) {
 
   const paid = await isPaidUser(user.id)
 
-  // Free users get one lifetime "aha" analysis before the paywall.
-  let isFreePreview = false
   if (!paid) {
-    const alreadyUsed = await hasUsedLifetimeFreeAnalysis(user.id)
-    if (alreadyUsed) {
-      const posthogPaywall = getPostHogClient()
-      posthogPaywall.capture({ distinctId: user.id, event: 'free_analysis_paywall_hit', properties: {} })
-      await posthogPaywall.shutdown()
-      return NextResponse.json(
-        {
-          error:
-            'You\'ve used your free analysis. Upgrade to Core for unlimited detailed feedback on every rewrite.',
-          upgradeUrl: '/pricing',
-          requiresUpgrade: true,
-        },
-        { status: 403 }
-      )
+    const inTrial = isWithinFreeTrial(user.created_at)
+    if (!inTrial) {
+      const usedThisWeek = await countFreeWeeklyAnalyses(user.id)
+      if (usedThisWeek >= FREE_WEEKLY_ANALYSIS_LIMIT) {
+        const posthogPaywall = getPostHogClient()
+        posthogPaywall.capture({
+          distinctId: user.id,
+          event: 'free_analysis_paywall_hit',
+          properties: { used: usedThisWeek, limit: FREE_WEEKLY_ANALYSIS_LIMIT },
+        })
+        await posthogPaywall.shutdown()
+        return NextResponse.json(
+          {
+            error: `You've used ${usedThisWeek}/${FREE_WEEKLY_ANALYSIS_LIMIT} free analyses this week. Upgrade to Core for unlimited feedback.`,
+            upgradeUrl: '/pricing',
+            requiresUpgrade: true,
+            quota: { used: usedThisWeek, limit: FREE_WEEKLY_ANALYSIS_LIMIT },
+          },
+          { status: 403 }
+        )
+      }
     }
-    isFreePreview = true
-  }
-
-  if (paid) {
+  } else {
     const quota = await checkAnalysisQuota(user.id)
     if (!quota.allowed) {
       return NextResponse.json(
@@ -376,13 +371,12 @@ export async function POST(request: Request) {
       properties: {
         passage_id: body.passageId ?? null,
         completion_id: body.completionId ?? null,
-        free_preview: isFreePreview,
         word_count: body.userText.trim().split(/\s+/).length,
       },
     })
     await posthog.shutdown()
 
-    return NextResponse.json({ ...result, freePreview: isFreePreview })
+    return NextResponse.json(result)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json(

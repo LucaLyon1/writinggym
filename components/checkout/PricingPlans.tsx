@@ -28,8 +28,8 @@ const FREE_PLAN: PricingPlan = {
   label: 'Free',
   price: 'Free',
   features: [
-    '1 session per day',
-    'Full rewrite + side-by-side comparison',
+    '3 analyses per week',
+    'Unlimited rewrites + side-by-side comparison',
     'Browse the full extract library',
   ],
   cta: 'Get started',
@@ -80,18 +80,38 @@ const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
 
 interface PricingPlansProps {
   currentPlanId?: string | null
+  /** If true, render the Free card with a CTA that records the post-trial choice. */
+  mustChooseAfterTrial?: boolean
 }
 
-export function PricingPlans({ currentPlanId }: PricingPlansProps) {
+export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPlansProps) {
   const [showCanceled, setShowCanceled] = useState(false)
   const [billing, setBilling] = useState<BillingCycle>('yearly')
+  const [savingFreeChoice, setSavingFreeChoice] = useState(false)
 
   const proPlan = PRO_PLANS[billing]
-  const plans = [proPlan]
+  // Always render Free + Core so users can see both options.
+  const plans = [FREE_PLAN, proPlan]
 
   const isCurrentPlan = (planId: string) => {
     if (!currentPlanId && planId === 'free') return true
     return currentPlanId === planId
+  }
+
+  async function chooseFree() {
+    setSavingFreeChoice(true)
+    try {
+      const res = await fetch('/api/profile/post-trial-choice', {
+        method: 'POST',
+      })
+      if (res.ok) {
+        posthog.capture('post_trial_chose_free')
+        // Reload so the layout drops the paywall flag.
+        window.location.href = '/'
+      }
+    } finally {
+      setSavingFreeChoice(false)
+    }
   }
 
   useEffect(() => {
@@ -199,7 +219,18 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
                 ))}
               </ul>
 
-              {isCurrent ? (
+              {mustChooseAfterTrial && plan.id === 'free' ? (
+                <div className="plans-card-cta">
+                  <button
+                    type="button"
+                    onClick={chooseFree}
+                    disabled={savingFreeChoice}
+                    className="plans-btn plans-btn-outline"
+                  >
+                    {savingFreeChoice ? 'Saving…' : 'Continue with Free'}
+                  </button>
+                </div>
+              ) : isCurrent ? (
                 <div className="plans-card-cta">
                   <span className="plans-btn plans-btn-current" aria-disabled="true">
                     Current plan

@@ -6,6 +6,7 @@ import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
 import { AuthModalProvider } from "@/components/auth/AuthModal";
 import { FirstVisitAuthModal } from "@/components/auth/FirstVisitAuthModal";
+import { PostTrialPaywall } from "@/components/auth/PostTrialPaywall";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
 import { createClient } from "@/lib/supabase/server";
@@ -33,30 +34,53 @@ export const metadata: Metadata = {
   manifest: "/favicon/site.webmanifest",
 };
 
-async function getAuthState(): Promise<{ isAuthenticated: boolean; isFreeUser: boolean }> {
+interface AuthState {
+  isAuthenticated: boolean
+  isFreeUser: boolean
+  mustChooseAfterTrial: boolean
+}
+
+async function getAuthState(): Promise<AuthState> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { isAuthenticated: false, isFreeUser: false }
+    if (!user) return { isAuthenticated: false, isFreeUser: false, mustChooseAfterTrial: false }
 
     const withinTrial = isWithinFreeTrial(user.created_at)
 
-    const { data: sub, error } = await supabase
-      .from('subscriptions')
-      .select('status')
-      .eq('user_id', user.id)
-      .in('status', ['active', 'trialing'])
-      .maybeSingle()
+    const [{ data: sub, error: subError }, { data: profile, error: profileError }] = await Promise.all([
+      supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', user.id)
+        .in('status', ['active', 'trialing'])
+        .maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('post_trial_choice_at')
+        .eq('id', user.id)
+        .maybeSingle(),
+    ])
 
-    if (error) {
-      console.error('[FreeUserGate] subscriptions query error:', error)
-      return { isAuthenticated: true, isFreeUser: !withinTrial }
+    if (subError) {
+      console.error('[FreeUserGate] subscriptions query error:', subError)
+      return { isAuthenticated: true, isFreeUser: !withinTrial, mustChooseAfterTrial: false }
     }
 
-    return { isAuthenticated: true, isFreeUser: !sub && !withinTrial }
+    const isFreeUser = !sub && !withinTrial
+    const hasChosen = !!profile?.post_trial_choice_at
+    if (profileError) {
+      console.error('[PostTrialPaywall] profile query error:', profileError)
+    }
+
+    return {
+      isAuthenticated: true,
+      isFreeUser,
+      mustChooseAfterTrial: !sub && !withinTrial && !hasChosen,
+    }
   } catch (e) {
     console.error('[FreeUserGate] unexpected error:', e)
-    return { isAuthenticated: false, isFreeUser: true }
+    return { isAuthenticated: false, isFreeUser: true, mustChooseAfterTrial: false }
   }
 }
 
@@ -65,7 +89,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isFreeUser } = await getAuthState()
+  const { isAuthenticated, isFreeUser, mustChooseAfterTrial } = await getAuthState()
 
   return (
     <html lang="en" className={`light ${GeistMono.variable} ${cormorantGaramond.variable}`}>
@@ -82,6 +106,7 @@ export default async function RootLayout({
           <PostHogIdentify />
           {!isAuthenticated && <FirstVisitAuthModal />}
           <FreeUserGate isFreeUser={isFreeUser} />
+          <PostTrialPaywall show={mustChooseAfterTrial} />
           {children}
           {isAuthenticated && <CrispChat />}
         </AuthModalProvider>

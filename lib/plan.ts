@@ -7,8 +7,13 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { isWithinFreeTrial } from '@/lib/trial'
 
 export type PlanId = 'free' | 'core' | 'premium'
+
+// Free users keep getting a small allowance after their trial ends.
+// The trial itself (first 7 days) is unlimited.
+export const FREE_WEEKLY_ANALYSIS_LIMIT = 3
 
 export interface Plan {
     id: PlanId
@@ -113,40 +118,6 @@ export async function getUserPlanDetails(userId: string): Promise<Plan> {
     return data as Plan
 }
 
-// ── Check daily session limit for free users ─────────────────
-
-export interface DailySessionQuota {
-    allowed: boolean
-    used: number
-    limit: number | null
-}
-
-export async function checkDailySessionQuota(userId: string): Promise<DailySessionQuota> {
-    const planId = await getUserPlan(userId)
-
-    if (planId !== 'free') {
-        return { allowed: true, used: 0, limit: null }
-    }
-
-    const today = new Date().toISOString().split('T')[0]
-
-    const { data } = await supabaseAdmin
-        .from('daily_stats')
-        .select('sessions')
-        .eq('user_id', userId)
-        .eq('stat_date', today)
-        .maybeSingle()
-
-    const used = data?.sessions ?? 0
-    const limit = 1
-
-    return {
-        allowed: used < limit,
-        used,
-        limit,
-    }
-}
-
 // ── Check if user has paid plan (for feature gating) ─────────
 
 export async function isPaidUser(userId: string): Promise<boolean> {
@@ -154,9 +125,43 @@ export async function isPaidUser(userId: string): Promise<boolean> {
     return planId !== 'free'
 }
 
+// ── Free post-trial: count weekly analyses against FREE_WEEKLY_ANALYSIS_LIMIT ─
+
+function currentWeekStartIso(): string {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - d.getDay())
+    return d.toISOString()
+}
+
+export async function countFreeWeeklyAnalyses(userId: string): Promise<number> {
+    const { count } = await supabaseAdmin
+        .from('analysis_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('requested_at', currentWeekStartIso())
+    return count ?? 0
+}
+
+async function getUserCreatedAt(userId: string): Promise<string | null> {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(userId)
+    return data?.user?.created_at ?? null
+}
+
 // ── Full entitlements (plan + current usage) ─────────────────
 
 export async function getUserEntitlements(userId: string): Promise<Entitlements> {
+    const base = await loadBaseEntitlements(userId)
+    if (base.plan_id !== 'free') return base
+
+    const createdAt = await getUserCreatedAt(userId)
+    if (isWithinFreeTrial(createdAt)) {
+        return { ...base, plan_label: 'Trial', weekly_analysis_limit: null }
+    }
+    return { ...base, plan_label: 'Free', weekly_analysis_limit: FREE_WEEKLY_ANALYSIS_LIMIT }
+}
+
+async function loadBaseEntitlements(userId: string): Promise<Entitlements> {
     // Try the RPC first; fall back to direct queries if it fails (e.g. stale SQL)
     const { data, error } = await supabaseAdmin.rpc('get_user_entitlements', {
         p_user_id: userId,
@@ -191,21 +196,13 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
         .eq('id', planId)
         .single()
 
-    const weekStart = new Date()
-    weekStart.setHours(0, 0, 0, 0)
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
-
-    const { count } = await supabaseAdmin
-        .from('analysis_requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('requested_at', weekStart.toISOString())
+    const count = await countFreeWeeklyAnalyses(userId)
 
     return {
         plan_id: planId,
         plan_label: plan?.label ?? 'Free',
         weekly_analysis_limit: plan?.weekly_analysis_limit !== undefined ? plan.weekly_analysis_limit : 5,
-        analyses_used_this_week: count ?? 0,
+        analyses_used_this_week: count,
         extract_access: (plan?.extract_access ?? 'restricted') as Entitlements['extract_access'],
         has_playground: plan?.has_playground ?? false,
         has_custom_voice: plan?.has_custom_voice ?? false,

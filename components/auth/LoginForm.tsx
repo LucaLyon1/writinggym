@@ -1,9 +1,13 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useActionState } from 'react'
-import Link from 'next/link'
-import { sendMagicLink, signInWithGoogle } from '@/app/actions/auth'
+import { useState } from "react";
+import { useActionState } from "react";
+import Link from "next/link";
+import {
+  sendMagicLink,
+  signInWithGoogle,
+  signInWithPassword,
+} from "@/app/actions/auth";
 
 function GoogleIcon() {
   return (
@@ -25,24 +29,32 @@ function GoogleIcon() {
         fill="#EA4335"
       />
     </svg>
-  )
+  );
 }
 
 interface LoginFormProps {
-  next?: string
-  hideHeader?: boolean
-  onSwitchMode?: () => void
+  next?: string;
+  hideHeader?: boolean;
+  onSwitchMode?: () => void;
 }
 
 export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
-  const [state, formAction, isPending] = useActionState(sendMagicLink, undefined)
-  const [googleError, setGoogleError] = useState<string | null>(null)
+  const [magicState, magicAction, magicPending] = useActionState(
+    sendMagicLink,
+    undefined,
+  );
+  const [passwordState, passwordAction, passwordPending] = useActionState(
+    signInWithPassword,
+    undefined,
+  );
+  const [showPassword, setShowPassword] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   async function handleGoogleSignIn() {
-    setGoogleError(null)
-    const result = await signInWithGoogle(next)
+    setGoogleError(null);
+    const result = await signInWithGoogle(next);
     if (result?.error) {
-      setGoogleError(result.error)
+      setGoogleError(result.error);
     }
   }
 
@@ -62,7 +74,7 @@ export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
           type="button"
           onClick={handleGoogleSignIn}
           className="auth-google-btn"
-          disabled={isPending}
+          disabled={magicPending}
         >
           <GoogleIcon />
           Sign in with Google
@@ -78,12 +90,76 @@ export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
         <span>or</span>
       </div>
 
-      {state?.success ? (
+      {showPassword ? (
+        <form action={passwordAction} className="auth-form">
+          {next && <input type="hidden" name="next" value={next} />}
+          <div className="auth-field">
+            <label htmlFor="password-email" className="auth-label">
+              Email
+            </label>
+            <input
+              id="password-email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="auth-input"
+              disabled={passwordPending}
+            />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="password" className="auth-label">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className="auth-input"
+              disabled={passwordPending}
+            />
+          </div>
+          {passwordState?.error && (
+            <p className="auth-error" role="alert">
+              {passwordState.error}
+            </p>
+          )}
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={passwordPending}
+          >
+            {passwordPending ? "Signing in…" : "Sign in with password"}
+          </button>
+          <p
+            style={{
+              marginTop: "0.35rem",
+              fontSize: "0.875rem",
+              color: "var(--ink-muted)",
+              textAlign: "center",
+            }}
+          >
+            <button
+              type="button"
+              className="auth-link auth-link-btn"
+              onClick={() => setShowPassword(false)}
+            >
+              Back to magic link
+            </button>
+          </p>
+        </form>
+      ) : magicState?.success ? (
         <div className="auth-magic-success" role="status">
-          <div className="auth-magic-success-icon" aria-hidden>✉️</div>
-          <p className="auth-magic-success-text">{state.success}</p>
+          <div className="auth-magic-success-icon" aria-hidden>
+            ✉️
+          </div>
+          <p className="auth-magic-success-text">{magicState.success}</p>
           <p className="auth-magic-success-hint">
-            Didn&apos;t get it? Check spam, or{' '}
+            Didn&apos;t get it? Check spam, or{" "}
             <button
               type="button"
               className="auth-link auth-link-btn"
@@ -95,7 +171,7 @@ export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
           </p>
         </div>
       ) : (
-        <form action={formAction} className="auth-form">
+        <form action={magicAction} className="auth-form">
           {next && <input type="hidden" name="next" value={next} />}
           <div className="auth-field">
             <label htmlFor="email" className="auth-label">
@@ -109,32 +185,56 @@ export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
               autoComplete="email"
               placeholder="you@example.com"
               className="auth-input"
-              disabled={isPending}
+              disabled={magicPending}
             />
           </div>
-          {state?.error && (
+          {magicState?.error && (
             <p className="auth-error" role="alert">
-              {state.error}
+              {magicState.error}
             </p>
           )}
-          <button type="submit" className="auth-submit" disabled={isPending}>
-            {isPending ? 'Sending link…' : 'Send sign-in link'}
+          <button type="submit" className="auth-submit" disabled={magicPending}>
+            {magicPending ? "Sending link…" : "Send sign-in link"}
           </button>
+          <p
+            style={{
+              marginTop: "0.35rem",
+              fontSize: "0.875rem",
+              color: "var(--ink-muted)",
+              textAlign: "center",
+            }}
+          >
+            Or you can{" "}
+            <button
+              type="button"
+              className="auth-link auth-link-btn"
+              onClick={() => setShowPassword(true)}
+            >
+              sign in with password
+            </button>
+          </p>
         </form>
       )}
 
       <p className="auth-footer">
-        Don&apos;t have an account?{' '}
+        Don&apos;t have an account?{" "}
         {onSwitchMode ? (
-          <button type="button" onClick={onSwitchMode} className="auth-link auth-link-btn">
+          <button
+            type="button"
+            onClick={onSwitchMode}
+            className="auth-link auth-link-btn"
+          >
             Sign up
           </button>
         ) : (
-          <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="auth-link">
+          <Link
+            href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
+            className="auth-link"
+          >
             Sign up
           </Link>
         )}
       </p>
     </div>
-  )
+  );
 }

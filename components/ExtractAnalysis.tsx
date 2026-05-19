@@ -250,7 +250,6 @@ interface UserFeedback {
   divergences?: DivergenceAnalysis
   next_step?: string
   verdict: string
-  freePreview?: boolean
 }
 
 interface Submission {
@@ -459,18 +458,6 @@ function WriteSidebar({
     <div className="ea-sidebar">
       {feedback && (
         <>
-          {feedback.freePreview && (
-            <div className="ea-sidebar-section ea-free-preview-banner">
-              <span className="ea-free-preview-label">Free preview</span>
-              <p className="ea-free-preview-text">
-                This was your free analysis. Start a 7-day free trial of Core to
-                get feedback like this on every rewrite.
-              </p>
-              <a href="/pricing" className="ea-free-preview-cta">
-                Start 7-day free trial →
-              </a>
-            </div>
-          )}
           {feedback.divergences && (
             <div className="ea-sidebar-section ea-sidebar-divergences">
               <h3 className="ea-sidebar-heading">Where you diverged</h3>
@@ -1316,10 +1303,10 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
                 <line x1="12" y1="2" x2="2" y2="12" />
               </svg>
             </button>
-            <h2 className="upgrade-prompt-title">You&rsquo;ve used your free analysis</h2>
+            <h2 className="upgrade-prompt-title">You&rsquo;ve used your free analyses this week</h2>
             <p className="upgrade-prompt-text">
-              Hope it was useful. Keep practicing with unlimited detailed feedback
-              on every rewrite — start a 7-day free trial of Core.
+              Free plans include 3 analyses per week. Upgrade to Core for
+              unlimited detailed feedback on every rewrite.
             </p>
             <ul className="upgrade-prompt-features">
               <li>Unlimited AI feedback on every rewrite</li>
@@ -1328,7 +1315,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
               <li>Follow-up chat to deepen understanding</li>
             </ul>
             <a href="/pricing" className="upgrade-prompt-btn">
-              Start 7-day free trial
+              Upgrade to Core
             </a>
           </div>
         </div>

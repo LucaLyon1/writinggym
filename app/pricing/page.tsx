@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
 import { createClient } from '@/lib/supabase/server'
+import { isWithinFreeTrial } from '@/lib/trial'
 import { AppFooter } from '@/components/AppFooter'
 
 interface FaqItem {
@@ -44,30 +45,41 @@ const FAQS: FaqItem[] = [
   },
 ]
 
-async function getCurrentPlanId(): Promise<string | null> {
+async function getPricingState(): Promise<{
+  currentPlanId: string | null
+  mustChooseAfterTrial: boolean
+}> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
+    if (!user) return { currentPlanId: null, mustChooseAfterTrial: false }
 
-    const { data: sub } = await supabase
-      .from('subscriptions')
-      .select('plan_id, status')
-      .eq('user_id', user.id)
-      .in('status', ['active', 'trialing'])
-      .maybeSingle()
+    const [{ data: sub }, { data: profile }] = await Promise.all([
+      supabase
+        .from('subscriptions')
+        .select('plan_id, status')
+        .eq('user_id', user.id)
+        .in('status', ['active', 'trialing'])
+        .maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('post_trial_choice_at')
+        .eq('id', user.id)
+        .maybeSingle(),
+    ])
 
-    return sub?.plan_id ?? null
+    const withinTrial = isWithinFreeTrial(user.created_at)
+    const hasChosen = !!profile?.post_trial_choice_at
+    const mustChooseAfterTrial = !sub && !withinTrial && !hasChosen
+
+    return { currentPlanId: sub?.plan_id ?? null, mustChooseAfterTrial }
   } catch {
-    return null
+    return { currentPlanId: null, mustChooseAfterTrial: false }
   }
 }
 
 export default async function PricingPage() {
-  const supabase = await createClient()
-  await supabase.auth.getUser()
-
-  const currentPlanId = await getCurrentPlanId()
+  const { currentPlanId, mustChooseAfterTrial } = await getPricingState()
 
   return (
     <div className="plans-root">
@@ -88,7 +100,10 @@ export default async function PricingPage() {
           </p>
         </header>
 
-        <PricingPlans currentPlanId={currentPlanId} />
+        <PricingPlans
+          currentPlanId={currentPlanId}
+          mustChooseAfterTrial={mustChooseAfterTrial}
+        />
 
         <p className="plans-note">
           Cancel anytime from your account, 7-day money-back guarantee included.

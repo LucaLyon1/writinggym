@@ -42,6 +42,29 @@ export async function sendMagicLink(
   }
 }
 
+export async function signInWithPassword(
+  _prevState: AuthState | undefined,
+  formData: FormData
+): Promise<AuthState> {
+  const supabase = await createClient()
+
+  const email = (formData.get('email') as string | null)?.trim()
+  const password = (formData.get('password') as string | null) ?? ''
+
+  if (!email || !password) {
+    return { error: 'Email and password are required.' }
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  const next = (formData.get('next') as string | null)?.trim()
+  redirect(next && next.startsWith('/') ? next : '/')
+}
+
 export async function setPassword(
   _prevState: { error?: string; success?: string } | undefined,
   formData: FormData

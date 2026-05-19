@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { isPaidUser } from '@/lib/plan'
+import { isWithinFreeTrial } from '@/lib/trial'
 
 const SYSTEM_PROMPT = `You are a literary craft expert helping a writer deepen their understanding of a specific writing exercise they just completed.
 
@@ -48,10 +49,10 @@ export async function POST(request: Request) {
   }
 
   const paid = await isPaidUser(user.id)
-  if (!paid) {
+  if (!paid && !isWithinFreeTrial(user.created_at)) {
     return NextResponse.json(
       {
-        error: 'Follow-up chat is available on the Core plan.',
+        error: 'Your 7-day free trial has ended. Upgrade to Core to keep using follow-up chat.',
         upgradeUrl: '/pricing',
         requiresUpgrade: true,
       },
