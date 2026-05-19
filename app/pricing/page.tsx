@@ -84,10 +84,6 @@ export default async function PricingPage() {
   return (
     <div className="plans-root">
       <div className="plans-inner">
-        <Link href="/" className="plans-back-link">
-          ← Back to home
-        </Link>
-
         <header className="plans-header">
           <h1 className="plans-title">
             Choose your
@@ -110,14 +106,11 @@ export default async function PricingPage() {
         </p>
 
         <section className="plans-faq" aria-label="Frequently asked questions">
-          <p className="plans-faq-eyebrow">Questions, answered</p>
+          <h2 className="plans-faq-eyebrow">FAQs</h2>
           <div className="plans-faq-list">
-            {FAQS.map((item, i) => (
+            {FAQS.map((item) => (
               <details key={item.q} className="plans-faq-item">
                 <summary className="plans-faq-question">
-                  <span className="plans-faq-num" aria-hidden>
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
                   <span className="plans-faq-q-text">{item.q}</span>
                   <span className="plans-faq-icon" aria-hidden>
                     →
@@ -133,14 +126,6 @@ export default async function PricingPage() {
           </div>
         </section>
 
-        <footer className="plans-footer">
-          <p className="plans-footer-brought">
-            Brought to you by{' '}
-            <Link href="/" className="plans-footer-brought-link">
-              ProseLab
-            </Link>
-          </p>
-        </footer>
       </div>
       <AppFooter />
     </div>

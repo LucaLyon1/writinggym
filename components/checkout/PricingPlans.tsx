@@ -7,10 +7,35 @@ import { CheckoutButton } from './CheckoutButton'
 
 type BillingCycle = 'yearly' | 'monthly'
 
+const ACCENT_WORDS = new Set(['Core', 'Premium', 'VIP'])
+
+function renderPlanTitle(label: string) {
+  const parts = label.split(' ')
+  return parts.map((word, i) => {
+    const space = i < parts.length - 1 ? ' ' : ''
+    if (ACCENT_WORDS.has(word)) {
+      return (
+        <span key={i} className="plans-card-title-accent">
+          {word}
+          {space}
+        </span>
+      )
+    }
+    return (
+      <span key={i}>
+        {word}
+        {space}
+      </span>
+    )
+  })
+}
+
 interface PricingPlan {
   id: string
   label: string
   price: string
+  originalPrice?: string
+  priceUnit?: string
   priceNote?: string
   features: string[]
   cta: string
@@ -21,61 +46,99 @@ interface PricingPlan {
   useManagedPayments?: boolean
   trialDays?: number
   isPopular?: boolean
+  isDiscounted?: boolean
+  isUnavailable?: boolean
+  badge?: string
 }
 
-const FREE_PLAN: PricingPlan = {
-  id: 'free',
-  label: 'Free',
-  price: 'Free',
-  features: [
-    '3 analyses per week',
-    'Unlimited rewrites + side-by-side comparison',
-    'Browse the full extract library',
-  ],
-  cta: 'Get started',
-  ctaHref: '/signup',
-  isPopular: false,
-}
+const CORE_FEATURES = [
+  'Unlimited sessions',
+  'AI analysis on every rewrite',
+  'Full extract library',
+  'Follow-up chat after every analysis',
+  'Cancel anytime',
+]
 
-const PRO_PLANS: Record<BillingCycle, PricingPlan> = {
+const CORE_PLANS: Record<BillingCycle, PricingPlan> = {
   yearly: {
     id: 'pre-release-yearly',
     label: 'ProseLab Core',
     price: '$8.25',
+    priceUnit: ' / month',
     priceNote: 'Billed $99 annually — save 17%',
-    features: [
-      'Unlimited sessions',
-      'AI analysis on every rewrite',
-      'Full extract library',
-      'Follow-up chat after every analysis',
-      'Cancel anytime',
-    ],
+    features: CORE_FEATURES,
     cta: 'Get ProseLab Core',
     lookupKey: 'yearly_99',
     product: 'yearly_99',
     mode: 'subscription',
     useManagedPayments: true,
-    isPopular: true,
   },
   monthly: {
     id: 'pre-release-monthly',
     label: 'ProseLab Core',
     price: '$9.99',
+    priceUnit: ' / month',
     priceNote: 'Billed monthly',
-    features: [
-      'Unlimited sessions',
-      'AI analysis on every rewrite',
-      'Full extract library',
-      'Follow-up chat after every analysis',
-      'Cancel anytime',
-    ],
+    features: CORE_FEATURES,
     cta: 'Get ProseLab Core',
     lookupKey: 'monthly_9.99',
     product: 'monthly_9.99',
     mode: 'subscription',
     useManagedPayments: true,
-    isPopular: true,
   },
+}
+
+const PREMIUM_PLANS: Record<BillingCycle, PricingPlan> = {
+  yearly: {
+    id: 'premium-yearly',
+    label: 'ProseLab Premium',
+    price: '$8.25',
+    originalPrice: '$16.50',
+    priceUnit: ' / month',
+    priceNote: 'Billed $99 annually — 50% off launch price',
+    features: CORE_FEATURES,
+    cta: 'Get ProseLab Premium',
+    lookupKey: 'yearly_99',
+    product: 'yearly_99',
+    mode: 'subscription',
+    useManagedPayments: true,
+    isDiscounted: true,
+    badge: 'Early-Bird price',
+  },
+  monthly: {
+    id: 'premium-monthly',
+    label: 'ProseLab Premium',
+    price: '$9.99',
+    originalPrice: '$19.99',
+    priceUnit: ' / month',
+    priceNote: '50% off launch price',
+    features: CORE_FEATURES,
+    cta: 'Get ProseLab Premium',
+    lookupKey: 'monthly_9.99',
+    product: 'monthly_9.99',
+    mode: 'subscription',
+    useManagedPayments: true,
+    isDiscounted: true,
+    badge: 'Early-Bird price',
+  },
+}
+
+const VIP_PLAN: PricingPlan = {
+  id: 'vip',
+  label: 'ProseLab VIP',
+  price: '$199',
+  priceUnit: ' one-time',
+  priceNote: 'Lifetime access — coming soon',
+  features: [
+    'Everything in Premium',
+    'Lifetime access — no renewals',
+    'Priority support',
+    'Direct line to the team',
+    'Early access to new features',
+  ],
+  cta: 'Coming soon',
+  ctaHref: '#',
+  isUnavailable: true,
 }
 
 interface PricingPlansProps {
@@ -89,9 +152,9 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
   const [billing, setBilling] = useState<BillingCycle>('yearly')
   const [savingFreeChoice, setSavingFreeChoice] = useState(false)
 
-  const proPlan = PRO_PLANS[billing]
-  // Always render Free + Core so users can see both options.
-  const plans = [FREE_PLAN, proPlan]
+  const corePlan = CORE_PLANS[billing]
+  const premiumPlan = PREMIUM_PLANS[billing]
+  const plans = [corePlan, premiumPlan, VIP_PLAN]
 
   const isCurrentPlan = (planId: string) => {
     if (!currentPlanId && planId === 'free') return true
@@ -186,21 +249,31 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
           return (
             <article
               key={plan.id}
-              className={`plans-card ${plan.isPopular && !isCurrent ? 'plans-card-popular' : ''} ${isCurrent ? 'plans-card-current' : ''}`}
+              className={[
+                'plans-card',
+                plan.isDiscounted && !isCurrent ? 'plans-card-discounted' : '',
+                plan.isPopular && !isCurrent ? 'plans-card-popular' : '',
+                plan.isUnavailable ? 'plans-card-unavailable' : '',
+                isCurrent ? 'plans-card-current' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              aria-disabled={plan.isUnavailable || undefined}
             >
-              {isCurrent && (
+              {isCurrent ? (
                 <span className="plans-badge plans-badge-current">Your plan</span>
-              )}
+              ) : plan.badge ? (
+                <span className="plans-badge plans-badge-discounted">{plan.badge}</span>
+              ) : null}
               <div className="plans-card-header">
-                <h2 className="plans-card-title">{plan.label}</h2>
+                <h2 className="plans-card-title">{renderPlanTitle(plan.label)}</h2>
                 <p className="plans-card-price">
-                  {plan.id === 'free' ? (
-                    plan.price
-                  ) : (
-                    <>
-                      {plan.price}
-                      <span className="plans-card-price-unit"> / month</span>
-                    </>
+                  {plan.originalPrice && (
+                    <span className="plans-card-price-original">{plan.originalPrice}</span>
+                  )}
+                  {plan.price}
+                  {plan.priceUnit && (
+                    <span className="plans-card-price-unit">{plan.priceUnit}</span>
                   )}
                 </p>
                 {plan.priceNote && (
@@ -236,6 +309,17 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
                     Current plan
                   </span>
                 </div>
+              ) : plan.isUnavailable ? (
+                <div className="plans-card-cta">
+                  <button
+                    type="button"
+                    disabled
+                    className="plans-btn plans-btn-disabled"
+                    aria-disabled="true"
+                  >
+                    {plan.cta}
+                  </button>
+                </div>
               ) : plan.lookupKey && plan.product ? (
                 <CheckoutButton
                   lookupKey={plan.lookupKey}
@@ -245,7 +329,7 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
                   trialDays={plan.trialDays}
                   successPath="/pricing/success"
                   cancelPath="/pricing"
-                  className="plans-btn plans-btn-primary"
+                  className={`plans-btn ${plan.isDiscounted ? 'plans-btn-primary' : 'plans-btn-outline'}`}
                 >
                   {plan.cta}
                 </CheckoutButton>

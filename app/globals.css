@@ -4430,9 +4430,9 @@ button.profile-manage-subscription:disabled {
 }
 
 .plans-inner {
-    max-width: 960px;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 4rem 2rem 5rem;
+    padding: 3rem 2rem 5rem;
 }
 
 .plans-back-link {
@@ -4563,12 +4563,13 @@ button.profile-manage-subscription:disabled {
 
 .plans-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.5rem;
     margin-bottom: 2.5rem;
-    max-width: 420px;
+    max-width: 1080px;
     margin-left: auto;
     margin-right: auto;
+    align-items: stretch;
 }
 
 .plans-card {
@@ -4593,6 +4594,19 @@ button.profile-manage-subscription:disabled {
 .plans-card-popular {
     border-color: var(--plans-rust);
     box-shadow: 0 4px 24px rgba(184, 76, 46, 0.08);
+}
+
+.plans-card-discounted {
+    border-color: var(--plans-rust);
+    box-shadow:
+        0 0 0 2px var(--plans-rust),
+        0 8px 28px rgba(184, 76, 46, 0.14);
+    background: linear-gradient(180deg, #fffaf3 0%, #ffffff 60%);
+}
+
+.plans-badge-discounted {
+    background: var(--plans-rust);
+    color: white;
 }
 
 .plans-badge {
@@ -4623,6 +4637,10 @@ button.profile-manage-subscription:disabled {
     margin-bottom: 0.5rem;
 }
 
+.plans-card-title-accent {
+    color: var(--plans-rust);
+}
+
 .plans-card-price {
     font-family: var(--plans-mono);
     font-size: 2.2rem;
@@ -4638,6 +4656,19 @@ button.profile-manage-subscription:disabled {
     font-weight: 400;
     color: var(--plans-muted);
     letter-spacing: 0.02em;
+}
+
+.plans-card-price-original {
+    display: inline-block;
+    margin-right: 0.6rem;
+    font-family: var(--plans-mono);
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--plans-muted);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
 }
 
 .plans-card-price-note {
@@ -4731,6 +4762,24 @@ button.profile-manage-subscription:disabled {
     color: var(--plans-rust);
 }
 
+.plans-btn-disabled,
+.plans-btn-disabled:hover {
+    background: var(--plans-aged);
+    color: var(--plans-muted);
+    border: 2px solid rgba(26, 23, 20, 0.12);
+    cursor: not-allowed;
+}
+
+.plans-card-unavailable {
+    opacity: 0.55;
+    filter: grayscale(0.35);
+}
+
+.plans-card-unavailable:hover {
+    border-color: rgba(26, 23, 20, 0.12);
+    box-shadow: none;
+}
+
 .plans-note {
     text-align: center;
     font-family: var(--plans-mono);
@@ -4800,9 +4849,8 @@ button.profile-manage-subscription:disabled {
 }
 
 .plans-faq {
-    margin-top: 4rem;
-    padding-top: 3rem;
-    border-top: 1px solid rgba(26, 23, 20, 0.08);
+    margin-top: 2.5rem;
+    padding-top: 2rem;
 }
 
 .plans-faq-eyebrow {
@@ -4875,7 +4923,7 @@ button.profile-manage-subscription:disabled {
 }
 
 .plans-faq-answer {
-    padding: 0 0 1.25rem 2.75rem;
+    padding: 0 0 1.25rem 0;
 }
 
 .plans-faq-answer-body {
@@ -4961,9 +5009,16 @@ button.profile-manage-subscription:disabled {
     min-width: 180px;
 }
 
+@media (max-width: 768px) {
+    .plans-grid {
+        grid-template-columns: 1fr;
+        max-width: 420px;
+    }
+}
+
 @media (max-width: 640px) {
     .plans-inner {
-        padding: 3rem 1.25rem 4rem;
+        padding: 1.5rem 1.25rem 4rem;
     }
 
     .plans-grid {
