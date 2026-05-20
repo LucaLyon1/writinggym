@@ -54,8 +54,17 @@ interface PricingPlan {
 const CORE_FEATURES = [
   'Unlimited sessions',
   'AI analysis on every rewrite',
-  'Full extract library',
   'Follow-up chat after every analysis',
+  'Cancel anytime',
+]
+
+const PREMIUM_FEATURES = [
+  'Unlimited sessions',
+  'AI analysis on every rewrite',
+  'Full extract library — always',
+  'Follow-up chat after every analysis',
+  'Early access to new features',
+  'Exclusive founder-member Discord access',
   'Cancel anytime',
 ]
 
@@ -96,7 +105,7 @@ const PREMIUM_PLANS: Record<BillingCycle, PricingPlan> = {
     originalPrice: '$16.50',
     priceUnit: ' / month',
     priceNote: 'Billed $99 annually — 50% off launch price',
-    features: CORE_FEATURES,
+    features: PREMIUM_FEATURES,
     cta: 'Get ProseLab Premium',
     lookupKey: 'yearly_99',
     product: 'yearly_99',
@@ -112,7 +121,7 @@ const PREMIUM_PLANS: Record<BillingCycle, PricingPlan> = {
     originalPrice: '$19.99',
     priceUnit: ' / month',
     priceNote: '50% off launch price',
-    features: CORE_FEATURES,
+    features: PREMIUM_FEATURES,
     cta: 'Get ProseLab Premium',
     lookupKey: 'monthly_9.99',
     product: 'monthly_9.99',
