@@ -23,20 +23,6 @@ export function AnalysisView({ passage, onBack, initialUserText }: AnalysisViewP
 
   return (
     <div className="analysis-view">
-      <div className="analysis-topbar">
-        <button className="back-btn" onClick={onBack}>
-          ← Go back to library
-        </button>
-        {category && (
-          <span className="gym-category-badge">{category.label}</span>
-        )}
-        <span className={`tile-difficulty tile-difficulty-${passage.difficulty}`}>
-          {passage.difficulty.charAt(0).toUpperCase() + passage.difficulty.slice(1)}
-        </span>
-        <span className="analysis-topbar-title">
-          {passage.author} — <em>{passage.title}</em>
-        </span>
-      </div>
       <ExtractAnalysis
         analysis={analysis}
         isLoading={isLoading}
@@ -45,6 +31,11 @@ export function AnalysisView({ passage, onBack, initialUserText }: AnalysisViewP
         constraint={constraint}
         categoryId={passage.categoryId}
         initialUserText={initialUserText}
+        author={passage.author}
+        title={passage.title}
+        difficulty={passage.difficulty}
+        categoryLabel={category?.label}
+        onBack={onBack}
       />
     </div>
   )

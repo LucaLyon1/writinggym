@@ -8,7 +8,6 @@ import { PublicAuthorAttribution } from '@/components/PublicAuthorAttribution'
 import type { CompletionAuthorPayload } from '@/lib/completion-author'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
-import { FollowUpChat } from '@/components/FollowUpChat'
 
 interface ExtractAnalysisProps {
   analysis: ExtractAnalysisType | null
@@ -18,9 +17,15 @@ interface ExtractAnalysisProps {
   constraint?: string
   categoryId?: string
   initialUserText?: string
+  author?: string
+  title?: string
+  difficulty?: string
+  categoryLabel?: string
+  onBack?: () => void
 }
 
-type Phase = 'loading' | 'analyse' | 'write'
+type Phase = 'loading' | 'analyse' | 'write' | 'community'
+type Tab = 'analyse' | 'write' | 'community'
 
 const CATEGORY_KEYS: CraftCategory[] = ['structure', 'voice', 'imagery', 'pacing']
 
@@ -73,22 +78,40 @@ function AnnotatedText({
             >
               {seg.text}
             </span>
-            <span
-              className="ea-seg-tooltip"
-              style={{ borderTopColor: config.color }}
-            >
-              <span
-                className="ea-annotation-label"
-                style={{ color: config.color }}
-              >
-                {config.label}
-              </span>
-              <p className="ea-annotation-note">{seg.annotation.note}</p>
-            </span>
           </span>
         )
       })}
     </p>
+  )
+}
+
+function AnnotationPanel({ segment }: { segment: Segment | null }) {
+  if (!segment || !segment.annotation) {
+    return (
+      <div className="ea-annotation-panel ea-annotation-panel-empty">
+        <p className="ea-annotation-panel-hint">
+          Hover a highlighted phrase to see what&rsquo;s going on with it.
+        </p>
+      </div>
+    )
+  }
+  const config = CATEGORIES[segment.annotation.category]
+  return (
+    <div
+      className="ea-annotation-panel"
+      style={{ borderTopColor: config.color }}
+    >
+      <span
+        className="ea-annotation-panel-label"
+        style={{ color: config.color }}
+      >
+        {config.label}
+      </span>
+      <blockquote className="ea-annotation-panel-quote">
+        “{segment.text.trim()}”
+      </blockquote>
+      <p className="ea-annotation-panel-note">{segment.annotation.note}</p>
+    </div>
   )
 }
 
@@ -183,55 +206,288 @@ function ReadItButton({
   )
 }
 
-function AnalyseFollowBlock({
-  analysis,
-  onContinue,
+function LeftSidebar({
+  activeTab,
+  onTabChange,
+  onBack,
+  onShowFeedback,
+  feedbackAvailable,
 }: {
-  analysis: ExtractAnalysisType
-  onContinue: () => void
+  activeTab: Tab
+  onTabChange: (t: Tab) => void
+  onBack?: () => void
+  onShowFeedback: () => void
+  feedbackAvailable: boolean
 }) {
   return (
-    <section className="ea-analyse-follow" aria-label="Analysis summary">
-      <h3 className="ea-sidebar-heading">What&rsquo;s happening here</h3>
-      <div className="ea-summary-list">
-        {analysis.summary.map((sentence, i) => (
-          <p key={i} className="ea-summary-item">
-            {sentence}
-          </p>
-        ))}
-      </div>
-      <button
-        type="button"
-        className="ea-ready-btn ea-analyse-cta"
-        onClick={onContinue}
-      >
-        Continue to your writing exercise →
-      </button>
-    </section>
+    <aside className="ea-left-sidebar">
+      {onBack && (
+        <button type="button" className="ea-left-back" onClick={onBack}>
+          ← Library
+        </button>
+      )}
+      <nav className="ea-left-nav" aria-label="Sections">
+        <button
+          type="button"
+          className={`ea-left-nav-btn${activeTab === 'analyse' ? ' is-active' : ''}`}
+          onClick={() => onTabChange('analyse')}
+        >
+          Analyse
+        </button>
+        <button
+          type="button"
+          className={`ea-left-nav-btn${activeTab === 'write' ? ' is-active' : ''}`}
+          onClick={() => onTabChange('write')}
+        >
+          Exercise
+        </button>
+        <button
+          type="button"
+          className="ea-left-nav-btn"
+          onClick={onShowFeedback}
+          disabled={!feedbackAvailable}
+          title={feedbackAvailable ? 'Open your latest feedback' : 'Run "Analyse my writing" first'}
+        >
+          Feedback
+        </button>
+        <button
+          type="button"
+          className={`ea-left-nav-btn${activeTab === 'community' ? ' is-active' : ''}`}
+          onClick={() => onTabChange('community')}
+        >
+          Community
+        </button>
+      </nav>
+    </aside>
   )
 }
 
-function WriteConstraintBlock({
-  constraint,
-  onBackToAnalysis,
+function TutorialCard({ activeTab }: { activeTab: Tab }) {
+  const steps =
+    activeTab === 'analyse'
+      ? [
+          'Hover any highlighted phrase to read why it works.',
+          'Filter the dimensions with the pills above the extract.',
+          'When you’re ready, take the exercise and write your own version.',
+        ]
+      : activeTab === 'write'
+      ? [
+          'Re-read the constraint on the right — it’s your brief.',
+          'Draft your version in the textarea. Use Test for an example.',
+          'Submit when you’re happy, then run Analyse my writing for feedback.',
+        ]
+      : [
+          'Your own rewrites sit at the top — click one to revisit its analysis.',
+          'Upvote what you love from other writers.',
+          'Read different takes on the same constraint to widen your range.',
+        ]
+  return (
+    <div className="ea-right-card ea-tutorial-card">
+      <h3 className="ea-right-card-heading">How this page works</h3>
+      <ol className="ea-tutorial-list">
+        {steps.map((s, i) => (
+          <li key={i} className="ea-tutorial-item">
+            <span className="ea-tutorial-num">{i + 1}</span>
+            <span className="ea-tutorial-text">{s}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+function ReferencePassageCard({
+  segments,
+  activeCategory,
+  onToggleCategory,
+  fullText,
+  speak,
+  stop,
+  speaking,
+  loading,
+  categoryId,
 }: {
-  constraint: string
-  onBackToAnalysis: () => void
+  segments: Segment[]
+  activeCategory: CraftCategory | null
+  onToggleCategory: (cat: CraftCategory) => void
+  fullText: string
+  speak: (t: string, categoryId?: string) => void
+  stop: () => void
+  speaking: boolean
+  loading: boolean
+  categoryId?: string
 }) {
   return (
-    <header className="ea-write-constraint">
-      <div className="ea-write-constraint-top">
-        <button
-          type="button"
-          className="ea-return-to-analysis"
-          onClick={onBackToAnalysis}
-        >
-          ← Return to analysis
-        </button>
+    <div className="ea-right-card ea-reference-card">
+      <div className="ea-reference-head">
+        <h3 className="ea-right-card-heading">Reference</h3>
+        <ReadItButton
+          text={fullText}
+          speak={speak}
+          stop={stop}
+          speaking={speaking}
+          loading={loading}
+          categoryId={categoryId}
+        />
       </div>
-      <h3 className="ea-sidebar-heading">Your exercise</h3>
-      <p className="ea-constraint-reminder">{constraint}</p>
-    </header>
+      <CategoryPills active={activeCategory} onToggle={onToggleCategory} />
+      <div className="ea-reference-prose">
+        <AnnotatedText
+          segments={segments}
+          activeCategory={activeCategory}
+          hoveredIndex={null}
+          onHover={() => {}}
+        />
+      </div>
+    </div>
+  )
+}
+
+function ExtractInfoCard({
+  author,
+  title,
+  difficulty,
+  categoryLabel,
+}: {
+  author?: string
+  title?: string
+  difficulty?: string
+  categoryLabel?: string
+}) {
+  if (!author && !title && !categoryLabel && !difficulty) return null
+  return (
+    <div className="ea-right-card ea-extract-info-card">
+      {(categoryLabel || difficulty) && (
+        <div className="ea-extract-info-tags">
+          {categoryLabel && (
+            <span className="gym-category-badge">{categoryLabel}</span>
+          )}
+          {difficulty && (
+            <span className={`tile-difficulty tile-difficulty-${difficulty}`}>
+              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+            </span>
+          )}
+        </div>
+      )}
+      {(author || title) && (
+        <div className="ea-extract-info-title">
+          {author && <p className="ea-extract-info-author">{author}</p>}
+          {title && <em className="ea-extract-info-work">{title}</em>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CommunityView({
+  submissions,
+  submissionsLoading,
+  publicSubmissions,
+  publicSubmissionsLoading,
+  onOpenOwn,
+  formatDate,
+}: {
+  submissions: Submission[]
+  submissionsLoading: boolean
+  publicSubmissions: PublicSubmission[]
+  publicSubmissionsLoading: boolean
+  onOpenOwn: (s: Submission) => void
+  formatDate: (iso: string) => string
+}) {
+  const [previewSubmission, setPreviewSubmission] = useState<Submission | PublicSubmission | null>(null)
+
+  return (
+    <div className="ea-community">
+      <section className="ea-community-section">
+        <h3 className="ea-community-heading">Your rewrites</h3>
+        {submissionsLoading ? (
+          <p className="ea-submissions-loading">Loading…</p>
+        ) : submissions.length === 0 ? (
+          <p className="ea-submissions-empty">You haven&rsquo;t submitted a rewrite yet for this passage.</p>
+        ) : (
+          <ul className="ea-community-list">
+            {submissions.map((s) => (
+              <li key={s.id} className="ea-community-item ea-community-item-own">
+                <button
+                  type="button"
+                  className="ea-community-item-body"
+                  onClick={() => onOpenOwn(s)}
+                  title="Open this rewrite and its analysis"
+                >
+                  <div className="ea-submission-meta">
+                    <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
+                    {s.word_count != null && (
+                      <span className="ea-submission-words">{s.word_count} words</span>
+                    )}
+                  </div>
+                  {s.user_text && (
+                    <p className="ea-submission-preview">
+                      {s.user_text.length > 240
+                        ? s.user_text.slice(0, 240) + '…'
+                        : s.user_text}
+                    </p>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="ea-community-section">
+        <h3 className="ea-community-heading">Other writers</h3>
+        {publicSubmissionsLoading ? (
+          <p className="ea-submissions-loading">Loading…</p>
+        ) : publicSubmissions.length === 0 ? (
+          <p className="ea-submissions-empty">No public rewrites yet. Be the first to share yours.</p>
+        ) : (
+          <ul className="ea-community-list">
+            {publicSubmissions.map((s) => (
+              <li key={s.id} className="ea-community-item">
+                <div className="ea-submission-meta ea-public-submission-meta">
+                  <PublicAuthorAttribution author={s} />
+                  <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
+                  {s.word_count != null && (
+                    <span className="ea-submission-words">{s.word_count} words</span>
+                  )}
+                </div>
+                {s.user_text && (
+                  <p className="ea-public-submission-text">
+                    {s.user_text.length > 240
+                      ? s.user_text.slice(0, 240) + '…'
+                      : s.user_text}
+                  </p>
+                )}
+                <div className="ea-submission-actions">
+                  <UpvoteButton
+                    completionId={s.id}
+                    initialCount={s.upvote_count}
+                    initialUpvoted={s.viewer_has_upvoted}
+                  />
+                  {s.user_text && s.user_text.length > 240 && (
+                    <button
+                      type="button"
+                      className="ea-submission-load"
+                      onClick={() => setPreviewSubmission(s)}
+                    >
+                      Read
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {previewSubmission && (
+        <SubmissionPreviewModal
+          submission={previewSubmission}
+          formatDate={formatDate}
+          onClose={() => setPreviewSubmission(null)}
+        />
+      )}
+    </div>
   )
 }
 
@@ -331,51 +587,6 @@ function normalizeFeedback(raw: Record<string, unknown> | null): UserFeedback | 
   }
 }
 
-function FeedbackPanel({ feedback }: { feedback: UserFeedback }) {
-  const strongPoints = feedback.strong_points ?? []
-  const weakPoints = feedback.weak_points ?? []
-
-  return (
-    <div className="ea-feedback-panel">
-      <div className="ea-feedback-verdict">
-        <p className="ea-verdict-text">{feedback.verdict}</p>
-      </div>
-
-      {(strongPoints.length > 0 || weakPoints.length > 0) && (
-        <div className="ea-points-row">
-          {strongPoints.length > 0 && (
-            <div className="ea-points-group ea-strong-points">
-              <h4 className="ea-points-heading">What works</h4>
-              <ul className="ea-points-list">
-                {strongPoints.map((point, i) => (
-                  <li key={i} className="ea-point-item ea-point-strong">{point}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {weakPoints.length > 0 && (
-            <div className="ea-points-group ea-weak-points">
-              <h4 className="ea-points-heading">What to work on</h4>
-              <ul className="ea-points-list">
-                {weakPoints.map((point, i) => (
-                  <li key={i} className="ea-point-item ea-point-weak">{point}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      {feedback.analysis && (
-        <div className="ea-feedback-analysis">
-          <p className="ea-feedback-text">{feedback.analysis}</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function SubmissionPreviewModal({
   submission,
   formatDate,
@@ -424,213 +635,20 @@ function SubmissionPreviewModal({
   )
 }
 
-function WriteSidebar({
+export function ExtractAnalysis({
   analysis,
-  submissions,
-  submissionsLoading,
-  onLoadSubmission,
-  onDeleteSubmission,
-  deletingId,
-  formatDate,
-  feedback,
-  originalText,
-  userText,
-  publicSubmissions,
-  publicSubmissionsLoading,
-}: {
-  analysis: ExtractAnalysisType
-  submissions: Submission[]
-  submissionsLoading: boolean
-  onLoadSubmission: (s: Submission) => void
-  onDeleteSubmission: (id: string) => void
-  deletingId: string | null
-  formatDate: (iso: string) => string
-  feedback: UserFeedback | null
-  originalText: string
-  userText: string
-  publicSubmissions: PublicSubmission[]
-  publicSubmissionsLoading: boolean
-}) {
-  const [previewSubmission, setPreviewSubmission] = useState<Submission | PublicSubmission | null>(null)
-  const [visibleCount, setVisibleCount] = useState(2)
-
-  return (
-    <div className="ea-sidebar">
-      {feedback && (
-        <>
-          {feedback.divergences && (
-            <div className="ea-sidebar-section ea-sidebar-divergences">
-              <h3 className="ea-sidebar-heading">Where you diverged</h3>
-              <div className="ea-divergence-list">
-                {(Object.entries(feedback.divergences) as [keyof DivergenceAnalysis, string | null][])
-                  .filter(([, text]) => text !== null)
-                  .map(([dim, text]) => {
-                    const config = CATEGORIES[dim]
-                    return (
-                      <div key={dim} className="ea-divergence-item" style={{ borderLeftColor: config.color }}>
-                        <div className="ea-divergence-header">
-                          <span className="ea-divergence-label" style={{ color: config.color }}>
-                            {config.label}
-                          </span>
-                        </div>
-                        <p className="ea-divergence-text">{text}</p>
-                      </div>
-                    )
-                  })}
-              </div>
-            </div>
-          )}
-
-          {feedback.next_step && (
-            <div className="ea-sidebar-section ea-sidebar-actionable">
-              <h3 className="ea-sidebar-heading">Try this next time</h3>
-              <p className="ea-actionable-text">{feedback.next_step}</p>
-            </div>
-          )}
-
-          <div className="ea-sidebar-section ea-sidebar-feedback">
-            <h3 className="ea-sidebar-heading">Full analysis</h3>
-            <div className="ea-sidebar-feedback-content">
-              <p className="ea-feedback-text">{feedback.analysis}</p>
-            </div>
-          </div>
-
-          <div className="ea-sidebar-section">
-            <FollowUpChat
-              originalText={originalText}
-              constraint={analysis.constraint}
-              userText={userText}
-              feedbackSummary={feedback.analysis}
-            />
-          </div>
-        </>
-      )}
-
-      <div className="ea-sidebar-section ea-submissions-section">
-        <h3 className="ea-sidebar-heading">Previous submissions</h3>
-        {submissionsLoading ? (
-          <p className="ea-submissions-loading">Loading…</p>
-        ) : submissions.length === 0 ? (
-          <p className="ea-submissions-empty">No saved drafts yet. Submit your writing to see it here — you can save without requesting analysis.</p>
-        ) : (
-          <>
-          <ul className="ea-submissions-list">
-            {submissions.slice(0, visibleCount).map((s) => (
-              <li key={s.id} className="ea-submission-item">
-                <div className="ea-submission-meta">
-                  <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
-                  {s.word_count != null && (
-                    <span className="ea-submission-words">{s.word_count} words</span>
-                  )}
-                </div>
-                {s.user_text && (
-                  <p className="ea-submission-preview">
-                    {s.user_text.length > 100
-                      ? s.user_text.slice(0, 100) + '…'
-                      : s.user_text}
-                  </p>
-                )}
-                <div className="ea-submission-actions">
-                  {s.user_text && s.user_text.length > 100 && (
-                    <button
-                      type="button"
-                      className="ea-submission-load"
-                      onClick={() => setPreviewSubmission(s)}
-                    >
-                      Read
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="ea-submission-load"
-                    onClick={() => onLoadSubmission(s)}
-                  >
-                    Load
-                  </button>
-                  <button
-                    type="button"
-                    className="ea-submission-delete"
-                    onClick={() => onDeleteSubmission(s.id)}
-                    disabled={deletingId === s.id}
-                    title="Delete this submission"
-                  >
-                    {deletingId === s.id ? '…' : 'Delete'}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {submissions.length > visibleCount && (
-            <button
-              type="button"
-              className="ea-submissions-show-more"
-              onClick={() => setVisibleCount((n) => n + 2)}
-            >
-              Show more ({submissions.length - visibleCount} remaining)
-            </button>
-          )}
-          </>
-        )}
-      </div>
-
-      <div className="ea-sidebar-section ea-public-submissions-section">
-        <h3 className="ea-sidebar-heading">Other writers</h3>
-        {publicSubmissionsLoading ? (
-          <p className="ea-submissions-loading">Loading…</p>
-        ) : publicSubmissions.length === 0 ? (
-          <p className="ea-submissions-empty">No public rewrites yet. Be the first to share yours.</p>
-        ) : (
-          <ul className="ea-submissions-list">
-            {publicSubmissions.map((s) => (
-              <li key={s.id} className="ea-submission-item ea-public-submission-item">
-                <div className="ea-submission-meta ea-public-submission-meta">
-                  <PublicAuthorAttribution author={s} />
-                  <span className="ea-submission-date">{formatDate(s.completed_at)}</span>
-                  {s.word_count != null && (
-                    <span className="ea-submission-words">{s.word_count} words</span>
-                  )}
-                </div>
-                {s.user_text && (
-                  <p className="ea-public-submission-text">
-                    {s.user_text.length > 100
-                      ? s.user_text.slice(0, 100) + '…'
-                      : s.user_text}
-                  </p>
-                )}
-                <div className="ea-submission-actions">
-                  <UpvoteButton
-                    completionId={s.id}
-                    initialCount={s.upvote_count}
-                    initialUpvoted={s.viewer_has_upvoted}
-                  />
-                  {s.user_text && s.user_text.length > 100 && (
-                    <button
-                      type="button"
-                      className="ea-submission-load"
-                      onClick={() => setPreviewSubmission(s)}
-                    >
-                      Read
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {previewSubmission && (
-        <SubmissionPreviewModal
-          submission={previewSubmission}
-          formatDate={formatDate}
-          onClose={() => setPreviewSubmission(null)}
-        />
-      )}
-    </div>
-  )
-}
-
-export function ExtractAnalysis({ analysis, isLoading, error, passageId, constraint, categoryId, initialUserText }: ExtractAnalysisProps) {
+  isLoading,
+  error,
+  passageId,
+  constraint,
+  categoryId,
+  initialUserText,
+  author,
+  title,
+  difficulty,
+  categoryLabel,
+  onBack,
+}: ExtractAnalysisProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [phase, setPhase] = useState<Phase>(initialUserText ? 'write' : 'loading')
@@ -643,7 +661,6 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   const [testLoading, setTestLoading] = useState(false)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [publicSubmissions, setPublicSubmissions] = useState<PublicSubmission[]>([])
   const [publicSubmissionsLoading, setPublicSubmissionsLoading] = useState(false)
   const [showFeedbackCard, setShowFeedbackCard] = useState(false)
@@ -693,7 +710,7 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
   }, [passageId, constraint])
 
   useEffect(() => {
-    if (phase === 'write' && passageId && constraint) {
+    if ((phase === 'write' || phase === 'community') && passageId && constraint) {
       fetchSubmissions()
       fetchPublicSubmissions()
     }
@@ -706,22 +723,6 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
     setFeedbackError(null)
     setSubmittedTextSnapshot(text.trim())
     setSubmittedCompletionId(s.id)
-  }
-
-  async function handleDeleteSubmission(id: string) {
-    setDeletingId(id)
-    try {
-      const res = await fetch(`/api/completions/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setSubmissions((prev) => prev.filter((s) => s.id !== id))
-        if (id === submittedCompletionId) {
-          setSubmittedCompletionId(null)
-          setSubmittedTextSnapshot('')
-        }
-      }
-    } finally {
-      setDeletingId(null)
-    }
   }
 
   const wordCount = useMemo(() => countWords(userText), [userText])
@@ -978,190 +979,266 @@ export function ExtractAnalysis({ analysis, isLoading, error, passageId, constra
     }
   }, [showFeedbackCard])
 
-  if (isLoading) {
-    return (
-      <div className="ea-root">
-        <div className="ea-loading">
-          <p className="ea-loading-text">Analysing the extract…</p>
+  const activeTab: Tab = phase === 'loading' ? 'analyse' : phase
+
+  function handleTabChange(t: Tab) {
+    setPhase(t)
+  }
+
+  function handleOpenOwnFromCommunity(s: Submission) {
+    handleLoadSubmission(s)
+    setPhase('write')
+  }
+
+  const analyseCenter = analysis ? (
+    <section className="ea-stage ea-stage-analyse">
+      <header className="ea-stage-head">
+        <h2 className="ea-stage-title">Analysis</h2>
+        <div className="ea-stage-actions">
+          <CategoryPills
+            active={activeCategory}
+            onToggle={handleCategoryToggle}
+          />
+          <ReadItButton
+            text={fullText}
+            speak={speak}
+            stop={stop}
+            speaking={speaking}
+            loading={speechLoading}
+            categoryId={categoryId}
+          />
         </div>
+      </header>
+      <div className="ea-stage-body ea-stage-body-prose">
+        <AnnotatedText
+          segments={analysis.segments}
+          activeCategory={activeCategory}
+          hoveredIndex={hoveredIndex}
+          onHover={setHoveredIndex}
+        />
+        <AnnotationPanel
+          segment={hoveredIndex !== null ? analysis.segments[hoveredIndex] ?? null : null}
+        />
       </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="ea-root">
-        <div className="ea-loading">
-          <p className="ea-error-text">{error}</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!analysis) {
-    return null
-  }
-
-  if (phase === 'analyse') {
-    return (
-      <div className="ea-root">
-        <div className="ea-analyse-layout">
-          <div className="ea-analyse-unified">
-            <main className="ea-main ea-analyse-main">
-              <div className="ea-toolbar">
-                <CategoryPills
-                  active={activeCategory}
-                  onToggle={handleCategoryToggle}
-                />
-                <ReadItButton
-                  text={fullText}
-                  speak={speak}
-                  stop={stop}
-                  speaking={speaking}
-                  loading={speechLoading}
-                  categoryId={categoryId}
-                />
-              </div>
-              <div className="ea-extract-quote">
-                <AnnotatedText
-                  segments={analysis.segments}
-                  activeCategory={activeCategory}
-                  hoveredIndex={hoveredIndex}
-                  onHover={setHoveredIndex}
-                />
-              </div>
-            </main>
-            <AnalyseFollowBlock
-              analysis={analysis}
-              onContinue={() => setPhase('write')}
-            />
+      <footer className="ea-stage-foot ea-stage-foot-analyse">
+        <div className="ea-stage-foot-summary">
+          <span className="ea-stage-foot-summary-label">What&rsquo;s happening here</span>
+          <div className="ea-stage-foot-summary-list">
+            {analysis.summary.map((sentence, i) => (
+              <p key={i} className="ea-stage-foot-summary-item">{sentence}</p>
+            ))}
           </div>
         </div>
+        <button
+          type="button"
+          className="ea-ready-btn ea-stage-foot-cta"
+          onClick={() => setPhase('write')}
+        >
+          Open the exercise →
+        </button>
+      </footer>
+    </section>
+  ) : null
+
+  const writeCenter = analysis ? (
+    <section className="ea-stage ea-stage-write">
+      <header className="ea-stage-head ea-stage-head-write">
+        <h2 className="ea-stage-title">Exercise</h2>
+      </header>
+      <div className="ea-stage-body ea-stage-body-write">
+        <div className="ea-write-prompt">
+          <span className="ea-write-prompt-label">Your prompt</span>
+          <p className="ea-write-prompt-text">{analysis.constraint}</p>
+        </div>
+        {feedbackLoading && (
+          <p className="ea-feedback-loading">Analysing your writing…</p>
+        )}
+        {feedbackError && !feedbackLoading && (
+          <p className="ea-feedback-error">{feedbackError}</p>
+        )}
+        <textarea
+          className="ea-textarea ea-textarea-prominent"
+          value={userText}
+          onChange={(e) => {
+            const v = e.target.value
+            setUserText(v)
+            if (v.trim() !== submittedTextSnapshot) {
+              setSubmittedCompletionId(null)
+              setFeedback(null)
+            }
+          }}
+          placeholder="Begin here…"
+          autoFocus
+        />
       </div>
+      <footer className="ea-stage-foot">
+        <span className="ea-word-count">{wordCount} words</span>
+        <div className="ea-stage-foot-actions">
+          <ReadItButton
+            text={userText}
+            speak={speak}
+            stop={stop}
+            speaking={speaking}
+            loading={speechLoading}
+            disabled={!userText.trim()}
+            categoryId={categoryId}
+          />
+          <button
+            type="button"
+            className="ea-test-btn"
+            onClick={handleTest}
+            disabled={testLoading || feedbackLoading || submitLoading}
+            title="Generate an example passage for this constraint"
+          >
+            {testLoading ? 'Generating…' : 'Test'}
+          </button>
+          <button
+            type="button"
+            className="ea-submit-btn"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            title="Save to your account. Required before you can run analysis."
+          >
+            {submitLoading ? 'Saving…' : 'Submit'}
+          </button>
+          <button
+            className="ea-analyze-btn"
+            onClick={handleAnalyze}
+            disabled={!canAnalyze}
+            title="Submit the current text first, then you can get AI feedback on it"
+          >
+            {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
+          </button>
+          {feedback && (
+            <button
+              className="ea-scorecard-btn"
+              onClick={() => setShowFeedbackCard(true)}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M8 12h8M8 8h8M8 16h4" />
+              </svg>
+              Feedback
+            </button>
+          )}
+        </div>
+      </footer>
+    </section>
+  ) : null
+
+  const communityCenter = (
+    <section className="ea-stage ea-stage-community">
+      <header className="ea-stage-head">
+        <h2 className="ea-stage-title">Community rewrites</h2>
+      </header>
+      <div className="ea-stage-body">
+        <CommunityView
+          submissions={submissions}
+          submissionsLoading={submissionsLoading}
+          publicSubmissions={publicSubmissions}
+          publicSubmissionsLoading={publicSubmissionsLoading}
+          onOpenOwn={handleOpenOwnFromCommunity}
+          formatDate={formatSubmissionDate}
+        />
+      </div>
+    </section>
+  )
+
+  let centerContent: React.ReactNode = null
+  if (isLoading || phase === 'loading') {
+    centerContent = (
+      <section className="ea-stage ea-stage-loading">
+        <p className="ea-loading-text">Analysing the extract…</p>
+      </section>
     )
+  } else if (error) {
+    centerContent = (
+      <section className="ea-stage ea-stage-loading">
+        <p className="ea-error-text">{error}</p>
+      </section>
+    )
+  } else if (!analysis) {
+    centerContent = null
+  } else if (phase === 'analyse') {
+    centerContent = analyseCenter
+  } else if (phase === 'write') {
+    centerContent = writeCenter
+  } else if (phase === 'community') {
+    centerContent = communityCenter
+  }
+
+  let rightContent: React.ReactNode = (
+    <ExtractInfoCard
+      author={author}
+      title={title}
+      difficulty={difficulty}
+      categoryLabel={categoryLabel}
+    />
+  )
+  if (analysis) {
+    if (phase === 'analyse') {
+      rightContent = (
+        <>
+          <ExtractInfoCard
+            author={author}
+            title={title}
+            difficulty={difficulty}
+            categoryLabel={categoryLabel}
+          />
+          <TutorialCard activeTab="analyse" />
+        </>
+      )
+    } else if (phase === 'write') {
+      rightContent = (
+        <>
+          <ExtractInfoCard
+            author={author}
+            title={title}
+            difficulty={difficulty}
+            categoryLabel={categoryLabel}
+          />
+          <ReferencePassageCard
+            segments={analysis.segments}
+            activeCategory={activeCategory}
+            onToggleCategory={handleCategoryToggle}
+            fullText={fullText}
+            speak={speak}
+            stop={stop}
+            speaking={speaking}
+            loading={speechLoading}
+            categoryId={categoryId}
+          />
+          <TutorialCard activeTab="write" />
+        </>
+      )
+    } else if (phase === 'community') {
+      rightContent = (
+        <>
+          <ExtractInfoCard
+            author={author}
+            title={title}
+            difficulty={difficulty}
+            categoryLabel={categoryLabel}
+          />
+          <TutorialCard activeTab="community" />
+        </>
+      )
+    }
   }
 
   return (
     <div className="ea-root">
-      <div className="ea-analyse-layout ea-write-layout">
-        <div className="ea-write-main">
-          <div className="ea-analyse-unified ea-write-unified">
-          <WriteConstraintBlock
-            constraint={analysis.constraint}
-            onBackToAnalysis={() => setPhase('analyse')}
-          />
-          <main className="ea-main ea-analyse-main">
-            <div className="ea-toolbar">
-              <CategoryPills
-                active={activeCategory}
-                onToggle={handleCategoryToggle}
-              />
-              <ReadItButton
-                text={fullText}
-                speak={speak}
-                stop={stop}
-                speaking={speaking}
-                loading={speechLoading}
-                categoryId={categoryId}
-              />
-            </div>
-            <div className="ea-extract-quote">
-              <AnnotatedText
-                segments={analysis.segments}
-                activeCategory={activeCategory}
-                hoveredIndex={hoveredIndex}
-                onHover={setHoveredIndex}
-              />
-            </div>
-          </main>
-          <section className="ea-write-follow" aria-label="Your response">
-            {feedbackLoading && (
-              <p className="ea-feedback-loading">Analysing your writing…</p>
-            )}
-            {feedbackError && !feedbackLoading && (
-              <p className="ea-feedback-error">{feedbackError}</p>
-            )}
-            <textarea
-              className="ea-textarea"
-              value={userText}
-              onChange={(e) => {
-                const v = e.target.value
-                setUserText(v)
-                if (v.trim() !== submittedTextSnapshot) {
-                  setSubmittedCompletionId(null)
-                  setFeedback(null)
-                }
-              }}
-              placeholder="Begin here…"
-            />
-            <div className="ea-write-footer">
-              <span className="ea-word-count">{wordCount} words</span>
-              <ReadItButton
-                text={userText}
-                speak={speak}
-                stop={stop}
-                speaking={speaking}
-                loading={speechLoading}
-                disabled={!userText.trim()}
-                categoryId={categoryId}
-              />
-              <button
-                type="button"
-                className="ea-test-btn"
-                onClick={handleTest}
-                disabled={testLoading || feedbackLoading || submitLoading}
-                title="Generate an example passage for this constraint"
-              >
-                {testLoading ? 'Generating…' : 'Test'}
-              </button>
-              <button
-                type="button"
-                className="ea-submit-btn"
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-                title="Save to your account. Required before you can run analysis."
-              >
-                {submitLoading ? 'Saving…' : 'Submit'}
-              </button>
-              <button
-                className="ea-analyze-btn"
-                onClick={handleAnalyze}
-                disabled={!canAnalyze}
-                title="Submit the current text first, then you can get AI feedback on it"
-              >
-                {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
-              </button>
-              {feedback && (
-                <button
-                  className="ea-scorecard-btn"
-                  onClick={() => setShowFeedbackCard(true)}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path d="M8 12h8M8 8h8M8 16h4" />
-                  </svg>
-                  Feedback
-                </button>
-              )}
-            </div>
-          </section>
-          </div>
-        </div>
-        <aside className="ea-write-sidebar-col">
-          <WriteSidebar
-            analysis={analysis}
-            submissions={submissions}
-            submissionsLoading={submissionsLoading}
-            onLoadSubmission={handleLoadSubmission}
-            onDeleteSubmission={handleDeleteSubmission}
-            deletingId={deletingId}
-            formatDate={formatSubmissionDate}
-            feedback={feedback}
-            originalText={fullText}
-            userText={userText}
-            publicSubmissions={publicSubmissions}
-            publicSubmissionsLoading={publicSubmissionsLoading}
-          />
+      <div className="ea-page-layout">
+        <LeftSidebar
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onBack={onBack}
+          onShowFeedback={() => setShowFeedbackCard(true)}
+          feedbackAvailable={!!feedback}
+        />
+        <main className="ea-center-col">{centerContent}</main>
+        <aside className="ea-right-col" aria-label="Context">
+          {rightContent}
         </aside>
       </div>
       {showFeedbackCard && feedback && analysis && (
