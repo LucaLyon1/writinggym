@@ -24,8 +24,8 @@ interface ExtractAnalysisProps {
   onBack?: () => void
 }
 
-type Phase = 'loading' | 'analyse' | 'write' | 'community'
-type Tab = 'analyse' | 'write' | 'community'
+type Phase = 'loading' | 'analyse' | 'write' | 'feedback' | 'community'
+type Tab = 'analyse' | 'write' | 'feedback' | 'community'
 
 const CATEGORY_KEYS: CraftCategory[] = ['structure', 'voice', 'imagery', 'pacing']
 
@@ -210,13 +210,11 @@ function LeftSidebar({
   activeTab,
   onTabChange,
   onBack,
-  onShowFeedback,
   feedbackAvailable,
 }: {
   activeTab: Tab
   onTabChange: (t: Tab) => void
   onBack?: () => void
-  onShowFeedback: () => void
   feedbackAvailable: boolean
 }) {
   return (
@@ -243,10 +241,10 @@ function LeftSidebar({
         </button>
         <button
           type="button"
-          className="ea-left-nav-btn"
-          onClick={onShowFeedback}
+          className={`ea-left-nav-btn${activeTab === 'feedback' ? ' is-active' : ''}`}
+          onClick={() => onTabChange('feedback')}
           disabled={!feedbackAvailable}
-          title={feedbackAvailable ? 'Open your latest feedback' : 'Run "Analyse my writing" first'}
+          title={feedbackAvailable ? 'View your feedback' : 'Run "Analyse my writing" first'}
         >
           Feedback
         </button>
@@ -357,6 +355,12 @@ function ExtractInfoCard({
   if (!author && !title && !categoryLabel && !difficulty) return null
   return (
     <div className="ea-right-card ea-extract-info-card">
+      {(author || title) && (
+        <div className="ea-extract-info-title">
+          {author && <p className="ea-extract-info-author">{author}</p>}
+          {title && <em className="ea-extract-info-work">{title}</em>}
+        </div>
+      )}
       {(categoryLabel || difficulty) && (
         <div className="ea-extract-info-tags">
           {categoryLabel && (
@@ -367,12 +371,6 @@ function ExtractInfoCard({
               {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
             </span>
           )}
-        </div>
-      )}
-      {(author || title) && (
-        <div className="ea-extract-info-title">
-          {author && <p className="ea-extract-info-author">{author}</p>}
-          {title && <em className="ea-extract-info-work">{title}</em>}
         </div>
       )}
     </div>
@@ -663,15 +661,12 @@ export function ExtractAnalysis({
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [publicSubmissions, setPublicSubmissions] = useState<PublicSubmission[]>([])
   const [publicSubmissionsLoading, setPublicSubmissionsLoading] = useState(false)
-  const [showFeedbackCard, setShowFeedbackCard] = useState(false)
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [submittedCompletionId, setSubmittedCompletionId] = useState<string | null>(null)
   const [submittedTextSnapshot, setSubmittedTextSnapshot] = useState('')
   const [submitLoading, setSubmitLoading] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [shareLoading, setShareLoading] = useState(false)
   const { speak, stop, speaking, loading: speechLoading } = useSpeech()
-  const feedbackCardRef = useRef<HTMLDivElement>(null)
 
   const fetchSubmissions = useCallback(async () => {
     if (!passageId || !constraint) return
@@ -791,13 +786,6 @@ export function ExtractAnalysis({
         router.push(`/signup?next=${encodeURIComponent(nextPath)}`)
         return
       }
-      if (res.status === 403) {
-        const data = (await res.json()) as { requiresUpgrade?: boolean; error?: string }
-        if (data.requiresUpgrade) {
-          setShowUpgradePrompt(true)
-          return
-        }
-      }
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
         throw new Error(data.error ?? 'Failed to save your writing')
@@ -892,21 +880,13 @@ export function ExtractAnalysis({
         router.push(`/signup?next=${encodeURIComponent(nextPath)}`)
         return
       }
-      if (res.status === 403) {
-        const data = (await res.json()) as { requiresUpgrade?: boolean; error?: string }
-        if (data.requiresUpgrade) {
-          setShowUpgradePrompt(true)
-          setFeedbackLoading(false)
-          return
-        }
-      }
       if (!res.ok) {
         const data = (await res.json()) as { error?: string }
         throw new Error(data.error ?? 'Failed to get feedback')
       }
       const data = (await res.json()) as UserFeedback
       setFeedback(data)
-      setShowFeedbackCard(true)
+      setPhase('feedback')
       fetchSubmissions()
       try {
         sessionStorage.removeItem('proselab-draft')
@@ -968,16 +948,6 @@ export function ExtractAnalysis({
   function handleCategoryToggle(cat: CraftCategory) {
     setActiveCategory((prev) => (prev === cat ? null : cat))
   }
-
-  useEffect(() => {
-    if (showFeedbackCard) {
-      function handleKey(e: KeyboardEvent) {
-        if (e.key === 'Escape') setShowFeedbackCard(false)
-      }
-      document.addEventListener('keydown', handleKey)
-      return () => document.removeEventListener('keydown', handleKey)
-    }
-  }, [showFeedbackCard])
 
   const activeTab: Tab = phase === 'loading' ? 'analyse' : phase
 
@@ -1047,7 +1017,6 @@ export function ExtractAnalysis({
       </header>
       <div className="ea-stage-body ea-stage-body-write">
         <div className="ea-write-prompt">
-          <span className="ea-write-prompt-label">Your prompt</span>
           <p className="ea-write-prompt-text">{analysis.constraint}</p>
         </div>
         {feedbackLoading && (
@@ -1112,7 +1081,7 @@ export function ExtractAnalysis({
           {feedback && (
             <button
               className="ea-scorecard-btn"
-              onClick={() => setShowFeedbackCard(true)}
+              onClick={() => setPhase('feedback')}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -1144,6 +1113,77 @@ export function ExtractAnalysis({
     </section>
   )
 
+  const feedbackCenter = feedback && analysis ? (
+    <section className="ea-stage ea-stage-feedback">
+      <header className="ea-stage-head">
+        <h2 className="ea-stage-title">Feedback</h2>
+      </header>
+      <div className="ea-feedback-user-text">
+        <span className="ea-feedback-section-label">Your response</span>
+        <p className="ea-feedback-user-passage">&ldquo;{submittedTextSnapshot || userText}&rdquo;</p>
+      </div>
+      <div className="ea-stage-body ea-stage-body-feedback">
+
+          {feedback.verdict && (
+            <div className="ea-feedback-verdict">
+              <p>{feedback.verdict}</p>
+            </div>
+          )}
+
+          {((feedback.strong_points ?? []).length > 0 || (feedback.weak_points ?? []).length > 0) && (
+            <div className="ea-feedback-points">
+              {(feedback.strong_points ?? []).length > 0 && (
+                <div className="ea-feedback-group">
+                  <h3 className="ea-feedback-group-heading">What works</h3>
+                  <ul className="ea-feedback-list">
+                    {(feedback.strong_points ?? []).map((point, i) => (
+                      <li key={i}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(feedback.weak_points ?? []).length > 0 && (
+                <div className="ea-feedback-group">
+                  <h3 className="ea-feedback-group-heading">What to work on</h3>
+                  <ul className="ea-feedback-list">
+                    {(feedback.weak_points ?? []).map((point, i) => (
+                      <li key={i}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {feedback.divergences && (
+            <div className="ea-feedback-divergences">
+              <h3 className="ea-feedback-group-heading">Divergences</h3>
+              {(Object.entries(feedback.divergences) as [keyof DivergenceAnalysis, string | null][])
+                .filter(([, text]) => text !== null)
+                .map(([dim, text]) => {
+                  const config = CATEGORIES[dim]
+                  return (
+                    <div key={dim} className="ea-feedback-divergence-item" style={{ borderLeftColor: config.color }}>
+                      <span className="ea-feedback-divergence-label" style={{ color: config.color }}>
+                        {config.label}
+                      </span>
+                      <p className="ea-feedback-divergence-text">{text}</p>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
+
+          {feedback.next_step && (
+            <div className="ea-feedback-next">
+              <h3 className="ea-feedback-group-heading">Try next time</h3>
+              <p>{feedback.next_step}</p>
+            </div>
+          )}
+      </div>
+    </section>
+  ) : null
+
   let centerContent: React.ReactNode = null
   if (isLoading || phase === 'loading') {
     centerContent = (
@@ -1163,6 +1203,8 @@ export function ExtractAnalysis({
     centerContent = analyseCenter
   } else if (phase === 'write') {
     centerContent = writeCenter
+  } else if (phase === 'feedback') {
+    centerContent = feedbackCenter
   } else if (phase === 'community') {
     centerContent = communityCenter
   }
@@ -1211,6 +1253,28 @@ export function ExtractAnalysis({
           <TutorialCard activeTab="write" />
         </>
       )
+    } else if (phase === 'feedback') {
+      rightContent = (
+        <>
+          <ExtractInfoCard
+            author={author}
+            title={title}
+            difficulty={difficulty}
+            categoryLabel={categoryLabel}
+          />
+          <ReferencePassageCard
+            segments={analysis.segments}
+            activeCategory={activeCategory}
+            onToggleCategory={handleCategoryToggle}
+            fullText={fullText}
+            speak={speak}
+            stop={stop}
+            speaking={speaking}
+            loading={speechLoading}
+            categoryId={categoryId}
+          />
+        </>
+      )
     } else if (phase === 'community') {
       rightContent = (
         <>
@@ -1233,7 +1297,6 @@ export function ExtractAnalysis({
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onBack={onBack}
-          onShowFeedback={() => setShowFeedbackCard(true)}
           feedbackAvailable={!!feedback}
         />
         <main className="ea-center-col">{centerContent}</main>
@@ -1241,94 +1304,6 @@ export function ExtractAnalysis({
           {rightContent}
         </aside>
       </div>
-      {showFeedbackCard && feedback && analysis && (
-        <div className="sc-overlay" onClick={() => setShowFeedbackCard(false)}>
-          <div
-            className="sc-card"
-            ref={feedbackCardRef}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button className="sc-close" onClick={() => setShowFeedbackCard(false)} aria-label="Close">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <line x1="2" y1="2" x2="12" y2="12" />
-                <line x1="12" y1="2" x2="2" y2="12" />
-              </svg>
-            </button>
-
-            <div className="sc-header">
-              <span className="sc-brand">PROSELAB</span>
-              <span className="sc-divider" />
-              <span className="sc-type">Writing Feedback</span>
-            </div>
-
-            <div className="sc-hero">
-              <div className="sc-hero-info">
-                <p className="sc-verdict">{feedback.verdict}</p>
-              </div>
-            </div>
-
-            {((feedback.strong_points ?? []).length > 0 || (feedback.weak_points ?? []).length > 0) && (
-              <div className="sc-points-section">
-                {(feedback.strong_points ?? []).length > 0 && (
-                  <div className="sc-points-group sc-strong-points">
-                    <h3 className="sc-points-heading">What works</h3>
-                    <ul className="sc-points-list">
-                      {(feedback.strong_points ?? []).map((point, i) => (
-                        <li key={i} className="sc-point-item sc-point-strong">{point}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {(feedback.weak_points ?? []).length > 0 && (
-                  <div className="sc-points-group sc-weak-points">
-                    <h3 className="sc-points-heading">What to work on</h3>
-                    <ul className="sc-points-list">
-                      {(feedback.weak_points ?? []).map((point, i) => (
-                        <li key={i} className="sc-point-item sc-point-weak">{point}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {feedback.divergences && (
-              <div className="sc-divergences">
-                {(Object.entries(feedback.divergences) as [keyof DivergenceAnalysis, string | null][])
-                  .filter(([, text]) => text !== null)
-                  .map(([dim, text]) => {
-                    const config = CATEGORIES[dim]
-                    return (
-                      <div key={dim} className="sc-divergence-item" style={{ borderLeftColor: config.color }}>
-                        <span className="sc-divergence-label" style={{ color: config.color }}>
-                          {config.label}
-                        </span>
-                        <p className="sc-divergence-text">{text}</p>
-                      </div>
-                    )
-                  })}
-              </div>
-            )}
-
-            {feedback.next_step && (
-              <div className="sc-actionable">
-                <span className="sc-actionable-label">Try next time</span>
-                <p className="sc-actionable-text">{feedback.next_step}</p>
-              </div>
-            )}
-
-            <div className="sc-constraint">
-              <span className="sc-constraint-label">Exercise</span>
-              <p className="sc-constraint-text">{analysis.constraint}</p>
-            </div>
-
-            <div className="sc-footer">
-              <span className="sc-watermark">proselab — learn to write by imitation</span>
-            </div>
-          </div>
-        </div>
-      )}
       {showShareModal && (
         <div className="sc-overlay" onClick={() => !shareLoading && setShowShareModal(false)}>
           <div className="share-modal" onClick={(e) => e.stopPropagation()}>
@@ -1364,36 +1339,6 @@ export function ExtractAnalysis({
                 Keep private
               </button>
             </div>
-          </div>
-        </div>
-      )}
-      {showUpgradePrompt && (
-        <div className="sc-overlay" onClick={() => setShowUpgradePrompt(false)}>
-          <div className="upgrade-prompt" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="sc-close"
-              onClick={() => setShowUpgradePrompt(false)}
-              aria-label="Close"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <line x1="2" y1="2" x2="12" y2="12" />
-                <line x1="12" y1="2" x2="2" y2="12" />
-              </svg>
-            </button>
-            <h2 className="upgrade-prompt-title">You&rsquo;ve used your free analyses this week</h2>
-            <p className="upgrade-prompt-text">
-              Free plans include 3 analyses per week. Upgrade to Core for
-              unlimited detailed feedback on every rewrite.
-            </p>
-            <ul className="upgrade-prompt-features">
-              <li>Unlimited AI feedback on every rewrite</li>
-              <li>Divergence analysis — where and why your instincts differ from the master</li>
-              <li>One specific, actionable next step per session</li>
-              <li>Follow-up chat to deepen understanding</li>
-            </ul>
-            <a href="/pricing" className="upgrade-prompt-btn">
-              Upgrade to Core
-            </a>
           </div>
         </div>
       )}

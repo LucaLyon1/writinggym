@@ -4,14 +4,7 @@ import type { ExtractAnalysis } from '@/types/extract'
 import type { Json } from '@/types/database.types'
 import { createClient } from '@/lib/supabase/server'
 import { constraintKey } from '@/lib/constraint-key'
-import {
-  checkAnalysisQuota,
-  countFreeWeeklyAnalyses,
-  FREE_WEEKLY_ANALYSIS_LIMIT,
-  recordAnalysisRequest,
-  isPaidUser,
-} from '@/lib/plan'
-import { isWithinFreeTrial } from '@/lib/trial'
+import { recordAnalysisRequest } from '@/lib/plan'
 import { getPostHogClient } from '@/lib/posthog-server'
 
 const SYSTEM_PROMPT = `You are a literary craft analyst giving honest, constructive feedback to a writer attempting a stylistic exercise.
@@ -195,44 +188,6 @@ export async function POST(request: Request) {
       { error: 'Sign in to use feedback.' },
       { status: 401 }
     )
-  }
-
-  const paid = await isPaidUser(user.id)
-
-  if (!paid) {
-    const inTrial = isWithinFreeTrial(user.created_at)
-    if (!inTrial) {
-      const usedThisWeek = await countFreeWeeklyAnalyses(user.id)
-      if (usedThisWeek >= FREE_WEEKLY_ANALYSIS_LIMIT) {
-        const posthogPaywall = getPostHogClient()
-        posthogPaywall.capture({
-          distinctId: user.id,
-          event: 'free_analysis_paywall_hit',
-          properties: { used: usedThisWeek, limit: FREE_WEEKLY_ANALYSIS_LIMIT },
-        })
-        await posthogPaywall.shutdown()
-        return NextResponse.json(
-          {
-            error: `You've used ${usedThisWeek}/${FREE_WEEKLY_ANALYSIS_LIMIT} free analyses this week. Upgrade to Core for unlimited feedback.`,
-            upgradeUrl: '/pricing',
-            requiresUpgrade: true,
-            quota: { used: usedThisWeek, limit: FREE_WEEKLY_ANALYSIS_LIMIT },
-          },
-          { status: 403 }
-        )
-      }
-    }
-  } else {
-    const quota = await checkAnalysisQuota(user.id)
-    if (!quota.allowed) {
-      return NextResponse.json(
-        {
-          error: `You've used ${quota.used}/${quota.limit} analyses this week. Contact support if you need more.`,
-          quota: { used: quota.used, limit: quota.limit },
-        },
-        { status: 429 }
-      )
-    }
   }
 
   const body = (await request.json()) as {

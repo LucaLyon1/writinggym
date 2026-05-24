@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { checkAnalysisQuota, recordAnalysisRequest } from '@/lib/plan'
+import { recordAnalysisRequest } from '@/lib/plan'
 import { constraintKey } from '@/lib/constraint-key'
 
 const SYSTEM_PROMPT = `You are helping a writer learn by imitation. You will receive:
@@ -32,17 +32,6 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Sign in to use this feature.' },
       { status: 401 }
-    )
-  }
-
-  const quota = await checkAnalysisQuota(user.id)
-  if (!quota.allowed) {
-    return NextResponse.json(
-      {
-        error: `You've used ${quota.used}/${quota.limit} analyses this week. Upgrade for unlimited access.`,
-        quota: { used: quota.used, limit: quota.limit },
-      },
-      { status: 429 }
     )
   }
 
