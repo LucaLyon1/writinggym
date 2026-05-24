@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useMemo, useEffect, type ReactNode } from 'react'
-import Link from 'next/link'
 import { passages, categories, tags } from '@/data/passages'
 import type { Difficulty, Passage } from '@/data/passages'
-import { AppFooter } from '@/components/AppFooter'
+import { SidebarNav } from '@/components/AppSidebar'
 
 const DIFFICULTY_META: Record<Difficulty, { label: string; icon: string }> = {
   accessible: { label: 'Accessible', icon: '◇' },
@@ -134,35 +133,7 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
             </button>
           ))}
 
-          <span className="sidebar-label" style={{ marginTop: '1.25rem' }}>Difficulty</span>
-          {(['accessible', 'intermediate', 'challenging'] as Difficulty[]).map((d) => (
-            <button
-              key={d}
-              className={`cat-btn ${activeDifficulty === d ? 'active' : ''}`}
-              onClick={() => {
-                setActiveDifficulty(activeDifficulty === d ? null : d)
-                setSidebarOpen(false)
-              }}
-            >
-              <span className="cat-btn-label">
-                <span className={`difficulty-dot difficulty-${d}`} />
-                {DIFFICULTY_META[d].label}
-              </span>
-              <span className="cat-btn-count">
-                {passages.filter((p) => p.difficulty === d).length}
-              </span>
-            </button>
-          ))}
-
-          <span className="sidebar-label" style={{ marginTop: '1.25rem' }}>Other pages</span>
-          <Link href="/explore" className="cat-btn cat-btn-link">
-            <span className="cat-btn-label">Explore community</span>
-            <span className="cat-btn-arrow" aria-hidden="true">↗</span>
-          </Link>
-          <Link href="/assessment" className="cat-btn cat-btn-link">
-            <span className="cat-btn-label">Assessment</span>
-            <span className="cat-btn-arrow" aria-hidden="true">↗</span>
-          </Link>
+          <SidebarNav />
         </nav>
 
         <main className="browser-main">
@@ -187,6 +158,19 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
               className="search-input"
               aria-label="Search extracts"
             />
+          </div>
+
+          <div className="difficulty-pills">
+            {(['accessible', 'intermediate', 'challenging'] as Difficulty[]).map((d) => (
+              <button
+                key={d}
+                className={`difficulty-pill ${activeDifficulty === d ? 'active' : ''}`}
+                onClick={() => setActiveDifficulty(activeDifficulty === d ? null : d)}
+              >
+                <span className={`difficulty-dot difficulty-${d}`} />
+                {DIFFICULTY_META[d].label}
+              </button>
+            ))}
           </div>
 
           {filtered.length === 0 && (
@@ -244,7 +228,6 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
             })}
           </div>
 
-          <AppFooter />
         </main>
       </div>
     </div>

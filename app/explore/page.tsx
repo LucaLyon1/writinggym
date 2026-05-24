@@ -1,8 +1,7 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ExploreList } from '@/components/ExploreList'
 import { COMPLETION_AUTHOR_PROFILE_SELECT, completionAuthorFromProfileEmbed } from '@/lib/completion-author'
-import { AppFooter } from '@/components/AppFooter'
+import { BrowsePageLayout } from '@/components/BrowsePageLayout'
 
 const PAGE_SIZE = 12
 
@@ -85,22 +84,22 @@ export default async function ExplorePage() {
   const { items, hasMore, total } = await fetchInitialItems(user?.id ?? null)
 
   return (
-    <div className="explore-root">
-      <div className="explore-inner">
-        <Link href="/" className="profile-back-link">← Back to passages</Link>
-        <header className="explore-header">
-          <h1 className="explore-title">Explore rewrites</h1>
-          <p className="explore-subtitle">
-            See how other writers tackled the same extracts.
-          </p>
-        </header>
-        <ExploreList
-          initialItems={items}
-          initialHasMore={hasMore}
-          initialTotal={total}
-        />
+    <BrowsePageLayout>
+      <div className="explore-root">
+        <div className="explore-inner">
+          <header className="explore-header">
+            <h1 className="explore-title">Explore rewrites</h1>
+            <p className="explore-subtitle">
+              See how other writers tackled the same extracts.
+            </p>
+          </header>
+          <ExploreList
+            initialItems={items}
+            initialHasMore={hasMore}
+            initialTotal={total}
+          />
+        </div>
       </div>
-      <AppFooter />
-    </div>
+    </BrowsePageLayout>
   )
 }

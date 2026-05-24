@@ -12,7 +12,8 @@ import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
 import { ProfileSetPassword } from '@/components/profile/ProfileSetPassword'
 import { logout } from '@/app/actions/auth'
-import { AppFooter } from '@/components/AppFooter'
+import { SidebarNav } from '@/components/AppSidebar'
+import { ProfileSidebar } from '@/components/profile/ProfileSidebar'
 
 type PassageCompletion = Tables<'passage_completions'>
 
@@ -63,12 +64,24 @@ export default async function ProfilePage() {
 
   if (error) {
     return (
-      <div className="profile-root">
-        <div className="profile-inner">
-          <Link href="/" className="profile-back-link">
-            ← Back to main screen
-          </Link>
-          <p className="profile-error">Failed to load your submissions.</p>
+      <div className="analysis-view">
+        <div className="ea-root">
+          <div className="ea-page-layout">
+            <aside className="ea-left-sidebar">
+              <SidebarNav />
+            </aside>
+            <main className="ea-center-col">
+              <section className="ea-stage">
+                <header className="ea-stage-head">
+                  <h2 className="ea-stage-title">Profile</h2>
+                </header>
+                <div className="ea-stage-body">
+                  <p className="profile-error">Failed to load your submissions.</p>
+                </div>
+              </section>
+            </main>
+            <aside className="ea-right-col" />
+          </div>
         </div>
       </div>
     )
@@ -82,30 +95,13 @@ export default async function ProfilePage() {
     entitlements.plan_id === 'free' ? trialDaysLeft(user?.created_at) : null
 
   return (
-    <div className="profile-root">
-      <div className="profile-inner">
-        <Link href="/" className="profile-back-link">
-          ← Back to main screen
-        </Link>
-
-        {/* ── Hero ── */}
-        <header className="profile-hero">
-          <div className="profile-hero-name">
-            <ProfileUsernameForm initialUsername={profile?.username ?? ''} />
-          </div>
-          <div className="profile-hero-badges">
-            {profile?.is_founding_member && (
-              <span className="profile-founding-badge" title="You supported rewrite during its pre-release — thank you!">
-                🚀 Founding Member
-              </span>
-            )}
-            {featuredBadge && (
-              <span className="profile-hero-streak-badge" title={`${featuredBadge.label} — ${currentStreak} day streak`}>
-                <span aria-hidden>{featuredBadge.emoji}</span> {featuredBadge.label}
-              </span>
-            )}
-          </div>
-          <div className="profile-hero-plan">
+    <div className="analysis-view">
+    <div className="ea-root">
+    <div className="ea-page-layout">
+      <ProfileSidebar>
+        <nav className="profile-sidebar-actions">
+          <span className="sidebar-label">Account</span>
+          <div className="profile-sidebar-plan">
             <span className={`profile-plan-badge ${entitlements.plan_id !== 'free' ? 'profile-plan-badge-paid' : 'profile-plan-badge-free'}`}>
               {entitlements.plan_label}
             </span>
@@ -114,78 +110,105 @@ export default async function ProfilePage() {
                 {daysLeft} day{daysLeft === 1 ? '' : 's'} left
               </span>
             )}
-            {entitlements.plan_id === 'free' ? (
-              <Link href="/pricing" className="profile-hero-upgrade">
-                Upgrade →
-              </Link>
-            ) : (
-              <ManageSubscriptionButton className="profile-hero-manage">
-                Manage subscription →
-              </ManageSubscriptionButton>
-            )}
-            <ProfileSetPassword />
-            <form action={logout}>
-              <button type="submit" className="profile-hero-signout">
-                Sign out →
-              </button>
-            </form>
           </div>
-        </header>
-
-        {/* ── Activity ── */}
-        <CompletionHeatmap completions={statsCompletions ?? []} />
-
-        {/* ── Stats ── */}
-        <section className="profile-stats-section" aria-label="Your stats">
-          <div className="profile-quotas-grid">
-            <div className="profile-quota-card profile-quota-card-streak">
-              <span className="profile-quota-label">Current streak</span>
-              <span className="profile-quota-value profile-quota-value-streak">
-                {getCurrentBadge(currentStreak)?.emoji && (
-                  <span className="profile-quota-badge" aria-hidden>
-                    {getCurrentBadge(currentStreak)!.emoji}
-                  </span>
-                )}
-                {currentStreak} day{currentStreak !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <div className="profile-quota-card">
-              <span className="profile-quota-label">Longest streak</span>
-              <span className="profile-quota-value">
-                {longestStreak} day{longestStreak !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <div className="profile-quota-card">
-              <span className="profile-quota-label">Words written</span>
-              <span className="profile-quota-value">{totalWordsWritten.toLocaleString()}</span>
-            </div>
-            <div className="profile-quota-card">
-              <span className="profile-quota-label">Total sessions</span>
-              <span className="profile-quota-value">{profile?.total_sessions ?? 0}</span>
-            </div>
-            <div className="profile-quota-card">
-              <span className="profile-quota-label">Passages completed</span>
-              <span className="profile-quota-value">{totalCount}</span>
-            </div>
-          </div>
-          <StreakBadges currentStreak={currentStreak} selectedBadge={profile?.selected_badge ?? null} />
-        </section>
-
-        {/* ── Submissions ── */}
-        {!totalCount ? (
-          <div className="profile-empty">
-            <p>You haven&apos;t completed any passages yet.</p>
-            <Link href="/" className="profile-empty-link">
-              Browse passages and start writing
+          {entitlements.plan_id === 'free' ? (
+            <Link href="/pricing" className="profile-sidebar-link">
+              Upgrade plan →
             </Link>
+          ) : (
+            <ManageSubscriptionButton className="profile-sidebar-link">
+              Manage subscription →
+            </ManageSubscriptionButton>
+          )}
+          <ProfileSetPassword />
+          <form action={logout}>
+            <button type="submit" className="profile-sidebar-link">
+              Sign out →
+            </button>
+          </form>
+        </nav>
+        <SidebarNav />
+      </ProfileSidebar>
+      <main className="ea-center-col">
+        <div className="profile-bio-section">
+          <div className="profile-bio-avatar" aria-hidden="true">
+            <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="40" cy="30" r="14" fill="currentColor" opacity="0.25" />
+              <ellipse cx="40" cy="62" rx="22" ry="14" fill="currentColor" opacity="0.18" />
+            </svg>
           </div>
-        ) : (
-          <ProfileSubmissionsList
-            initialCompletions={(firstPageCompletions ?? []) as PassageCompletion[]}
-          />
-        )}
-      </div>
-      <AppFooter />
+          <div className="profile-bio-info">
+            <div className="profile-bio-name">
+              <ProfileUsernameForm initialUsername={profile?.username ?? ''} />
+            </div>
+            <p className="profile-bio-text">
+              Writer, reader, reviser.
+            </p>
+          </div>
+        </div>
+        <section className="ea-stage">
+          {!totalCount ? (
+            <>
+              <header className="ea-stage-head">
+                <h2 className="ea-stage-title">Your writing</h2>
+              </header>
+              <div className="ea-stage-body profile-stage-body">
+                <div className="profile-empty">
+                  <p>You haven&apos;t completed any passages yet.</p>
+                  <Link href="/" className="profile-empty-link">
+                    Browse passages and start writing
+                  </Link>
+                </div>
+              </div>
+            </>
+          ) : (
+            <ProfileSubmissionsList
+              initialCompletions={(firstPageCompletions ?? []) as PassageCompletion[]}
+            />
+          )}
+        </section>
+      </main>
+      <aside className="ea-right-col">
+        <CompletionHeatmap completions={statsCompletions ?? []} />
+        <div className="profile-right-stats">
+          <div className="profile-right-stat">
+            <span className="profile-right-stat-value">
+              {getCurrentBadge(currentStreak)?.emoji && (
+                <span aria-hidden>{getCurrentBadge(currentStreak)!.emoji}</span>
+              )}
+              {currentStreak} day{currentStreak !== 1 ? 's' : ''}
+            </span>
+            <span className="profile-right-stat-label">Current streak</span>
+          </div>
+          <div className="profile-right-stat">
+            <span className="profile-right-stat-value">{longestStreak} day{longestStreak !== 1 ? 's' : ''}</span>
+            <span className="profile-right-stat-label">Longest streak</span>
+          </div>
+          <div className="profile-right-stat">
+            <span className="profile-right-stat-value">{totalWordsWritten.toLocaleString()}</span>
+            <span className="profile-right-stat-label">Words written</span>
+          </div>
+          <div className="profile-right-stat">
+            <span className="profile-right-stat-value">{totalCount}</span>
+            <span className="profile-right-stat-label">Passages completed</span>
+          </div>
+        </div>
+        <div className="profile-right-badges">
+          {profile?.is_founding_member && (
+            <span className="profile-founding-badge" title="You supported rewrite during its pre-release — thank you!">
+              🚀 Founding Member
+            </span>
+          )}
+          {featuredBadge && (
+            <span className="profile-hero-streak-badge" title={`${featuredBadge.label} — ${currentStreak} day streak`}>
+              <span aria-hidden>{featuredBadge.emoji}</span> {featuredBadge.label}
+            </span>
+          )}
+          <StreakBadges currentStreak={currentStreak} selectedBadge={profile?.selected_badge ?? null} />
+        </div>
+      </aside>
+    </div>
+    </div>
     </div>
   )
 }

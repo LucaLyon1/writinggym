@@ -4,8 +4,6 @@ import { useMemo, useState } from 'react'
 
 type Completion = { completed_at: string }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
 function getLevel(count: number): 0 | 1 | 2 | 3 | 4 {
   if (count === 0) return 0
   if (count === 1) return 1
@@ -14,8 +12,35 @@ function getLevel(count: number): 0 | 1 | 2 | 3 | 4 {
   return 4
 }
 
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+function getMonthGrid(year: number, month: number) {
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const daysInMonth = lastDay.getDate()
+
+  // Monday = 0, Sunday = 6
+  let startDow = firstDay.getDay() - 1
+  if (startDow < 0) startDow = 6
+
+  const cells: { day: number | null; date: string | null }[] = []
+
+  for (let i = 0; i < startDow; i++) {
+    cells.push({ day: null, date: null })
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    cells.push({ day: d, date: dateStr })
+  }
+
+  return cells
+}
+
 export function CompletionHeatmap({ completions }: { completions: Completion[] }) {
-  const [tooltip, setTooltip] = useState<{ date: string; count: number; x: number; y: number } | null>(null)
+  const today = new Date()
+  const [viewMonth, setViewMonth] = useState(today.getMonth())
+  const [viewYear, setViewYear] = useState(today.getFullYear())
 
   const countByDate = useMemo(() => {
     const map = new Map<string, number>()
@@ -28,110 +53,122 @@ export function CompletionHeatmap({ completions }: { completions: Completion[] }
     return map
   }, [completions])
 
-  const { grid } = useMemo(() => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+  const grid = useMemo(
+    () => getMonthGrid(viewYear, viewMonth),
+    [viewYear, viewMonth]
+  )
 
-    const totalDays = 365
-    const startDate = new Date(today)
-    startDate.setDate(startDate.getDate() - totalDays + 1)
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  })
 
-    const startDayOfWeek = startDate.getDay()
-    const gridStart = new Date(startDate)
-    gridStart.setDate(gridStart.getDate() - startDayOfWeek)
+  const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
-    const weeks = 53
-    const grid: { date: Date; count: number; isEmpty: boolean }[][] = []
+  const monthTotal = grid.reduce((sum, cell) => {
+    if (!cell.date) return sum
+    return sum + (countByDate.get(cell.date) ?? 0)
+  }, 0)
 
-    for (let col = 0; col < weeks; col++) {
-      const column: { date: Date; count: number; isEmpty: boolean }[] = []
-      for (let row = 0; row < 7; row++) {
-        const cellDate = new Date(gridStart)
-        cellDate.setDate(gridStart.getDate() + col * 7 + row)
-        const isInRange = cellDate >= startDate && cellDate <= today
-        const key = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`
-        column.push({
-          date: cellDate,
-          count: isInRange ? countByDate.get(key) ?? 0 : 0,
-          isEmpty: !isInRange,
-        })
-      }
-      grid.push(column)
+  const activeDays = grid.filter(
+    (cell) => cell.date && (countByDate.get(cell.date) ?? 0) > 0
+  ).length
+
+  function goBack() {
+    if (viewMonth === 0) {
+      setViewMonth(11)
+      setViewYear(viewYear - 1)
+    } else {
+      setViewMonth(viewMonth - 1)
     }
+  }
 
-    return { grid }
-  }, [countByDate])
+  function goForward() {
+    if (isCurrentMonth) return
+    if (viewMonth === 11) {
+      setViewMonth(0)
+      setViewYear(viewYear + 1)
+    } else {
+      setViewMonth(viewMonth + 1)
+    }
+  }
 
   return (
-    <section className="heatmap-section" aria-label="Daily completions">
-      <h2 className="heatmap-title">Activity</h2>
-      <div className="heatmap-wrapper">
-        <div className="heatmap-weekdays" aria-hidden>
-          {WEEKDAYS.map((d) => (
-            <span key={d} className="heatmap-weekday">
-              {d}
-            </span>
+    <section className="heatmap-section" aria-label="Activity calendar">
+      <header className="heatmap-header">
+        <button
+          type="button"
+          className="heatmap-nav-btn"
+          onClick={goBack}
+          aria-label="Previous month"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 2L4 6l4 4" />
+          </svg>
+        </button>
+        <h2 className="heatmap-month-label">{monthLabel}</h2>
+        <button
+          type="button"
+          className="heatmap-nav-btn"
+          onClick={goForward}
+          disabled={isCurrentMonth}
+          aria-label="Next month"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 2l4 4-4 4" />
+          </svg>
+        </button>
+      </header>
+
+      <div className="heatmap-calendar">
+        <div className="heatmap-dow-row">
+          {WEEKDAY_LABELS.map((d) => (
+            <span key={d} className="heatmap-dow">{d}</span>
           ))}
         </div>
-        <div className="heatmap-grid-wrap">
-          <div className="heatmap-grid">
-            {grid.map((column, colIdx) => (
-              <div key={colIdx} className="heatmap-column">
-                {column.map((cell, rowIdx) => {
-                  const level = cell.isEmpty ? 0 : getLevel(cell.count)
-                  const dateStr = cell.date.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                  return (
-                    <div
-                      key={rowIdx}
-                      className={`heatmap-cell heatmap-cell-${level}`}
-                      data-empty={cell.isEmpty}
-                      data-count={cell.count}
-                      onMouseEnter={(e) => {
-                        if (cell.isEmpty) return
-                        const rect = e.currentTarget.getBoundingClientRect()
-                        setTooltip({
-                          date: dateStr,
-                          count: cell.count,
-                          x: rect.left + rect.width / 2,
-                          y: rect.top,
-                        })
-                      }}
-                      onMouseLeave={() => setTooltip(null)}
-                      title={cell.isEmpty ? undefined : `${cell.count} completion${cell.count !== 1 ? 's' : ''} on ${dateStr}`}
-                    />
-                  )
-                })}
-              </div>
-            ))}
-          </div>
+        <div className="heatmap-days">
+          {grid.map((cell, i) => {
+            if (!cell.date) {
+              return <span key={i} className="heatmap-day heatmap-day-empty" />
+            }
+            const count = countByDate.get(cell.date) ?? 0
+            const level = getLevel(count)
+            const isFuture = cell.date > todayStr
+            const isToday = cell.date === todayStr
+            return (
+              <span
+                key={i}
+                className={`heatmap-day heatmap-day-${level}${isToday ? ' heatmap-day-today' : ''}${isFuture ? ' heatmap-day-future' : ''}`}
+                title={isFuture ? undefined : `${count} session${count !== 1 ? 's' : ''}`}
+              >
+                {cell.day}
+              </span>
+            )
+          })}
         </div>
       </div>
+
+      <div className="heatmap-stats">
+        <div className="heatmap-stat">
+          <span className="heatmap-stat-value">{monthTotal}</span>
+          <span className="heatmap-stat-label">sessions</span>
+        </div>
+        <div className="heatmap-stat">
+          <span className="heatmap-stat-value">{activeDays}</span>
+          <span className="heatmap-stat-label">active days</span>
+        </div>
+      </div>
+
       <div className="heatmap-legend">
         <span className="heatmap-legend-label">Less</span>
         <div className="heatmap-legend-swatches">
           {[0, 1, 2, 3, 4].map((level) => (
-            <div key={level} className={`heatmap-legend-cell heatmap-cell-${level}`} />
+            <div key={level} className={`heatmap-legend-cell heatmap-day-${level}`} />
           ))}
         </div>
         <span className="heatmap-legend-label">More</span>
       </div>
-      {tooltip && (
-        <div
-          className="heatmap-tooltip"
-          style={{
-            left: tooltip.x,
-            top: tooltip.y - 8,
-            transform: 'translate(-50%, -100%)',
-          }}
-        >
-          <strong>{tooltip.count} completion{tooltip.count !== 1 ? 's' : ''}</strong>
-          <span>{tooltip.date}</span>
-        </div>
-      )}
     </section>
   )
 }

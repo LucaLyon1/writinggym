@@ -1,17 +1,17 @@
 'use client'
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import Link from 'next/link'
 import { CATEGORIES } from '@/lib/categories'
 import type { CraftCategory } from '@/types/extract'
 import {
   craftPlaygroundPrompts,
   type CraftPlaygroundPrompt,
 } from '@/data/playground-prompts'
-import { AppFooter } from '@/components/AppFooter'
+import { SidebarNav } from '@/components/AppSidebar'
 
 interface CraftPromptGalleryProps {
   onSelect: (prompt: CraftPlaygroundPrompt) => void
+  onFreetextSelect?: () => void
   hero?: ReactNode
 }
 
@@ -38,7 +38,7 @@ const CRAFT_ORDER: CraftCategory[] = [
   'pacing',
 ]
 
-export function CraftPromptGallery({ onSelect, hero }: CraftPromptGalleryProps) {
+export function CraftPromptGallery({ onSelect, onFreetextSelect, hero }: CraftPromptGalleryProps) {
   const [activeCraft, setActiveCraft] = useState<CraftCategory | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -103,7 +103,7 @@ export function CraftPromptGallery({ onSelect, hero }: CraftPromptGalleryProps) 
               setSidebarOpen(false)
             }}
           >
-            <span className="cat-btn-label">All Prompts</span>
+            <span className="cat-btn-label">All prompts</span>
             <span className="cat-btn-count">{craftPlaygroundPrompts.length}</span>
           </button>
           {CRAFT_ORDER.map((craft) => (
@@ -120,26 +120,14 @@ export function CraftPromptGallery({ onSelect, hero }: CraftPromptGalleryProps) 
             </button>
           ))}
 
-          <span className="sidebar-label" style={{ marginTop: '1.25rem' }}>Other pages</span>
-          <Link href="/" className="cat-btn cat-btn-link">
-            <span className="cat-btn-label">Exercises</span>
-            <span className="cat-btn-arrow" aria-hidden="true">↗</span>
-          </Link>
-          <Link href="/explore" className="cat-btn cat-btn-link">
-            <span className="cat-btn-label">Explore community</span>
-            <span className="cat-btn-arrow" aria-hidden="true">↗</span>
-          </Link>
-          <Link href="/assessment" className="cat-btn cat-btn-link">
-            <span className="cat-btn-label">Assessment</span>
-            <span className="cat-btn-arrow" aria-hidden="true">↗</span>
-          </Link>
+          <SidebarNav />
         </nav>
 
         <main className="browser-main">
           {hero}
           <div className="category-header">
             <h2 className="category-title">
-              {activeMeta ? activeMeta.label : 'All Prompts'}
+              {activeMeta ? activeMeta.label : 'Playground'}
             </h2>
             <p className="category-desc">
               {activeMeta
@@ -159,11 +147,27 @@ export function CraftPromptGallery({ onSelect, hero }: CraftPromptGalleryProps) 
             />
           </div>
 
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !onFreetextSelect && (
             <p className="browser-empty">No prompts match these filters.</p>
           )}
 
           <div className="passage-grid">
+            {onFreetextSelect && (
+              <button
+                type="button"
+                className="pg-freetext-hero"
+                onClick={onFreetextSelect}
+              >
+                <div className="pg-freetext-hero-content">
+                  <h3 className="pg-freetext-hero-title">Free Writing</h3>
+                  <p className="pg-freetext-hero-desc">
+                    Write anything — a scene, a memory, a character. Get craft
+                    feedback on what works and what to improve.
+                  </p>
+                </div>
+                <span className="pg-freetext-hero-cta">Start writing →</span>
+              </button>
+            )}
             {filtered.map((p) => {
               const cat = CATEGORIES[p.craft]
               return (
@@ -188,8 +192,6 @@ export function CraftPromptGallery({ onSelect, hero }: CraftPromptGalleryProps) 
               )
             })}
           </div>
-
-          <AppFooter />
         </main>
       </div>
     </div>

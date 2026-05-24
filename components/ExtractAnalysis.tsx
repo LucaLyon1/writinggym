@@ -8,6 +8,7 @@ import { PublicAuthorAttribution } from '@/components/PublicAuthorAttribution'
 import type { CompletionAuthorPayload } from '@/lib/completion-author'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
+import { SidebarNav } from '@/components/AppSidebar'
 
 interface ExtractAnalysisProps {
   analysis: ExtractAnalysisType | null
@@ -256,6 +257,7 @@ function LeftSidebar({
           Community
         </button>
       </nav>
+      <SidebarNav />
     </aside>
   )
 }
@@ -270,9 +272,9 @@ function TutorialCard({ activeTab }: { activeTab: Tab }) {
         ]
       : activeTab === 'write'
       ? [
-          'Re-read the constraint on the right — it’s your brief.',
-          'Draft your version in the textarea. Use Test for an example.',
-          'Submit when you’re happy, then run Analyse my writing for feedback.',
+          "Re-read the constraint on the right — it’s your brief.",
+          "Draft your version in the textarea. Use Test for an example.",
+          "Save when you’re happy, then run Analyse my writing for feedback.",
         ]
       : [
           'Your own rewrites sit at the top — click one to revisit its analysis.',
@@ -829,11 +831,11 @@ export function ExtractAnalysis({
       return
     }
     if (!submittedCompletionId) {
-      setFeedbackError('Submit your writing before requesting analysis.')
+      setFeedbackError('Save your writing before requesting analysis.')
       return
     }
     if (userText.trim() !== submittedTextSnapshot) {
-      setFeedbackError('Submit your writing before requesting analysis.')
+      setFeedbackError('Save your writing before requesting analysis.')
       return
     }
     const supabase = createClient()
@@ -1066,15 +1068,15 @@ export function ExtractAnalysis({
             className="ea-submit-btn"
             onClick={handleSubmit}
             disabled={!canSubmit}
-            title="Save to your account. Required before you can run analysis."
+            title="Save to your account — required before you can run analysis."
           >
-            {submitLoading ? 'Saving…' : 'Submit'}
+            {submitLoading ? 'Saving…' : 'Save'}
           </button>
           <button
             className="ea-analyze-btn"
             onClick={handleAnalyze}
             disabled={!canAnalyze}
-            title="Submit the current text first, then you can get AI feedback on it"
+            title="Save the current text first, then you can get AI feedback on it"
           >
             {feedbackLoading ? 'Analysing…' : 'Analyse my writing'}
           </button>

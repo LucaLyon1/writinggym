@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { passages, categories } from '@/data/passages'
 import type { Tables } from '@/types/database.types'
@@ -151,6 +151,8 @@ function SubmissionCard({
   )
 }
 
+type FilterMode = 'all' | 'public' | 'private'
+
 export function ProfileSubmissionsList({
   initialCompletions,
 }: {
@@ -159,8 +161,29 @@ export function ProfileSubmissionsList({
   const [completions, setCompletions] = useState<PassageCompletion[]>(initialCompletions)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialCompletions.length === PAGE_SIZE)
+  const [search, setSearch] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [filter, setFilter] = useState<FilterMode>('all')
 
   const passageMap = new Map(passages.map((p) => [p.id, p]))
+
+  const filtered = useMemo(() => {
+    let result = completions
+    if (filter === 'public') result = result.filter((c) => c.is_public)
+    if (filter === 'private') result = result.filter((c) => !c.is_public)
+    if (search.trim()) {
+      const q = search.toLowerCase().trim()
+      result = result.filter((c) => {
+        const p = passageMap.get(c.passage_id)
+        return (
+          (c.user_text && c.user_text.toLowerCase().includes(q)) ||
+          (p && p.title.toLowerCase().includes(q)) ||
+          (p && p.author.toLowerCase().includes(q))
+        )
+      })
+    }
+    return result
+  }, [completions, filter, search, passageMap])
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return
@@ -183,33 +206,89 @@ export function ProfileSubmissionsList({
     }
   }, [completions.length, hasMore, loading])
 
-  if (completions.length === 0) {
-    return null
-  }
-
   return (
     <>
-      <ul className="profile-list">
-        {completions.map((c) => (
-          <SubmissionCard
-            key={c.id}
-            c={c}
-            passage={passageMap.get(c.passage_id)}
-          />
-        ))}
-      </ul>
-      {hasMore && (
-        <div className="profile-load-more">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={loading}
-            className="profile-load-more-btn"
-          >
-            {loading ? 'Loading…' : 'Load more'}
-          </button>
-        </div>
-      )}
+      <header className={`ea-stage-head profile-stage-toolbar${searchOpen ? ' profile-toolbar-expanded' : ''}`}>
+        {searchOpen ? (
+          <div className="profile-search-row">
+            <input
+              type="search"
+              className="profile-search-input"
+              placeholder="Search by title, author, or text…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoFocus
+            />
+            <button
+              type="button"
+              className="profile-search-close"
+              onClick={() => { setSearchOpen(false); setSearch('') }}
+              aria-label="Close search"
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="2" y1="2" x2="12" y2="12" />
+                <line x1="12" y1="2" x2="2" y2="12" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <>
+            <h2 className="ea-stage-title">Your writing</h2>
+            <div className="profile-stage-actions">
+              <div className="profile-filter-pills">
+                {(['all', 'public', 'private'] as FilterMode[]).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    className={`profile-filter-pill${filter === f ? ' is-active' : ''}`}
+                    onClick={() => setFilter(f)}
+                  >
+                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="profile-search-btn"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </button>
+            </div>
+          </>
+        )}
+      </header>
+      <div className="ea-stage-body profile-stage-body">
+        {filtered.length === 0 ? (
+          <p className="profile-no-results">No submissions match your filters.</p>
+        ) : (
+          <ul className="profile-list">
+            {filtered.map((c) => (
+              <SubmissionCard
+                key={c.id}
+                c={c}
+                passage={passageMap.get(c.passage_id)}
+              />
+            ))}
+          </ul>
+        )}
+        {hasMore && !search && filter === 'all' && (
+          <div className="profile-load-more">
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loading}
+              className="profile-load-more-btn"
+            >
+              {loading ? 'Loading…' : 'Load more'}
+            </button>
+          </div>
+        )}
+      </div>
     </>
   )
 }

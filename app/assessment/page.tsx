@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { passages, categories } from '@/data/passages'
 import type { Passage } from '@/data/passages'
-import { AppFooter } from '@/components/AppFooter'
+import { BrowsePageLayout } from '@/components/BrowsePageLayout'
 
 const PROMPTS = [
   'Describe a place you know well — a room, a street, a landscape — in a single paragraph.',
@@ -87,6 +87,7 @@ export default function AssessmentPage() {
 
   if (result) {
     return (
+      <BrowsePageLayout>
       <div className="assess-root">
         <div className="assess-inner assess-inner-wide">
           <header className="assess-header">
@@ -165,10 +166,12 @@ export default function AssessmentPage() {
           </div>
         </div>
       </div>
+      </BrowsePageLayout>
     )
   }
 
   return (
+    <BrowsePageLayout>
     <div className="assess-root">
       <div className="assess-inner">
         <header className="assess-header">
@@ -260,7 +263,7 @@ export default function AssessmentPage() {
           </div>
         )}
       </div>
-      <AppFooter />
     </div>
+    </BrowsePageLayout>
   )
 }
