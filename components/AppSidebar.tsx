@@ -2,6 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState, memo, type ReactNode } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { trialDaysLeft } from '@/lib/trial'
 
 const NAV_LINKS = [
   { href: '/', label: 'Exercises', exact: true },
@@ -10,8 +13,26 @@ const NAV_LINKS = [
   { href: '/profile', label: 'Profile', exact: false },
 ]
 
-export function SidebarNav() {
+let cachedDaysLeft: number | null | undefined = undefined
+
+export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactNode } = {}) {
   const pathname = usePathname()
+  const [daysLeft, setDaysLeft] = useState<number | null>(
+    cachedDaysLeft !== undefined ? cachedDaysLeft : null
+  )
+
+  useEffect(() => {
+    if (cachedDaysLeft !== undefined) {
+      setDaysLeft(cachedDaysLeft)
+      return
+    }
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const days = user ? trialDaysLeft(user.created_at) : null
+      cachedDaysLeft = days
+      setDaysLeft(days)
+    })
+  }, [])
 
   return (
     <div className="sidebar-nav">
@@ -32,7 +53,15 @@ export function SidebarNav() {
           )
         })}
       </nav>
-      <span className="sidebar-nav-copy">&copy; 2026 ProseLab</span>
+      {footer}
+      {daysLeft !== null && !footer && (
+        <Link href="/pricing" className="sidebar-upgrade-btn">
+          Upgrade <span className="sidebar-upgrade-days">({daysLeft} day{daysLeft === 1 ? '' : 's'} left)</span>
+        </Link>
+      )}
+      <div className="sidebar-nav-footer">
+        <span className="sidebar-nav-copy">&copy; 2026 ProseLab</span>
+      </div>
     </div>
   )
-}
+})

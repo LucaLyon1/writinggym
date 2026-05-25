@@ -105,28 +105,27 @@ export default async function PricingPage() {
           Cancel anytime from your account, 7-day money-back guarantee included.
         </p>
 
-        <section className="plans-faq" aria-label="Frequently asked questions">
-          <h2 className="plans-faq-eyebrow">FAQs</h2>
-          <div className="plans-faq-list">
-            {FAQS.map((item) => (
-              <details key={item.q} className="plans-faq-item">
-                <summary className="plans-faq-question">
-                  <span className="plans-faq-q-text">{item.q}</span>
-                  <span className="plans-faq-icon" aria-hidden>
-                    →
-                  </span>
-                </summary>
-                <div className="plans-faq-answer">
-                  <div className="plans-faq-answer-body">
-                    {typeof item.a === 'string' ? <p>{item.a}</p> : item.a}
-                  </div>
-                </div>
-              </details>
-            ))}
-          </div>
-        </section>
-
       </div>
+      <section className="plans-faq" aria-label="Frequently asked questions">
+        <h2 className="plans-faq-eyebrow">FAQs</h2>
+        <div className="plans-faq-list">
+          {FAQS.map((item) => (
+            <details key={item.q} className="plans-faq-item">
+              <summary className="plans-faq-question">
+                <span className="plans-faq-q-text">{item.q}</span>
+                <span className="plans-faq-icon" aria-hidden>
+                  →
+                </span>
+              </summary>
+              <div className="plans-faq-answer">
+                <div className="plans-faq-answer-body">
+                  {typeof item.a === 'string' ? <p>{item.a}</p> : item.a}
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
       <AppFooter />
     </div>
   )

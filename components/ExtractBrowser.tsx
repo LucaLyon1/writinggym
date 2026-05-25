@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import { passages, categories, tags } from '@/data/passages'
 import type { Difficulty, Passage } from '@/data/passages'
 import { SidebarNav } from '@/components/AppSidebar'
+import { useSidebar } from '@/components/SidebarContext'
 
 const DIFFICULTY_META: Record<Difficulty, { label: string; icon: string }> = {
   accessible: { label: 'Accessible', icon: '◇' },
@@ -41,7 +42,7 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar()
   const [completedByPassage, setCompletedByPassage] = useState<
     Record<string, number>
   >({})
@@ -52,22 +53,6 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
       .then((data) => (data ? setCompletedByPassage(data) : null))
       .catch(() => {})
   }, [])
-
-  useEffect(() => {
-    if (!sidebarOpen) return
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth
-    const previousOverflow = document.body.style.overflow
-    const previousPadding = document.body.style.paddingRight
-    document.body.style.overflow = 'hidden'
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`
-    }
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.body.style.paddingRight = previousPadding
-    }
-  }, [sidebarOpen])
 
   const passageCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -94,19 +79,6 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
   return (
     <div className="browser-root browser-embedded">
       <div className={`browser-body ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <button
-          type="button"
-          className="browser-sidebar-toggle"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open filters"
-        >
-          <span aria-hidden="true">☰</span> Filters
-        </button>
-        <div
-          className="browser-sidebar-backdrop"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
         <nav className="browser-sidebar">
           <span className="sidebar-label">Categories</span>
           <button

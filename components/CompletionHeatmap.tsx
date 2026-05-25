@@ -37,7 +37,15 @@ function getMonthGrid(year: number, month: number) {
   return cells
 }
 
-export function CompletionHeatmap({ completions }: { completions: Completion[] }) {
+type Props = {
+  completions: Completion[]
+  currentStreak?: number
+  longestStreak?: number
+  totalWordsWritten?: number
+  totalPassages?: number
+}
+
+export function CompletionHeatmap({ completions, currentStreak, longestStreak, totalWordsWritten, totalPassages }: Props) {
   const today = new Date()
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -75,7 +83,10 @@ export function CompletionHeatmap({ completions }: { completions: Completion[] }
     (cell) => cell.date && (countByDate.get(cell.date) ?? 0) > 0
   ).length
 
+  const isEarliestMonth = viewYear === 2026 && viewMonth === 2
+
   function goBack() {
+    if (isEarliestMonth) return
     if (viewMonth === 0) {
       setViewMonth(11)
       setViewYear(viewYear - 1)
@@ -101,6 +112,7 @@ export function CompletionHeatmap({ completions }: { completions: Completion[] }
           type="button"
           className="heatmap-nav-btn"
           onClick={goBack}
+          disabled={isEarliestMonth}
           aria-label="Previous month"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -140,7 +152,7 @@ export function CompletionHeatmap({ completions }: { completions: Completion[] }
               <span
                 key={i}
                 className={`heatmap-day heatmap-day-${level}${isToday ? ' heatmap-day-today' : ''}${isFuture ? ' heatmap-day-future' : ''}`}
-                title={isFuture ? undefined : `${count} session${count !== 1 ? 's' : ''}`}
+                title={isFuture ? undefined : `${count} prompt${count !== 1 ? 's' : ''} answered`}
               >
                 {cell.day}
               </span>
@@ -150,24 +162,30 @@ export function CompletionHeatmap({ completions }: { completions: Completion[] }
       </div>
 
       <div className="heatmap-stats">
-        <div className="heatmap-stat">
-          <span className="heatmap-stat-value">{monthTotal}</span>
-          <span className="heatmap-stat-label">sessions</span>
-        </div>
-        <div className="heatmap-stat">
-          <span className="heatmap-stat-value">{activeDays}</span>
-          <span className="heatmap-stat-label">active days</span>
-        </div>
-      </div>
-
-      <div className="heatmap-legend">
-        <span className="heatmap-legend-label">Less</span>
-        <div className="heatmap-legend-swatches">
-          {[0, 1, 2, 3, 4].map((level) => (
-            <div key={level} className={`heatmap-legend-cell heatmap-day-${level}`} />
-          ))}
-        </div>
-        <span className="heatmap-legend-label">More</span>
+        {currentStreak != null && (
+          <div className="heatmap-stat">
+            <span className="heatmap-stat-value">{currentStreak}</span>
+            <span className="heatmap-stat-label">day streak</span>
+          </div>
+        )}
+        {longestStreak != null && (
+          <div className="heatmap-stat">
+            <span className="heatmap-stat-value">{longestStreak}</span>
+            <span className="heatmap-stat-label">longest streak</span>
+          </div>
+        )}
+        {totalWordsWritten != null && (
+          <div className="heatmap-stat">
+            <span className="heatmap-stat-value">{totalWordsWritten.toLocaleString()}</span>
+            <span className="heatmap-stat-label">words written</span>
+          </div>
+        )}
+        {totalPassages != null && (
+          <div className="heatmap-stat">
+            <span className="heatmap-stat-value">{totalPassages}</span>
+            <span className="heatmap-stat-label">passages done</span>
+          </div>
+        )}
       </div>
     </section>
   )

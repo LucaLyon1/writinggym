@@ -12,6 +12,9 @@ import { FreeUserGate } from "@/components/FreeUserGate";
 import { createClient } from "@/lib/supabase/server";
 import { isWithinFreeTrial } from "@/lib/trial";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
+import { SidebarProvider } from "@/components/SidebarContext";
+import { MobileSidebarToggle } from "@/components/MobileSidebarToggle";
+import { SidebarBackdrop } from "@/components/SidebarBackdrop";
 
 // Import Cormorant Garamond font from Google Fonts (local or CDN)
 import { Cormorant_Garamond } from "next/font/google";
@@ -95,20 +98,26 @@ export default async function RootLayout({
     <html lang="en" className={`light ${GeistMono.variable} ${cormorantGaramond.variable}`}>
       <body>
         <AuthModalProvider>
+          <SidebarProvider>
           <header className="auth-header">
-            <Link href="/" className="auth-header-logo">
-              <span style={{ fontFamily: "Georgia, serif", fontWeight: 700 }}>
-                Proselab
-              </span>
-            </Link>
+            <div className="auth-header-left">
+              <MobileSidebarToggle />
+              <Link href="/" className="auth-header-logo">
+                <span style={{ fontFamily: "Georgia, serif", fontWeight: 700 }}>
+                  Proselab
+                </span>
+              </Link>
+            </div>
             <AuthNav />
           </header>
+          <SidebarBackdrop />
           <PostHogIdentify />
           {!isAuthenticated && <FirstVisitAuthModal />}
           <FreeUserGate isFreeUser={isFreeUser} />
           <PostTrialPaywall show={mustChooseAfterTrial} />
           {children}
           {isAuthenticated && <CrispChat />}
+          </SidebarProvider>
         </AuthModalProvider>
         <Script
           id="cookieyes"
