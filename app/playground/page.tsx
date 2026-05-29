@@ -12,6 +12,7 @@ import { CATEGORIES } from '@/lib/categories'
 import { createClient } from '@/lib/supabase/client'
 import { playgroundPassageId } from '@/lib/playground-passage'
 import { SidebarNav } from '@/components/AppSidebar'
+import { CollapsibleResponse } from '@/components/CollapsibleResponse'
 
 const FREETEXT_ID = '__freetext__'
 const FREETEXT_CONSTRAINT = 'Write anything — a scene, a memory, a description.'
@@ -621,12 +622,7 @@ export default function PlaygroundPage() {
         <header className="ea-stage-head">
           <h2 className="ea-stage-title">Feedback</h2>
         </header>
-        <div className="ea-feedback-user-text">
-          <span className="ea-feedback-section-label">Your writing</span>
-          <p className="ea-feedback-user-passage">
-            &ldquo;{submittedTextSnapshot || text}&rdquo;
-          </p>
-        </div>
+        <CollapsibleResponse label="Your writing" text={submittedTextSnapshot || text} />
         <div className="ea-stage-body ea-stage-body-feedback">
           {feedback.verdict && (
             <div className="ea-feedback-verdict">
@@ -1022,6 +1018,7 @@ export default function PlaygroundPage() {
         onClose={() => setPreviewSubmission(null)}
       />
     )}
+
     </div>
   )
 }

@@ -9,6 +9,7 @@ import type { CompletionAuthorPayload } from '@/lib/completion-author'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
 import { SidebarNav } from '@/components/AppSidebar'
+import { CollapsibleResponse } from '@/components/CollapsibleResponse'
 
 interface ExtractAnalysisProps {
   analysis: ExtractAnalysisType | null
@@ -1120,10 +1121,7 @@ export function ExtractAnalysis({
       <header className="ea-stage-head">
         <h2 className="ea-stage-title">Feedback</h2>
       </header>
-      <div className="ea-feedback-user-text">
-        <span className="ea-feedback-section-label">Your response</span>
-        <p className="ea-feedback-user-passage">&ldquo;{submittedTextSnapshot || userText}&rdquo;</p>
-      </div>
+      <CollapsibleResponse label="Your response" text={submittedTextSnapshot || userText} />
       <div className="ea-stage-body ea-stage-body-feedback">
 
           {feedback.verdict && (

@@ -1199,6 +1199,30 @@ body {
     font-style: italic;
 }
 
+.ea-feedback-user-passage-clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ea-feedback-expand {
+    margin-top: 0.5rem;
+    padding: 0;
+    background: none;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.ea-feedback-expand:hover {
+    opacity: 0.75;
+}
+
 .ea-stage-body-feedback > .ea-feedback-verdict,
 .ea-stage-body-feedback > .ea-feedback-points,
 .ea-stage-body-feedback > .ea-feedback-divergences,
