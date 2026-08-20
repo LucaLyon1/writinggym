@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
 import { CheckoutButton } from './CheckoutButton'
-import type { BillingPlanKey } from '@/lib/billing-plans'
+import { WhopCheckoutModal } from './WhopCheckoutModal'
+import { isBillingPlanKey, type BillingPlanKey } from '@/lib/billing-plans'
 
 type BillingCycle = 'yearly' | 'monthly'
 
@@ -137,14 +138,17 @@ const VIP_PLAN: PricingPlan = {
 
 interface PricingPlansProps {
   currentPlanId?: string | null
+  userEmail?: string | null
   /** If true, render the Free card with a CTA that records the post-trial choice. */
   mustChooseAfterTrial?: boolean
 }
 
-export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPlansProps) {
+export function PricingPlans({ currentPlanId, userEmail, mustChooseAfterTrial }: PricingPlansProps) {
   const [showCanceled, setShowCanceled] = useState(false)
   const [billing, setBilling] = useState<BillingCycle>('yearly')
   const [savingFreeChoice, setSavingFreeChoice] = useState(false)
+  const [checkoutPlanKey, setCheckoutPlanKey] = useState<BillingPlanKey | null>(null)
+  const [checkoutStateId, setCheckoutStateId] = useState<string | undefined>()
 
   const corePlan = CORE_PLANS[billing]
   const premiumPlan = PREMIUM_PLANS[billing]
@@ -171,8 +175,53 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
     }
   }
 
+  const openCheckout = useCallback((planKey: BillingPlanKey) => {
+    if (userEmail === null) {
+      const next = `/pricing?checkout=${encodeURIComponent(planKey)}`
+      window.location.assign(`/signup?next=${encodeURIComponent(next)}`)
+      return
+    }
+
+    // PricingPlans is also reused in account gates that do not have the user's
+    // email available. Preserve their server-authenticated checkout handoff.
+    if (!userEmail) {
+      window.location.assign(`/checkout?plan=${encodeURIComponent(planKey)}`)
+      return
+    }
+
+    setCheckoutPlanKey(planKey)
+  }, [userEmail])
+
+  const closeCheckout = useCallback(() => {
+    setCheckoutPlanKey(null)
+    setCheckoutStateId(undefined)
+
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('checkout') || url.searchParams.has('state_id')) {
+      url.searchParams.delete('checkout')
+      url.searchParams.delete('state_id')
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+    }
+  }, [])
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const requestedPlan = params.get('checkout')
+
+    if (isBillingPlanKey(requestedPlan)) {
+      if (userEmail === null) {
+        const next = `/pricing?checkout=${encodeURIComponent(requestedPlan)}`
+        window.location.replace(`/signup?next=${encodeURIComponent(next)}`)
+        return
+      }
+
+      if (userEmail) {
+        setBilling(requestedPlan.endsWith('monthly') ? 'monthly' : 'yearly')
+        setCheckoutStateId(params.get('state_id') ?? undefined)
+        setCheckoutPlanKey(requestedPlan)
+      }
+    }
+
     if (params.get('canceled') === 'true') {
       setShowCanceled(true)
       const timer = setTimeout(() => {
@@ -181,7 +230,7 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
       }, 5000)
       return () => clearTimeout(timer)
     }
-  }, [])
+  }, [userEmail])
 
   return (
     <>
@@ -318,6 +367,7 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
                 <CheckoutButton
                   planKey={plan.billingPlanKey}
                   className={`plans-btn ${plan.isDiscounted ? 'plans-btn-primary' : 'plans-btn-outline'}`}
+                  onCheckout={openCheckout}
                 >
                   {plan.cta}
                 </CheckoutButton>
@@ -335,6 +385,15 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
           )
         })}
       </section>
+
+      {checkoutPlanKey && userEmail && (
+        <WhopCheckoutModal
+          email={userEmail}
+          planKey={checkoutPlanKey}
+          stateId={checkoutStateId}
+          onClose={closeCheckout}
+        />
+      )}
     </>
   )
 }

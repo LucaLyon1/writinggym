@@ -25,6 +25,7 @@ export function WhopCheckoutClient({ email, planKey, planId, planLabel, stateId 
   const attemptId = useRef(crypto.randomUUID())
   const [session, setSession] = useState<CheckoutSession | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -48,7 +49,14 @@ export function WhopCheckoutClient({ email, planKey, planId, planLabel, stateId 
 
     createCheckout()
     return () => { active = false }
-  }, [planKey])
+  }, [planKey, retryCount])
+
+  const retryCheckout = () => {
+    attemptId.current = crypto.randomUUID()
+    setError(null)
+    setSession(null)
+    setRetryCount((count) => count + 1)
+  }
 
   const finishCheckout = (receiptId?: string) => {
     const params = new URLSearchParams({ plan: planKey, status: 'success' })
@@ -61,7 +69,7 @@ export function WhopCheckoutClient({ email, planKey, planId, planLabel, stateId 
       <div className={styles.message} role="alert">
         <h2>Checkout couldn&apos;t start</h2>
         <p>{error}</p>
-        <button type="button" onClick={() => window.location.reload()}>
+        <button type="button" onClick={retryCheckout}>
           Try again
         </button>
       </div>

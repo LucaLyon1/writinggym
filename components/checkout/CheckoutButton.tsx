@@ -9,6 +9,7 @@ interface CheckoutButtonProps {
   children: React.ReactNode
   className?: string
   variant?: 'primary' | 'outline'
+  onCheckout?: (planKey: BillingPlanKey) => void
 }
 
 export function CheckoutButton({
@@ -16,6 +17,7 @@ export function CheckoutButton({
   children,
   className = 'plans-btn plans-btn-primary',
   variant = 'primary',
+  onCheckout,
 }: CheckoutButtonProps) {
   const handleCheckout = () => {
     const plan = BILLING_PLANS[planKey]
@@ -26,6 +28,11 @@ export function CheckoutButton({
       product: plan.appPlanId,
       billing_cycle: plan.billingCycle,
     })
+    if (onCheckout) {
+      onCheckout(planKey)
+      return
+    }
+
     window.location.assign(`/checkout?plan=${encodeURIComponent(planKey)}`)
   }
 

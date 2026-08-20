@@ -48,11 +48,12 @@ const FAQS: FaqItem[] = [
 async function getPricingState(): Promise<{
   currentPlanId: string | null
   mustChooseAfterTrial: boolean
+  userEmail: string | null
 }> {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { currentPlanId: null, mustChooseAfterTrial: false }
+    if (!user) return { currentPlanId: null, mustChooseAfterTrial: false, userEmail: null }
 
     const [{ data: sub }, { data: profile }] = await Promise.all([
       supabase
@@ -72,14 +73,14 @@ async function getPricingState(): Promise<{
     const hasChosen = !!profile?.post_trial_choice_at
     const mustChooseAfterTrial = !sub && !withinTrial && !hasChosen
 
-    return { currentPlanId: sub?.plan_id ?? null, mustChooseAfterTrial }
+    return { currentPlanId: sub?.plan_id ?? null, mustChooseAfterTrial, userEmail: user.email ?? null }
   } catch {
-    return { currentPlanId: null, mustChooseAfterTrial: false }
+    return { currentPlanId: null, mustChooseAfterTrial: false, userEmail: null }
   }
 }
 
 export default async function PricingPage() {
-  const { currentPlanId, mustChooseAfterTrial } = await getPricingState()
+  const { currentPlanId, mustChooseAfterTrial, userEmail } = await getPricingState()
 
   return (
     <div className="plans-root">
@@ -98,6 +99,7 @@ export default async function PricingPage() {
 
         <PricingPlans
           currentPlanId={currentPlanId}
+          userEmail={userEmail}
           mustChooseAfterTrial={mustChooseAfterTrial}
         />
 

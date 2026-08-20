@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -6,8 +5,6 @@ import {
   isBillingPlanKey,
   isConfiguredBillingPlan,
 } from '@/lib/billing-plans'
-import { WhopCheckoutClient } from './WhopCheckoutClient'
-import styles from './checkout.module.css'
 
 export default async function CheckoutPage({
   searchParams,
@@ -27,26 +24,7 @@ export default async function CheckoutPage({
     redirect(`/signup?next=${encodeURIComponent(next)}`)
   }
 
-  return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
-        <Link href="/pricing" className={styles.back}>← Back to plans</Link>
-        <div className={styles.heading}>
-          <p className={styles.eyebrow}>Secure checkout with Whop</p>
-          <h1>Finish choosing<br /><em>{plan.label}</em></h1>
-          <p>Your seven-day ProseLab trial remains separate from this subscription.</p>
-        </div>
-        <WhopCheckoutClient
-          email={user.email ?? ''}
-          planKey={plan.key}
-          planId={plan.whopPlanId}
-          planLabel={plan.label}
-          stateId={params.state_id}
-        />
-        <p className={styles.finePrint}>
-          Payment and subscription management are securely handled by Whop.
-        </p>
-      </div>
-    </main>
-  )
+  const pricingParams = new URLSearchParams({ checkout: plan.key })
+  if (params.state_id) pricingParams.set('state_id', params.state_id)
+  redirect(`/pricing?${pricingParams.toString()}`)
 }
