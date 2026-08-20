@@ -4,6 +4,7 @@ import { getBillingPlanByWhopId } from '@/lib/billing-plans'
 import { getPostHogClient } from '@/lib/posthog-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getWhopClient, WHOP_ACCOUNT_ID } from '@/lib/whop'
+import { syncWhopSubscription } from '@/lib/whop-subscription-sync'
 
 type MembershipEvent = Extract<
   UnwrapWebhookEvent,
@@ -42,35 +43,20 @@ async function syncMembership(event: MembershipEvent) {
     return
   }
 
-  const { error } = await supabaseAdmin.from('subscriptions').upsert({
-    user_id: userId,
-    plan_id: planId,
+  await syncWhopSubscription({
+    userId,
+    planId,
     status: membership.status,
-    billing_provider: 'whop',
-    external_customer_id: membership.user?.id ?? null,
-    external_subscription_id: membership.id,
-    external_plan_id: membership.plan.id,
-    manage_url: membership.manage_url,
-    current_period_start: membership.renewal_period_start,
-    current_period_end: membership.renewal_period_end,
-    cancel_at_period_end: membership.cancel_at_period_end,
-    canceled_at: membership.canceled_at,
-    provider_updated_at: membership.updated_at,
-    stripe_customer_id: null,
-    stripe_subscription_id: null,
-    stripe_price_id: null,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id' })
-
-  if (error) throw error
-
-  if (event.type === 'membership.activated') {
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .update({ is_founding_member: true })
-      .eq('id', userId)
-    if (profileError) throw profileError
-  }
+    membershipId: membership.id,
+    customerId: membership.user?.id ?? null,
+    externalPlanId: membership.plan.id,
+    manageUrl: membership.manage_url,
+    currentPeriodStart: membership.renewal_period_start,
+    currentPeriodEnd: membership.renewal_period_end,
+    cancelAtPeriodEnd: membership.cancel_at_period_end,
+    canceledAt: membership.canceled_at,
+    providerUpdatedAt: membership.updated_at,
+  })
 
   const posthog = getPostHogClient()
   posthog.capture({

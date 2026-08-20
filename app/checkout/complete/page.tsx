@@ -6,7 +6,7 @@ import styles from '../checkout.module.css'
 export default async function CheckoutCompletePage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string; status?: string }>
+  searchParams: Promise<{ plan?: string; status?: string; receipt?: string }>
 }) {
   const params = await searchParams
   const plan = isBillingPlanKey(params.plan) ? BILLING_PLANS[params.plan] : null
@@ -14,7 +14,7 @@ export default async function CheckoutCompletePage({
 
   return (
     <main className={styles.page}>
-      {!failed && <RefreshLayoutAfterPurchase />}
+      {!failed && <RefreshLayoutAfterPurchase whopReceiptId={params.receipt} />}
       <div className={`${styles.shell} ${styles.complete}`}>
         <p className={styles.eyebrow}>{failed ? 'Checkout interrupted' : 'You’re in'}</p>
         <h1>
