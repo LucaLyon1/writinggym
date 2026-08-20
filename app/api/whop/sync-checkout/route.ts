@@ -3,7 +3,10 @@ import { getBillingPlanByWhopId } from '@/lib/billing-plans'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getWhopClient, WHOP_ACCOUNT_ID, WHOP_PRODUCT_ID } from '@/lib/whop'
-import { syncWhopSubscription } from '@/lib/whop-subscription-sync'
+import {
+  normalizeWhopMembership,
+  syncWhopSubscription,
+} from '@/lib/whop-subscription-sync'
 
 function metadataString(
   metadata: { [key: string]: unknown } | null,
@@ -48,40 +51,44 @@ export async function POST(request: NextRequest) {
     }
 
     const membership = await whop.memberships.retrieve(payment.membership.id)
-    if (membership.company.id !== WHOP_ACCOUNT_ID || membership.product.id !== WHOP_PRODUCT_ID) {
+    const normalized = normalizeWhopMembership(membership, {
+      customerId: payment.user?.id ?? null,
+      updatedAt: payment.updated_at,
+    })
+    if (normalized.accountId !== WHOP_ACCOUNT_ID || normalized.productId !== WHOP_PRODUCT_ID) {
       return NextResponse.json({ error: 'Unexpected Whop membership' }, { status: 403 })
     }
 
-    const membershipUserId = metadataString(membership.metadata, 'supabase_user_id')
+    const membershipUserId = metadataString(normalized.metadata, 'supabase_user_id')
     if (membershipUserId && membershipUserId !== user.id) {
       return NextResponse.json({ error: 'Membership does not belong to this account' }, { status: 403 })
     }
 
     const metadataPlan =
-      metadataString(membership.metadata, 'app_plan_id') ??
+      metadataString(normalized.metadata, 'app_plan_id') ??
       metadataString(payment.metadata, 'app_plan_id')
-    const configuredPlan = getBillingPlanByWhopId(membership.plan.id)
+    const configuredPlan = getBillingPlanByWhopId(normalized.planId)
     const planId = metadataPlan === 'core' || metadataPlan === 'premium'
       ? metadataPlan
       : configuredPlan?.appPlanId
 
-    if (!planId || membership.plan.id !== payment.plan.id) {
+    if (!planId || normalized.planId !== payment.plan.id) {
       return NextResponse.json({ error: 'Unknown Whop plan' }, { status: 422 })
     }
 
     await syncWhopSubscription({
       userId: user.id,
       planId,
-      status: membership.status,
-      membershipId: membership.id,
-      customerId: membership.user?.id ?? payment.user?.id ?? null,
-      externalPlanId: membership.plan.id,
-      manageUrl: membership.manage_url,
-      currentPeriodStart: membership.renewal_period_start,
-      currentPeriodEnd: membership.renewal_period_end,
-      cancelAtPeriodEnd: membership.cancel_at_period_end,
-      canceledAt: membership.canceled_at,
-      providerUpdatedAt: membership.updated_at,
+      status: normalized.status,
+      membershipId: normalized.id,
+      customerId: normalized.customerId,
+      externalPlanId: normalized.planId,
+      manageUrl: normalized.manageUrl,
+      currentPeriodStart: normalized.currentPeriodStart,
+      currentPeriodEnd: normalized.currentPeriodEnd,
+      cancelAtPeriodEnd: normalized.cancelAtPeriodEnd,
+      canceledAt: normalized.canceledAt,
+      providerUpdatedAt: normalized.providerUpdatedAt,
     })
 
     const { error: ledgerError } = await supabaseAdmin
@@ -93,7 +100,7 @@ export async function POST(request: NextRequest) {
       }, { onConflict: 'id', ignoreDuplicates: true })
     if (ledgerError) throw ledgerError
 
-    return NextResponse.json({ synced: true, planId, status: membership.status })
+    return NextResponse.json({ synced: true, planId, status: normalized.status })
   } catch (error) {
     console.error('[whop checkout sync] Failed to reconcile receipt:', error)
     return NextResponse.json({ error: 'Unable to confirm purchase yet' }, { status: 502 })

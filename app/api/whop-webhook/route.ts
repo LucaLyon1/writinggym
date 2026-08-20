@@ -4,7 +4,10 @@ import { getBillingPlanByWhopId } from '@/lib/billing-plans'
 import { getPostHogClient } from '@/lib/posthog-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getWhopClient, WHOP_ACCOUNT_ID } from '@/lib/whop'
-import { syncWhopSubscription } from '@/lib/whop-subscription-sync'
+import {
+  normalizeWhopMembership,
+  syncWhopSubscription,
+} from '@/lib/whop-subscription-sync'
 
 type MembershipEvent = Extract<
   UnwrapWebhookEvent,
@@ -123,10 +126,14 @@ async function handleSuccessfulPayment(
   }
 
   const membership = await getWhopClient().memberships.retrieve(payment.membership.id)
+  const normalized = normalizeWhopMembership(membership, {
+    customerId: payment.user?.id ?? null,
+    updatedAt: payment.updated_at,
+  })
   const metadataPlan =
-    metadataString(membership.metadata, 'app_plan_id') ??
+    metadataString(normalized.metadata, 'app_plan_id') ??
     metadataString(payment.metadata, 'app_plan_id')
-  const configuredPlan = getBillingPlanByWhopId(membership.plan.id)
+  const configuredPlan = getBillingPlanByWhopId(normalized.planId)
   const planId = metadataPlan === 'core' || metadataPlan === 'premium'
     ? metadataPlan
     : configuredPlan?.appPlanId
@@ -134,8 +141,8 @@ async function handleSuccessfulPayment(
   if (!planId) {
     console.error('[whop webhook] Successful payment has an unknown plan', {
       paymentId: payment.id,
-      membershipId: membership.id,
-      whopPlanId: membership.plan.id,
+      membershipId: normalized.id,
+      whopPlanId: normalized.planId,
     })
     return
   }
@@ -143,16 +150,16 @@ async function handleSuccessfulPayment(
   await syncWhopSubscription({
     userId,
     planId,
-    status: membership.status,
-    membershipId: membership.id,
-    customerId: membership.user?.id ?? payment.user?.id ?? null,
-    externalPlanId: membership.plan.id,
-    manageUrl: membership.manage_url,
-    currentPeriodStart: membership.renewal_period_start,
-    currentPeriodEnd: membership.renewal_period_end,
-    cancelAtPeriodEnd: membership.cancel_at_period_end,
-    canceledAt: membership.canceled_at,
-    providerUpdatedAt: membership.updated_at,
+    status: normalized.status,
+    membershipId: normalized.id,
+    customerId: normalized.customerId,
+    externalPlanId: normalized.planId,
+    manageUrl: normalized.manageUrl,
+    currentPeriodStart: normalized.currentPeriodStart,
+    currentPeriodEnd: normalized.currentPeriodEnd,
+    cancelAtPeriodEnd: normalized.cancelAtPeriodEnd,
+    canceledAt: normalized.canceledAt,
+    providerUpdatedAt: normalized.providerUpdatedAt,
   })
 }
 
