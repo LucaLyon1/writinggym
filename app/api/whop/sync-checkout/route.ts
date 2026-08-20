@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getBillingPlanByWhopId } from '@/lib/billing-plans'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getWhopClient, WHOP_ACCOUNT_ID, WHOP_PRODUCT_ID } from '@/lib/whop'
+import {
+  getWhopBillingPortalUrl,
+  getWhopClient,
+  WHOP_ACCOUNT_ID,
+  WHOP_PRODUCT_ID,
+} from '@/lib/whop'
 import {
   normalizeWhopMembership,
   syncWhopSubscription,
@@ -83,7 +88,7 @@ export async function POST(request: NextRequest) {
       membershipId: normalized.id,
       customerId: normalized.customerId,
       externalPlanId: normalized.planId,
-      manageUrl: normalized.manageUrl,
+      manageUrl: normalized.manageUrl ?? getWhopBillingPortalUrl(payment.member?.id),
       currentPeriodStart: normalized.currentPeriodStart,
       currentPeriodEnd: normalized.currentPeriodEnd,
       cancelAtPeriodEnd: normalized.cancelAtPeriodEnd,

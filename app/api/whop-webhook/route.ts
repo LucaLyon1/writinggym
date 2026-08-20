@@ -3,7 +3,7 @@ import type { UnwrapWebhookEvent } from '@whop/sdk/resources/webhooks'
 import { getBillingPlanByWhopId } from '@/lib/billing-plans'
 import { getPostHogClient } from '@/lib/posthog-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getWhopClient, WHOP_ACCOUNT_ID } from '@/lib/whop'
+import { getWhopBillingPortalUrl, getWhopClient, WHOP_ACCOUNT_ID } from '@/lib/whop'
 import {
   normalizeWhopMembership,
   syncWhopSubscription,
@@ -154,7 +154,7 @@ async function handleSuccessfulPayment(
     membershipId: normalized.id,
     customerId: normalized.customerId,
     externalPlanId: normalized.planId,
-    manageUrl: normalized.manageUrl,
+    manageUrl: normalized.manageUrl ?? getWhopBillingPortalUrl(payment.member?.id),
     currentPeriodStart: normalized.currentPeriodStart,
     currentPeriodEnd: normalized.currentPeriodEnd,
     cancelAtPeriodEnd: normalized.cancelAtPeriodEnd,
