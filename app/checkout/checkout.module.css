@@ -56,12 +56,7 @@
 }
 
 .embed {
-  overflow: hidden;
-  padding: 0.65rem;
-  border: 1px solid rgba(72, 55, 43, 0.14);
-  border-radius: 18px;
-  background: #f8f2e8;
-  box-shadow: 0 24px 70px rgba(58, 42, 31, 0.12);
+  width: 100%;
 }
 
 .message {
@@ -130,5 +125,4 @@
 
 @media (max-width: 640px) {
   .page { padding-top: 5.5rem; }
-  .embed { padding: 0.2rem; }
 }

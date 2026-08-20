@@ -66,7 +66,7 @@ export function WhopCheckoutModal({ email, planKey, stateId, onClose }: Props) {
         className={styles.modal}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="whop-checkout-title"
+        aria-label={`Checkout for ${plan.label}`}
       >
         <button
           ref={closeButtonRef}
@@ -78,24 +78,13 @@ export function WhopCheckoutModal({ email, planKey, stateId, onClose }: Props) {
           <span aria-hidden>×</span>
         </button>
 
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>Secure checkout with Whop</p>
-          <h2 id="whop-checkout-title">{plan.label}</h2>
-        </header>
-
-        <div className={styles.checkout}>
-          <WhopCheckoutClient
-            email={email}
-            planKey={plan.key}
-            planId={plan.whopPlanId}
-            planLabel={plan.label}
-            stateId={stateId}
-          />
-        </div>
-
-        <p className={styles.finePrint}>
-          Payment and subscription management are securely handled by Whop.
-        </p>
+        <WhopCheckoutClient
+          email={email}
+          planKey={plan.key}
+          planId={plan.whopPlanId}
+          planLabel={plan.label}
+          stateId={stateId}
+        />
       </section>
     </div>,
     document.body
