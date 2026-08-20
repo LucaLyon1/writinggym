@@ -108,6 +108,54 @@ async function handleFailedPayment(
   await posthog.shutdown()
 }
 
+async function handleSuccessfulPayment(
+  event: Extract<UnwrapWebhookEvent, { type: 'payment.succeeded' }>
+) {
+  const payment = event.data
+  const userId = metadataString(payment.metadata, 'supabase_user_id')
+  if (!userId || !payment.membership?.id) {
+    console.error('[whop webhook] Successful payment is missing app identity metadata', {
+      paymentId: payment.id,
+      membershipId: payment.membership?.id,
+      userId,
+    })
+    return
+  }
+
+  const membership = await getWhopClient().memberships.retrieve(payment.membership.id)
+  const metadataPlan =
+    metadataString(membership.metadata, 'app_plan_id') ??
+    metadataString(payment.metadata, 'app_plan_id')
+  const configuredPlan = getBillingPlanByWhopId(membership.plan.id)
+  const planId = metadataPlan === 'core' || metadataPlan === 'premium'
+    ? metadataPlan
+    : configuredPlan?.appPlanId
+
+  if (!planId) {
+    console.error('[whop webhook] Successful payment has an unknown plan', {
+      paymentId: payment.id,
+      membershipId: membership.id,
+      whopPlanId: membership.plan.id,
+    })
+    return
+  }
+
+  await syncWhopSubscription({
+    userId,
+    planId,
+    status: membership.status,
+    membershipId: membership.id,
+    customerId: membership.user?.id ?? payment.user?.id ?? null,
+    externalPlanId: membership.plan.id,
+    manageUrl: membership.manage_url,
+    currentPeriodStart: membership.renewal_period_start,
+    currentPeriodEnd: membership.renewal_period_end,
+    cancelAtPeriodEnd: membership.cancel_at_period_end,
+    canceledAt: membership.canceled_at,
+    providerUpdatedAt: membership.updated_at,
+  })
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.WHOP_WEBHOOK_SECRET || !process.env.WHOP_API_KEY) {
     console.error('[whop webhook] Whop secrets are not configured')
@@ -144,6 +192,9 @@ export async function POST(request: NextRequest) {
       case 'membership.deactivated':
       case 'membership.cancel_at_period_end_changed':
         await syncMembership(event)
+        break
+      case 'payment.succeeded':
+        await handleSuccessfulPayment(event)
         break
       case 'payment.failed':
         await handleFailedPayment(event)
