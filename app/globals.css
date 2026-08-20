@@ -9223,7 +9223,7 @@ body[data-gated] > *:not(.gate-overlay) {
     --plans-muted: #5c5246;
     --plans-mono: var(--font-mono);
 
-    max-width: 620px;
+    max-width: 1120px;
     max-height: calc(100vh - 3rem);
     padding: 2rem 2rem 1.5rem;
     overflow-y: auto;
