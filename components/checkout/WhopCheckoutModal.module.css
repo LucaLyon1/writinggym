@@ -5,7 +5,7 @@
   display: grid;
   place-items: center;
   overflow-y: auto;
-  padding: 4rem 1.25rem 2rem;
+  padding: 3rem 1.25rem;
   background: rgba(26, 23, 20, 0.62);
   animation: checkout-backdrop-in 160ms ease-out;
 }
@@ -70,7 +70,7 @@
 
 @media (max-width: 640px) {
   .backdrop {
-    padding: 3.5rem 0.5rem 1rem;
+    padding: 2.75rem 0.5rem 1.75rem;
   }
 
   .modal {
