@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { useActionState } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { sendMagicLink, signInWithGoogle } from '@/app/actions/auth'
+import { trackWhopEvent } from '@/lib/whop-pixel'
 
 function GoogleIcon() {
   return (
@@ -37,6 +37,17 @@ interface SignupFormProps {
 export function SignupForm({ next, hideHeader, onSwitchMode }: SignupFormProps) {
   const [state, formAction, isPending] = useActionState(sendMagicLink, undefined)
   const [googleError, setGoogleError] = useState<string | null>(null)
+  const leadTracked = useRef(false)
+
+  const trackLead = useCallback(() => {
+    if (leadTracked.current) return
+    trackWhopEvent('lead')
+    leadTracked.current = true
+  }, [])
+
+  useEffect(() => {
+    if (state?.success) trackLead()
+  }, [state?.success, trackLead])
 
   async function handleGoogleSignIn() {
     setGoogleError(null)

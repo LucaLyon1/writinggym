@@ -36,6 +36,7 @@ export function CheckoutButton({
     setLoading(true)
     setError(null)
 
+    window.whop?.track('add_to_cart')
     posthog.capture('checkout_initiated', { product, lookup_key: lookupKey, mode })
 
     try {

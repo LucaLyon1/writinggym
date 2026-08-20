@@ -58,6 +58,7 @@ export async function GET(request: Request) {
   const redirectUrl = new URL(next, requestUrl.origin)
   if (isNewUser) {
     redirectUrl.searchParams.set('welcome', '1')
+    redirectUrl.searchParams.set('whop_registration', '1')
   }
   return NextResponse.redirect(redirectUrl)
 }
