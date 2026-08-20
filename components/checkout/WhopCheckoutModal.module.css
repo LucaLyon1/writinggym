@@ -14,12 +14,18 @@
   position: relative;
   width: min(680px, 100%);
   margin: auto 0;
+  animation: checkout-modal-in 180ms ease-out;
+}
+
+.panel {
+  max-height: calc(100dvh - 6rem);
   overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid rgba(26, 23, 20, 0.16);
   border-radius: 16px;
   background: #f8f2e8;
   box-shadow: 0 24px 72px rgba(26, 23, 20, 0.24);
-  animation: checkout-modal-in 180ms ease-out;
 }
 
 .close {
@@ -69,6 +75,10 @@
 
   .modal {
     width: 100%;
+  }
+
+  .panel {
+    max-height: calc(100dvh - 4.5rem);
   }
 
   .close {

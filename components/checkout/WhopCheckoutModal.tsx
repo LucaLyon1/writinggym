@@ -78,13 +78,15 @@ export function WhopCheckoutModal({ email, planKey, stateId, onClose }: Props) {
           <span aria-hidden>×</span>
         </button>
 
-        <WhopCheckoutClient
-          email={email}
-          planKey={plan.key}
-          planId={plan.whopPlanId}
-          planLabel={plan.label}
-          stateId={stateId}
-        />
+        <div className={styles.panel}>
+          <WhopCheckoutClient
+            email={email}
+            planKey={plan.key}
+            planId={plan.whopPlanId}
+            planLabel={plan.label}
+            stateId={stateId}
+          />
+        </div>
       </section>
     </div>,
     document.body
