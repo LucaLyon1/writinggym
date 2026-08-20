@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const rawNext = requestUrl.searchParams.get('next') ?? '/'
-  const next = rawNext.startsWith('/') ? rawNext : '/'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/'
 
   if (!code) {
     return NextResponse.redirect(new URL(next, requestUrl.origin))

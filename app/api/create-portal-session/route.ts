@@ -22,14 +22,27 @@ export async function POST() {
 
     const { data: subscription } = await supabaseAdmin
       .from('subscriptions')
-      .select('stripe_customer_id')
+      .select('billing_provider, manage_url, stripe_customer_id')
       .eq('user_id', user.id)
       .in('status', ['active', 'trialing'])
       .maybeSingle()
 
-    if (!subscription?.stripe_customer_id) {
+    if (!subscription) {
       return NextResponse.json(
         { error: 'No active subscription found' },
+        { status: 404 }
+      )
+    }
+
+    if (subscription.billing_provider === 'whop') {
+      return NextResponse.json({
+        url: subscription.manage_url ?? 'https://whop.com/@me/settings/memberships/',
+      })
+    }
+
+    if (!subscription.stripe_customer_id) {
+      return NextResponse.json(
+        { error: 'No billing account found' },
         { status: 404 }
       )
     }

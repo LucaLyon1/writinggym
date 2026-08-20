@@ -369,13 +369,19 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_provider: string
           cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          external_customer_id: string | null
+          external_plan_id: string | null
+          external_subscription_id: string | null
           id: string
+          manage_url: string | null
           plan_id: string
+          provider_updated_at: string | null
           status: string
           stripe_customer_id: string | null
           stripe_price_id: string | null
@@ -385,13 +391,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          billing_provider?: string
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          external_customer_id?: string | null
+          external_plan_id?: string | null
+          external_subscription_id?: string | null
           id?: string
+          manage_url?: string | null
           plan_id?: string
+          provider_updated_at?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
@@ -401,13 +413,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          billing_provider?: string
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          external_customer_id?: string | null
+          external_plan_id?: string | null
+          external_subscription_id?: string | null
           id?: string
+          manage_url?: string | null
           plan_id?: string
+          provider_updated_at?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
@@ -432,6 +450,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      billing_webhook_events: {
+        Row: {
+          event_type: string
+          id: string
+          processed_at: string
+          provider: string
+        }
+        Insert: {
+          event_type: string
+          id: string
+          processed_at?: string
+          provider: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          processed_at?: string
+          provider?: string
+        }
+        Relationships: []
       }
       upvotes: {
         Row: {

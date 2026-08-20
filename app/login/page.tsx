@@ -7,10 +7,11 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ next?: string }>
 }) {
+  const { next } = await searchParams
+  const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) redirect('/')
+  if (user) redirect(safeNext)
 
-  const { next } = await searchParams
-  return <AuthPageFrame mode="login" next={next} />
+  return <AuthPageFrame mode="login" next={safeNext === '/' ? undefined : safeNext} />
 }

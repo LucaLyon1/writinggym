@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   '/cookies',
   '/email-verified',
   '/auth/callback',
+  '/api/whop-webhook',
 ]
 
 function isPublic(pathname: string): boolean {
@@ -41,7 +42,7 @@ export async function middleware(request: NextRequest) {
 
       if (!user) {
         const signupUrl = new URL('/signup', request.url)
-        signupUrl.searchParams.set('next', request.nextUrl.pathname)
+        signupUrl.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`)
         return NextResponse.redirect(signupUrl)
       }
     }

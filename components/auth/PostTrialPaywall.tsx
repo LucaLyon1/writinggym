@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CheckoutButton } from '@/components/checkout/CheckoutButton'
+import type { BillingPlanKey } from '@/lib/billing-plans'
 
 interface Props {
   show: boolean
@@ -14,20 +15,17 @@ type BillingCycle = 'yearly' | 'monthly'
 const CORE_PLANS: Record<BillingCycle, {
   price: string
   priceNote: string
-  lookupKey: string
-  product: string
+  billingPlanKey: BillingPlanKey
 }> = {
   yearly: {
     price: '$8.25',
     priceNote: 'Billed $99 annually — save 17%',
-    lookupKey: 'yearly_99',
-    product: 'yearly_99',
+    billingPlanKey: 'core-yearly',
   },
   monthly: {
     price: '$9.99',
     priceNote: 'Billed monthly',
-    lookupKey: 'monthly_9.99',
-    product: 'monthly_9.99',
+    billingPlanKey: 'core-monthly',
   },
 }
 
@@ -95,12 +93,7 @@ export function PostTrialPaywall({ show }: Props) {
           </ul>
 
           <CheckoutButton
-            lookupKey={plan.lookupKey}
-            product={plan.product}
-            mode="subscription"
-            useManagedPayments
-            successPath="/pricing/success"
-            cancelPath="/"
+            planKey={plan.billingPlanKey}
             className="post-trial-cta"
           >
             Get ProseLab Core

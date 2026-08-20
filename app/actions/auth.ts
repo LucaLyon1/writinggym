@@ -24,9 +24,13 @@ export async function sendMagicLink(
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  // Always land in the root app after magic-link click; ignore any `next` from
-  // the form so users don't get bounced back to /signup or /pricing.
-  const emailRedirectTo = `${siteUrl}/auth/callback`
+  const rawNext = (formData.get('next') as string | null)?.trim()
+  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
+    ? rawNext
+    : null
+  const callbackUrl = new URL('/auth/callback', siteUrl)
+  if (next) callbackUrl.searchParams.set('next', next)
+  const emailRedirectTo = callbackUrl.toString()
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -62,7 +66,7 @@ export async function signInWithPassword(
 
   revalidatePath('/', 'layout')
   const next = (formData.get('next') as string | null)?.trim()
-  redirect(next && next.startsWith('/') ? next : '/')
+  redirect(next && next.startsWith('/') && !next.startsWith('//') ? next : '/')
 }
 
 export async function setPassword(
@@ -97,7 +101,7 @@ export async function signInWithGoogle(next?: string) {
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
   const redirectTo =
-    next && next.startsWith('/')
+    next && next.startsWith('/') && !next.startsWith('//')
       ? `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
       : `${siteUrl}/auth/callback`
 

@@ -12,6 +12,8 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
+    "@whop/checkout": "^0.6.0",
+    "@whop/sdk": "^0.0.42",
     "elevenlabs": "^1.59.0",
     "geist": "^1.7.0",
     "next": "16.1.6",

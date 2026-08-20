@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
 import { CheckoutButton } from './CheckoutButton'
+import type { BillingPlanKey } from '@/lib/billing-plans'
 
 type BillingCycle = 'yearly' | 'monthly'
 
@@ -40,11 +41,7 @@ interface PricingPlan {
   features: string[]
   cta: string
   ctaHref?: string
-  lookupKey?: string
-  product?: string
-  mode?: 'payment' | 'subscription'
-  useManagedPayments?: boolean
-  trialDays?: number
+  billingPlanKey?: BillingPlanKey
   isPopular?: boolean
   isDiscounted?: boolean
   isUnavailable?: boolean
@@ -77,10 +74,7 @@ const CORE_PLANS: Record<BillingCycle, PricingPlan> = {
     priceNote: 'Billed $99 annually — save 17%',
     features: CORE_FEATURES,
     cta: 'Get ProseLab Core',
-    lookupKey: 'yearly_99',
-    product: 'yearly_99',
-    mode: 'subscription',
-    useManagedPayments: true,
+    billingPlanKey: 'core-yearly',
   },
   monthly: {
     id: 'pre-release-monthly',
@@ -90,10 +84,7 @@ const CORE_PLANS: Record<BillingCycle, PricingPlan> = {
     priceNote: 'Billed monthly',
     features: CORE_FEATURES,
     cta: 'Get ProseLab Core',
-    lookupKey: 'monthly_9.99',
-    product: 'monthly_9.99',
-    mode: 'subscription',
-    useManagedPayments: true,
+    billingPlanKey: 'core-monthly',
   },
 }
 
@@ -107,10 +98,7 @@ const PREMIUM_PLANS: Record<BillingCycle, PricingPlan> = {
     priceNote: 'Billed $99 annually — 50% off launch price',
     features: PREMIUM_FEATURES,
     cta: 'Get ProseLab Premium',
-    lookupKey: 'yearly_99',
-    product: 'yearly_99',
-    mode: 'subscription',
-    useManagedPayments: true,
+    billingPlanKey: 'premium-yearly',
     isDiscounted: true,
     badge: 'Early-Bird price',
   },
@@ -123,10 +111,7 @@ const PREMIUM_PLANS: Record<BillingCycle, PricingPlan> = {
     priceNote: '50% off launch price',
     features: PREMIUM_FEATURES,
     cta: 'Get ProseLab Premium',
-    lookupKey: 'monthly_9.99',
-    product: 'monthly_9.99',
-    mode: 'subscription',
-    useManagedPayments: true,
+    billingPlanKey: 'premium-monthly',
     isDiscounted: true,
     badge: 'Early-Bird price',
   },
@@ -329,15 +314,9 @@ export function PricingPlans({ currentPlanId, mustChooseAfterTrial }: PricingPla
                     {plan.cta}
                   </button>
                 </div>
-              ) : plan.lookupKey && plan.product ? (
+              ) : plan.billingPlanKey ? (
                 <CheckoutButton
-                  lookupKey={plan.lookupKey}
-                  product={plan.product}
-                  mode={plan.mode ?? 'subscription'}
-                  useManagedPayments={plan.useManagedPayments}
-                  trialDays={plan.trialDays}
-                  successPath="/pricing/success"
-                  cancelPath="/pricing"
+                  planKey={plan.billingPlanKey}
                   className={`plans-btn ${plan.isDiscounted ? 'plans-btn-primary' : 'plans-btn-outline'}`}
                 >
                   {plan.cta}
