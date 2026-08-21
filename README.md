@@ -52,3 +52,30 @@ Three-phase writing loop:
 
 8 passages from: Carver, Didion, Baldwin, Le Guin, Chekhov, Woolf, Nabokov, Morrison.
 Each has 3 hand-authored twist prompts.
+
+## Billing and purchase email flow
+
+- Supabase Auth creates the stable application user ID.
+- Whop is the active checkout provider. Its webhook and verified checkout
+  receipt both upsert the provider-neutral `subscriptions` row.
+- Successful `active` or `trialing` subscriptions update the matching Loops
+  contact to `userGroup: Core User`, which starts the live purchase sequence.
+- A scheduled cancellation remains paid until Whop deactivates the membership.
+  Only terminal states such as `canceled` or `expired` return the contact to
+  `userGroup: Free User`.
+- Stripe remains supported for legacy subscriptions and uses the same Loops
+  contact sync. Webhook failures return an error so Stripe or Whop can retry.
+
+Production requires `LOOPS_API_KEY` in addition to the Supabase and billing
+provider secrets listed in `.env.example`.
+
+Before rollout, preview the existing-purchaser backfill without changing Loops:
+
+```bash
+npm run sync:loops-purchasers
+```
+
+After reviewing the dry run and deploying the same configuration, apply it once
+with `npm run sync:loops-purchasers -- --apply`. The command is idempotent, only
+targets active or trialing subscriptions, and is safe to rerun after a partial
+failure.

@@ -2,16 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { syncBillingContactForUser } from '@/lib/billing-contact-sync'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-const PRODUCT_TAGS: Record<string, string> = {
-  vault: '14843035',
-  upgrade: '14115500',
-  core: '14115500',
-  premium: '14115500',
-  book: '14115500',
-}
 
 const PRE_RELEASE_PRODUCTS = new Set(['yearly_99', 'monthly_9.99'])
 
@@ -86,6 +79,13 @@ export async function POST(request: NextRequest) {
 
   console.log(`[webhook] Received event: ${stripeEvent.type}`)
 
+  const { data: processed } = await supabaseAdmin
+    .from('billing_webhook_events')
+    .select('id')
+    .eq('id', stripeEvent.id)
+    .maybeSingle()
+  if (processed) return NextResponse.json({ received: true, duplicate: true })
+
   try {
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {
@@ -119,8 +119,16 @@ export async function POST(request: NextRequest) {
       default:
         console.log(`[webhook] Unhandled event type: ${stripeEvent.type}`)
     }
+
+    const { error } = await supabaseAdmin.from('billing_webhook_events').insert({
+      id: stripeEvent.id,
+      provider: 'stripe',
+      event_type: stripeEvent.type,
+    })
+    if (error && error.code !== '23505') throw error
   } catch (err) {
     console.error('[webhook] Error processing event:', err)
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })
@@ -136,19 +144,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     subscription: session.subscription,
     customer: session.customer,
   })
-
-  const tagId = product ? PRODUCT_TAGS[product] : undefined
-  if (tagId) {
-    const customerEmail = session.customer_details?.email
-    if (customerEmail) {
-      try {
-        await addToConvertKitTag(customerEmail, tagId)
-        console.log(`[webhook] Added ${customerEmail} to ConvertKit tag ${tagId}`)
-      } catch (err) {
-        console.error('[webhook] ConvertKit failed:', err instanceof Error ? err.message : err)
-      }
-    }
-  }
 
   if (session.mode !== 'subscription') {
     console.log('[webhook] Skipping — session mode is not subscription:', session.mode)
@@ -207,23 +202,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .upsert(upsertData, { onConflict: 'user_id' })
 
   if (error) {
-    console.error('[webhook] Supabase upsert FAILED:', JSON.stringify(error))
-  } else {
-    console.log(`[webhook] Subscription saved for user ${userId}, plan ${planId}, status ${subscription.status}`)
-    const posthog = getPostHogClient()
-    posthog.capture({
-      distinctId: userId,
-      event: 'subscription_activated',
-      properties: {
-        plan_id: planId,
-        product,
-        status: subscription.status,
-        stripe_subscription_id: stripeSubscriptionId,
-        customer_email: session.customer_details?.email ?? null,
-      },
-    })
-    await posthog.shutdown()
+    throw new Error(`Supabase subscription upsert failed: ${error.message}`)
   }
+
+  await syncBillingContactForUser({ userId, status: subscription.status })
+
+  console.log(`[webhook] Subscription saved for user ${userId}, plan ${planId}, status ${subscription.status}`)
+  const posthog = getPostHogClient()
+  posthog.capture({
+    distinctId: userId,
+    event: 'subscription_activated',
+    properties: {
+      plan_id: planId,
+      product,
+      status: subscription.status,
+      stripe_subscription_id: stripeSubscriptionId,
+      customer_email: session.customer_details?.email ?? null,
+    },
+  })
+  await posthog.shutdown()
 
   if (PRE_RELEASE_PRODUCTS.has(product)) {
     const { error: badgeError } = await supabaseAdmin
@@ -275,10 +272,14 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     .eq('id', existing.id)
 
   if (error) {
-    console.error('[webhook] Failed to update subscription:', error)
-  } else {
-    console.log(`[webhook] Subscription updated for user ${existing.user_id}: status=${subscription.status}`)
+    throw new Error(`Failed to update subscription: ${error.message}`)
   }
+
+  await syncBillingContactForUser({
+    userId: existing.user_id,
+    status: subscription.status,
+  })
+  console.log(`[webhook] Subscription updated for user ${existing.user_id}: status=${subscription.status}`)
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -303,17 +304,19 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .eq('id', existing.id)
 
   if (error) {
-    console.error('[webhook] Failed to cancel subscription:', error)
-  } else {
-    console.log(`[webhook] Subscription canceled for user ${existing.user_id}`)
-    const posthog = getPostHogClient()
-    posthog.capture({
-      distinctId: existing.user_id,
-      event: 'subscription_canceled',
-      properties: { stripe_subscription_id: subscription.id },
-    })
-    await posthog.shutdown()
+    throw new Error(`Failed to cancel subscription: ${error.message}`)
   }
+
+  await syncBillingContactForUser({ userId: existing.user_id, status: 'canceled' })
+
+  console.log(`[webhook] Subscription canceled for user ${existing.user_id}`)
+  const posthog = getPostHogClient()
+  posthog.capture({
+    distinctId: existing.user_id,
+    event: 'subscription_canceled',
+    properties: { stripe_subscription_id: subscription.id },
+  })
+  await posthog.shutdown()
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
@@ -345,10 +348,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     .eq('id', existing.id)
 
   if (error) {
-    console.error('[webhook] Failed to update subscription on invoice.paid:', error)
-  } else {
-    console.log(`[webhook] Subscription renewed for user ${existing.user_id}`)
+    throw new Error(`Failed to update subscription on invoice.paid: ${error.message}`)
   }
+
+  await syncBillingContactForUser({
+    userId: existing.user_id,
+    status: subscription.status,
+  })
+  console.log(`[webhook] Subscription renewed for user ${existing.user_id}`)
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -418,30 +425,5 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
     console.error('[webhook] Failed to mark subscription incomplete:', error)
   } else {
     console.log(`[webhook] Subscription marked incomplete for user ${userId} (async payment failed)`)
-  }
-}
-
-async function addToConvertKitTag(email: string, tagId: string): Promise<void> {
-  const apiSecret = process.env.CONVERTKIT_API_SECRET
-
-  if (!apiSecret) {
-    throw new Error('CONVERTKIT_API_SECRET is not configured')
-  }
-
-  const response = await fetch(
-    `https://api.convertkit.com/v3/tags/${tagId}/subscribe`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_secret: apiSecret,
-        email,
-      }),
-    }
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`ConvertKit API error: ${response.status} - ${errorText}`)
   }
 }

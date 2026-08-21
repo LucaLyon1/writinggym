@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { CraftCategory, ExtractAnalysis as ExtractAnalysisType, Segment } from '@/types/extract'
@@ -9,6 +9,7 @@ import type { CompletionAuthorPayload } from '@/lib/completion-author'
 import { CATEGORIES } from '@/lib/categories'
 import { useSpeech } from '@/hooks/useSpeech'
 import { SidebarNav } from '@/components/AppSidebar'
+import { useSidebar } from '@/components/SidebarContext'
 import { CollapsibleResponse } from '@/components/CollapsibleResponse'
 
 interface ExtractAnalysisProps {
@@ -219,8 +220,9 @@ function LeftSidebar({
   onBack?: () => void
   feedbackAvailable: boolean
 }) {
+  const { open } = useSidebar()
   return (
-    <aside className="ea-left-sidebar">
+    <aside className={`ea-left-sidebar${open ? ' is-open' : ''}`}>
       {onBack && (
         <button type="button" className="ea-left-back" onClick={onBack}>
           ← Library

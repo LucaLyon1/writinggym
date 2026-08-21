@@ -15,7 +15,6 @@ interface Props {
 
 export function WhopCheckoutModal({ email, planKey, stateId, onClose }: Props) {
   const modalRef = useRef<HTMLElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const plan = BILLING_PLANS[planKey]
 
   useEffect(() => {
@@ -24,7 +23,7 @@ export function WhopCheckoutModal({ email, planKey, stateId, onClose }: Props) {
       ? document.activeElement
       : null
     document.body.style.overflow = 'hidden'
-    closeButtonRef.current?.focus()
+    modalRef.current?.focus()
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
@@ -67,17 +66,8 @@ export function WhopCheckoutModal({ email, planKey, stateId, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={`Checkout for ${plan.label}`}
+        tabIndex={-1}
       >
-        <button
-          ref={closeButtonRef}
-          type="button"
-          className={styles.close}
-          onClick={onClose}
-          aria-label="Close checkout"
-        >
-          <span aria-hidden>×</span>
-        </button>
-
         <div className={styles.panel}>
           <WhopCheckoutClient
             email={email}

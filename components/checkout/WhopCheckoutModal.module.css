@@ -28,35 +28,6 @@
   box-shadow: 0 24px 72px rgba(26, 23, 20, 0.24);
 }
 
-.close {
-  position: absolute;
-  top: -2.75rem;
-  right: 0;
-  z-index: 1;
-  display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: white;
-  cursor: pointer;
-  font: inherit;
-  font-size: 1.5rem;
-  line-height: 1;
-  opacity: 0.8;
-  transition: opacity 150ms;
-}
-
-.close:hover,
-.close:focus-visible {
-  opacity: 1;
-  outline: 2px solid white;
-  outline-offset: 2px;
-}
-
 @keyframes checkout-backdrop-in {
   from { opacity: 0; }
 }
@@ -79,11 +50,6 @@
 
   .panel {
     max-height: calc(100dvh - 4.5rem);
-  }
-
-  .close {
-    top: -2.5rem;
-    right: 0.15rem;
   }
 }
 

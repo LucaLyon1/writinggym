@@ -12,6 +12,7 @@ import { CATEGORIES } from '@/lib/categories'
 import { createClient } from '@/lib/supabase/client'
 import { playgroundPassageId } from '@/lib/playground-passage'
 import { SidebarNav } from '@/components/AppSidebar'
+import { useSidebar } from '@/components/SidebarContext'
 import { CollapsibleResponse } from '@/components/CollapsibleResponse'
 
 const FREETEXT_ID = '__freetext__'
@@ -154,6 +155,7 @@ function SubmissionPreviewModal({
 export default function PlaygroundPage() {
   const router = useRouter()
   const pathname = usePathname()
+  const { open: sidebarOpen } = useSidebar()
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<PgTab>('write')
   const [text, setText] = useState('')
@@ -914,7 +916,7 @@ export default function PlaygroundPage() {
     <div className="analysis-view">
     <div className="ea-root">
       <div className="ea-page-layout">
-        <aside className="ea-left-sidebar">
+        <aside className={`ea-left-sidebar${sidebarOpen ? ' is-open' : ''}`}>
           <button type="button" className="ea-left-back" onClick={handleReset}>
             ← Playground
           </button>

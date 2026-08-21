@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { syncBillingContactForUser } from '@/lib/billing-contact-sync'
 
 export interface WhopSubscriptionSyncInput {
   userId: string
@@ -132,4 +133,9 @@ export async function syncWhopSubscription(input: WhopSubscriptionSyncInput) {
       .eq('id', input.userId)
     if (profileError) throw profileError
   }
+
+  await syncBillingContactForUser({
+    userId: input.userId,
+    status: input.status,
+  })
 }

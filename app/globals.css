@@ -9882,3 +9882,57 @@ body[data-gated] > *:not(.gate-overlay) {
         transform: translateX(0);
     }
 }
+
+/* Extract / Playground: the app nav inside the horizontal section bar becomes a
+   slide-in drawer on mobile, opened by the global hamburger toggle. The page
+   tabs (Analyse / Exercise / …) stay in the always-visible top bar. */
+@media (max-width: 900px) {
+    .ea-left-sidebar .sidebar-nav {
+        position: fixed;
+        top: var(--auth-header-height);
+        left: 0;
+        bottom: 0;
+        width: min(280px, 80vw);
+        z-index: 108;
+        margin-top: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 1rem 1.25rem 1.5rem;
+        background: var(--paper-warm);
+        border-right: 1px solid var(--line);
+        box-shadow: 2px 0 24px rgba(0, 0, 0, 0.08);
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+        overflow-y: auto;
+    }
+
+    .ea-left-sidebar.is-open .sidebar-nav {
+        transform: translateX(0);
+    }
+
+    .ea-left-sidebar .sidebar-nav-links {
+        flex-direction: column;
+        gap: 0;
+        margin: 0 -1.25rem;
+    }
+
+    .ea-left-sidebar .sidebar-nav-link {
+        flex: 1 1 auto;
+        display: block;
+        padding: 0.7rem 1.25rem;
+        font-size: 0.72rem;
+        border-top: 1px solid var(--line);
+        border-radius: 0;
+    }
+
+    .ea-left-sidebar .sidebar-nav-copy,
+    .ea-left-sidebar .sidebar-upgrade-btn {
+        display: block;
+    }
+
+    .ea-left-sidebar .sidebar-nav-footer {
+        display: flex;
+        margin: 0 -1.25rem -1.5rem;
+    }
+}
