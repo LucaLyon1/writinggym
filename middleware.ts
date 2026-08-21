@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   '/cookies',
   '/email-verified',
   '/auth/callback',
+  '/.well-known/apple-developer-merchantid-domain-association',
   '/api/whop-webhook',
 ]
 
