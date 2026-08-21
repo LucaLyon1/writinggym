@@ -20,6 +20,10 @@ interface Props {
   stateId?: string
 }
 
+const RETURN26_PROMO_CODE = 'RETURN26'
+// Sunday 23 August 2026, 23:59:59.999 Europe/London (BST).
+const RETURN26_EXPIRES_AT = Date.parse('2026-08-23T22:59:59.999Z')
+
 export function WhopCheckoutClient({ email, planKey, planId, planLabel, stateId }: Props) {
   const router = useRouter()
   const attemptId = useRef(crypto.randomUUID())
@@ -97,6 +101,7 @@ export function WhopCheckoutClient({ email, planKey, planId, planLabel, stateId 
     prefill: { email },
     disableEmail: true,
     adaptivePricing: true,
+    promoCode: Date.now() <= RETURN26_EXPIRES_AT ? RETURN26_PROMO_CODE : undefined,
     stateId,
     returnUrl: `${window.location.origin}/checkout/complete?plan=${encodeURIComponent(planKey)}`,
     onComplete: (_completedPlanId: string, receiptId: string | undefined) => finishCheckout(receiptId),
