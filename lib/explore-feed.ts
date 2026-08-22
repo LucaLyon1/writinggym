@@ -1,0 +1,76 @@
+import { createClient } from '@/lib/supabase/server'
+import { COMPLETION_AUTHOR_PROFILE_SELECT, completionAuthorFromProfileEmbed } from '@/lib/completion-author'
+
+export const EXPLORE_PAGE_SIZE = 12
+
+export interface ExploreFeedItem {
+  id: string
+  user_text: string | null
+  word_count: number | null
+  completed_at: string
+  passage_id: string
+  constraint_key: string
+  upvote_count: number
+  viewer_has_upvoted: boolean
+  username: string | null
+  current_streak: number
+  show_streak_badge: boolean
+  is_founding_member: boolean
+}
+
+export async function fetchExploreFeed(userId: string | null): Promise<{
+  items: ExploreFeedItem[]
+  hasMore: boolean
+  total: number
+}> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('passage_completions')
+    .select(
+      `id, user_text, word_count, completed_at, passage_id, constraint_key, upvotes(count), ${COMPLETION_AUTHOR_PROFILE_SELECT}`
+    )
+    .eq('is_public', true)
+
+  if (error || !data) return { items: [], hasMore: false, total: 0 }
+
+  const sorted: ExploreFeedItem[] = data
+    .map((c) => {
+      const author = completionAuthorFromProfileEmbed(
+        (c as { profiles?: unknown }).profiles
+      )
+      return {
+        id: c.id,
+        user_text: c.user_text,
+        word_count: c.word_count,
+        completed_at: c.completed_at,
+        passage_id: c.passage_id,
+        constraint_key: c.constraint_key,
+        upvote_count: (c.upvotes as unknown as { count: number }[])[0]?.count ?? 0,
+        viewer_has_upvoted: false,
+        ...author,
+      }
+    })
+    .sort(
+      (a, b) =>
+        b.upvote_count - a.upvote_count ||
+        new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+    )
+
+  const page = sorted.slice(0, EXPLORE_PAGE_SIZE)
+
+  if (userId && page.length > 0) {
+    const ids = page.map((c) => c.id)
+    const { data: myUpvotes } = await supabase
+      .from('upvotes')
+      .select('completion_id')
+      .eq('user_id', userId)
+      .in('completion_id', ids)
+    const voted = new Set((myUpvotes ?? []).map((u) => u.completion_id))
+    for (const item of page) {
+      item.viewer_has_upvoted = voted.has(item.id)
+    }
+  }
+
+  return { items: page, hasMore: sorted.length > EXPLORE_PAGE_SIZE, total: sorted.length }
+}

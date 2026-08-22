@@ -1,0 +1,37 @@
+.wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.blur {
+  flex: 1;
+  min-height: 0;
+  filter: blur(14px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 18vh;
+  background: rgba(250, 247, 242, 0.28);
+}
+
+.popup {
+  padding: 0.7rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 10px 28px rgba(40, 30, 24, 0.12);
+  color: var(--ink);
+  font: 600 0.82rem var(--font-display);
+  letter-spacing: 0.04em;
+}

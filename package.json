@@ -16,6 +16,8 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
     "@whop/checkout": "^0.6.0",
+    "@whop/embedded-components-react-js": "^1.2.0",
+    "@whop/embedded-components-vanilla-js": "^1.2.0",
     "@whop/sdk": "^0.0.42",
     "elevenlabs": "^1.59.0",
     "geist": "^1.7.0",
@@ -25,6 +27,8 @@
     "posthog-node": "^5.33.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0",
+    "remark-breaks": "^4.0.0",
     "resend": "^6.9.3",
     "stripe": "^18.0.0"
   },

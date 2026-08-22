@@ -9,8 +9,8 @@ import { trialDaysLeft } from '@/lib/trial'
 const NAV_LINKS = [
   { href: '/', label: 'Exercises', exact: true },
   { href: '/playground', label: 'Playground', exact: false },
-  { href: '/explore', label: 'Community', exact: false },
-  { href: '/profile', label: 'Profile', exact: false },
+  { href: '/community', label: 'Community', exact: false },
+  { href: '/profile', label: 'Settings', exact: false },
 ]
 
 let cachedDaysLeft: number | null | undefined = undefined

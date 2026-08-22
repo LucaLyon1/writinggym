@@ -256,6 +256,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           current_streak: number
           email_reminders: boolean
@@ -277,6 +278,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           current_streak?: number
           email_reminders?: boolean
@@ -298,6 +300,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           current_streak?: number
           email_reminders?: boolean
@@ -366,6 +369,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whop_oauth_tokens: {
+        Row: {
+          access_token: string
+          expires_at: string
+          refresh_token: string
+          updated_at: string
+          user_id: string
+          whop_user_id: string | null
+        }
+        Insert: {
+          access_token: string
+          expires_at: string
+          refresh_token: string
+          updated_at?: string
+          user_id: string
+          whop_user_id?: string | null
+        }
+        Update: {
+          access_token?: string
+          expires_at?: string
+          refresh_token?: string
+          updated_at?: string
+          user_id?: string
+          whop_user_id?: string | null
+        }
+        Relationships: []
       }
       subscriptions: {
         Row: {
