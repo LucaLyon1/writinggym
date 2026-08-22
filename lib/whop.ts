@@ -10,7 +10,11 @@ export const WHOP_LOCAL_CHAT_CHANNEL_ID =
   process.env.WHOP_LOCAL_CHAT_CHANNEL_ID ?? 'chat_feed_1CeHdRxgaX1ergR511Vmgn'
 
 export function isProdWhopChat() {
-  return process.env.VERCEL_ENV === 'production' || process.env.WHOP_USE_PROD_CHAT === '1'
+  return (
+    process.env.VERCEL_ENV === 'production' ||
+    process.env.NODE_ENV === 'production' ||
+    process.env.WHOP_USE_PROD_CHAT === '1'
+  )
 }
 
 export function getCommunityChatChannelId() {
