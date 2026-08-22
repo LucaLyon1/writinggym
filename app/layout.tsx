@@ -132,13 +132,6 @@ export default async function RootLayout({
         </AuthModalProvider>
         <Script
           defer
-          data-website-id="dfid_IBYj6a8XOWT1aRRW4PExx"
-          data-domain="proselab.io"
-          src="https://datafa.st/js/script.js"
-          strategy="afterInteractive"
-        />
-        <Script
-          defer
           data-website-id="51d4b355-7309-41fd-84c5-cd2218b76b82"
           src="https://cloud.umami.is/script.js"
           strategy="afterInteractive"
