@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 
 type Completion = { completed_at: string }
 
@@ -38,6 +38,7 @@ function getMonthGrid(year: number, month: number) {
 }
 
 type Props = {
+  children?: ReactNode
   completions: Completion[]
   currentStreak?: number
   longestStreak?: number
@@ -45,7 +46,7 @@ type Props = {
   totalPassages?: number
 }
 
-export function CompletionHeatmap({ completions, currentStreak, longestStreak, totalWordsWritten, totalPassages }: Props) {
+export function CompletionHeatmap({ children, completions, currentStreak, longestStreak, totalWordsWritten, totalPassages }: Props) {
   const today = new Date()
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -106,6 +107,8 @@ export function CompletionHeatmap({ completions, currentStreak, longestStreak, t
   }
 
   return (
+    <>
+      {children}
     <section className="heatmap-section" aria-label="Activity calendar">
       <header className="heatmap-header">
         <button
@@ -188,5 +191,6 @@ export function CompletionHeatmap({ completions, currentStreak, longestStreak, t
         )}
       </div>
     </section>
+    </>
   )
 }
