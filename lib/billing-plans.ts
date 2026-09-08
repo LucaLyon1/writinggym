@@ -18,14 +18,14 @@ export const BILLING_PLANS: Record<BillingPlanKey, BillingPlanConfig> = {
     appPlanId: 'core',
     billingCycle: 'monthly',
     label: 'ProseLab Core — Monthly',
-    whopPlanId: 'plan_jg59KIC0zEBCt',
+    whopPlanId: 'plan_8DqqLDO3hxKAh',
   },
   'core-yearly': {
     key: 'core-yearly',
     appPlanId: 'core',
     billingCycle: 'yearly',
     label: 'ProseLab Core — Yearly',
-    whopPlanId: 'plan_barEOMZvoYrej',
+    whopPlanId: 'plan_1E7RwuJBhlZBZ',
   },
   'premium-monthly': {
     key: 'premium-monthly',

@@ -1,7 +1,14 @@
 import { Whop } from '@whop/sdk'
 
 export const WHOP_ACCOUNT_ID = process.env.WHOP_ACCOUNT_ID ?? 'biz_tGIL6R2J3Z0k5p'
-export const WHOP_PRODUCT_ID = process.env.WHOP_PRODUCT_ID ?? 'prod_gOqq98A2Us54W'
+export const WHOP_PRODUCT_ID = process.env.WHOP_PRODUCT_ID ?? 'prod_OFqlk4hW26pBI'
+/** Premium plans still live on the legacy product until Premium is remapped. */
+export const WHOP_PREMIUM_PRODUCT_ID =
+  process.env.WHOP_PREMIUM_PRODUCT_ID ?? 'prod_gOqq98A2Us54W'
+
+export function isAllowedWhopProductId(productId: string | null | undefined): boolean {
+  return productId === WHOP_PRODUCT_ID || productId === WHOP_PREMIUM_PRODUCT_ID
+}
 export const WHOP_PUBLIC_FORUM_EXPERIENCE_ID =
   process.env.WHOP_PUBLIC_FORUM_EXPERIENCE_ID ?? 'exp_tnWXo8jYEONzgK'
 export const WHOP_GENERAL_CHAT_CHANNEL_ID =
