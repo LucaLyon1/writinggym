@@ -137,5 +137,6 @@ export async function syncWhopSubscription(input: WhopSubscriptionSyncInput) {
   await syncBillingContactForUser({
     userId: input.userId,
     status: input.status,
+    planId: input.planId,
   })
 }
