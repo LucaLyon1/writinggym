@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 
 interface SidebarContextValue {
@@ -16,13 +16,19 @@ const SidebarContext = createContext<SidebarContextValue>({
 })
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false)
-  const toggle = useCallback(() => setOpen(v => !v), [])
   const pathname = usePathname()
+  const [state, setState] = useState({ pathname, open: false })
+  const open = state.pathname === pathname && state.open
 
-  useEffect(() => {
-    setOpen(false)
-  }, [pathname])
+  if (state.pathname !== pathname) {
+    setState({ pathname, open: false })
+  }
+  const setOpen = useCallback((value: boolean) => setState({ pathname, open: value }), [pathname])
+  const toggle = useCallback(() => setState(previous => ({
+    pathname,
+    open: previous.pathname === pathname ? !previous.open : true,
+  })), [pathname])
+  const value = useMemo(() => ({ open, setOpen, toggle }), [open, setOpen, toggle])
 
   useEffect(() => {
     if (!open) return
@@ -40,7 +46,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   }, [open])
 
   return (
-    <SidebarContext.Provider value={{ open, setOpen, toggle }}>
+    <SidebarContext.Provider value={value}>
       {children}
     </SidebarContext.Provider>
   )

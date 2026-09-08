@@ -1,17 +1,18 @@
 'use client'
 
-import { useActionState, useState, useEffect } from 'react'
+import { useActionState, useState } from 'react'
 import { updateUsername } from '@/app/actions/profile'
 
 export function ProfileUsernameForm({ initialUsername }: { initialUsername: string }) {
   const [isEditing, setIsEditing] = useState(false)
-  const [state, formAction, isPending] = useActionState(updateUsername, undefined)
-
-  useEffect(() => {
-    if (state?.success) {
-      setIsEditing(false)
-    }
-  }, [state?.success])
+  const [state, formAction, isPending] = useActionState(async (
+    previous: Awaited<ReturnType<typeof updateUsername>> | undefined,
+    formData: FormData,
+  ) => {
+    const result = await updateUsername(previous, formData)
+    if (result?.success) setIsEditing(false)
+    return result
+  }, undefined)
 
   if (!isEditing) {
     return (

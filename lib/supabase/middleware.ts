@@ -12,7 +12,7 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    return supabaseResponse
+    return { response: supabaseResponse, user: null, configured: false }
   }
 
   const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {
@@ -33,7 +33,7 @@ export async function updateSession(request: NextRequest) {
   })
 
   // Refresh session – must run immediately after createServerClient
-  await supabase.auth.getClaims()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  return supabaseResponse
+  return { response: supabaseResponse, user, configured: true }
 }

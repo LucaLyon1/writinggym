@@ -9,6 +9,7 @@ import { deleteCompletionAction } from '@/app/actions/completions'
 type PassageCompletion = Tables<'passage_completions'>
 
 const PAGE_SIZE = 5
+const passageMap = new Map(passages.map((p) => [p.id, p]))
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -165,8 +166,6 @@ export function ProfileSubmissionsList({
   const [searchOpen, setSearchOpen] = useState(false)
   const [filter, setFilter] = useState<FilterMode>('all')
 
-  const passageMap = new Map(passages.map((p) => [p.id, p]))
-
   const filtered = useMemo(() => {
     let result = completions
     if (filter === 'public') result = result.filter((c) => c.is_public)
@@ -183,7 +182,7 @@ export function ProfileSubmissionsList({
       })
     }
     return result
-  }, [completions, filter, search, passageMap])
+  }, [completions, filter, search])
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return

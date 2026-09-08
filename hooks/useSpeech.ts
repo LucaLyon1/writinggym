@@ -1,12 +1,39 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 export function useSpeech() {
   const [speaking, setSpeaking] = useState(false);
   const [loading, setLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const urlRef = useRef<string | null>(null);
+
+  const cleanup = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    if (audioRef.current) {
+      audioRef.current.onplay = null;
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
+      audioRef.current = null;
+    }
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+    }
+  }, []);
+
+  const stop = useCallback(() => {
+    cleanup();
+    setSpeaking(false);
+    setLoading(false);
+  }, [cleanup]);
+
+  useEffect(() => cleanup, [cleanup]);
 
   const speak = useCallback(async (text: string, categoryId?: string) => {
     stop();
@@ -31,7 +58,9 @@ export function useSpeech() {
       }
 
       const blob = await res.blob();
+      if (controller.signal.aborted) return;
       const url = URL.createObjectURL(blob);
+      urlRef.current = url;
 
       const audio = new Audio(url);
       audioRef.current = audio;
@@ -41,38 +70,22 @@ export function useSpeech() {
         setSpeaking(true);
       };
       audio.onended = () => {
-        setSpeaking(false);
-        URL.revokeObjectURL(url);
+        stop();
       };
       audio.onerror = () => {
-        setSpeaking(false);
-        setLoading(false);
-        URL.revokeObjectURL(url);
+        stop();
       };
 
       await audio.play();
     } catch (err) {
+      // A replaced request must not reset the new request's playback state.
+      if (controller.signal.aborted) return;
       if ((err as Error).name !== "AbortError") {
         console.error("Speech error:", err);
       }
-      setLoading(false);
-      setSpeaking(false);
+      stop();
     }
-  }, []);
-
-  const stop = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
-
-    setSpeaking(false);
-    setLoading(false);
-  }, []);
+  }, [stop]);
 
   return { speak, stop, speaking, loading };
 }

@@ -13,25 +13,18 @@ const NAV_LINKS = [
   { href: '/profile', label: 'Settings', exact: false },
 ]
 
-let cachedDaysLeft: number | null | undefined = undefined
-
 export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactNode } = {}) {
   const pathname = usePathname()
-  const [daysLeft, setDaysLeft] = useState<number | null>(
-    cachedDaysLeft !== undefined ? cachedDaysLeft : null
-  )
+  const [daysLeft, setDaysLeft] = useState<number | null>(null)
 
   useEffect(() => {
-    if (cachedDaysLeft !== undefined) {
-      setDaysLeft(cachedDaysLeft)
-      return
-    }
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      const days = user ? trialDaysLeft(user.created_at) : null
-      cachedDaysLeft = days
-      setDaysLeft(days)
+    // INITIAL_SESSION supplies the current user; subsequent events keep account
+    // switches in sync without a separate auth request or a cross-user cache.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setDaysLeft(session?.user ? trialDaysLeft(session.user.created_at) : null)
     })
+    return () => subscription.unsubscribe()
   }, [])
 
   return (

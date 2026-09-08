@@ -1,9 +1,26 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
 const STORAGE_KEY = 'proselab-onboarding-done'
+
+function subscribeToStorage(onChange: () => void) {
+  window.addEventListener('storage', onChange)
+  return () => window.removeEventListener('storage', onChange)
+}
+
+function getOnboardingDone(): boolean {
+  try {
+    return Boolean(localStorage.getItem(STORAGE_KEY))
+  } catch {
+    return false
+  }
+}
+
+function getServerOnboardingDone(): null {
+  return null
+}
 
 interface Step {
   icon: string
@@ -51,18 +68,16 @@ export function Onboarding() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [visible, setVisible] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+  const [forceWelcome] = useState(() => searchParams.get('welcome') === '1')
+  const done = useSyncExternalStore(subscribeToStorage, getOnboardingDone, getServerOnboardingDone)
+  const visible = done !== null && !dismissed && (forceWelcome || !done)
   const [currentStep, setCurrentStep] = useState(0)
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward')
   const [animating, setAnimating] = useState(false)
 
   useEffect(() => {
     const forceWelcome = searchParams.get('welcome') === '1'
-    const done = localStorage.getItem(STORAGE_KEY)
-    if (forceWelcome || !done) {
-      setVisible(true)
-      document.body.style.overflow = 'hidden'
-    }
     if (forceWelcome) {
       const params = new URLSearchParams(searchParams.toString())
       params.delete('welcome')
@@ -71,10 +86,20 @@ export function Onboarding() {
     }
   }, [searchParams, pathname, router])
 
+  useEffect(() => {
+    if (!visible) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [visible])
+
   const dismiss = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, '1')
-    setVisible(false)
-    document.body.style.overflow = ''
+    try {
+      localStorage.setItem(STORAGE_KEY, '1')
+    } catch {
+      // Dismiss still works when browser storage is unavailable.
+    }
+    setDismissed(true)
   }, [])
 
   const goTo = useCallback((next: number, dir: 'forward' | 'backward') => {

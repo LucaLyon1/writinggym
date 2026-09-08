@@ -45,8 +45,9 @@ interface AuthState {
 }
 
 async function getAuthState(): Promise<AuthState> {
+  // Let Next's dynamic-rendering signal from cookies reach the framework.
+  const supabase = await createClient()
   try {
-    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { isAuthenticated: false, isFreeUser: false, mustChooseAfterTrial: false }
 
