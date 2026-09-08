@@ -60,14 +60,19 @@ Each has 3 hand-authored twist prompts.
   receipt both upsert the provider-neutral `subscriptions` row.
 - Successful `active` or `trialing` subscriptions update the matching Loops
   contact to `userGroup: Core User`, which starts the live purchase sequence.
+  The same webhook path also sets Resend contact `plan_tier` to `core` and
+  adds the contact to the Paying Users segment.
 - A scheduled cancellation remains paid until Whop deactivates the membership.
   Only terminal states such as `canceled` or `expired` return the contact to
-  `userGroup: Free User`.
+  `userGroup: Free User` and Resend `plan_tier: free` (removed from Paying
+  Users).
 - Stripe remains supported for legacy subscriptions and uses the same Loops
-  contact sync. Webhook failures return an error so Stripe or Whop can retry.
+  and Resend contact sync. Webhook failures return an error so Stripe or Whop
+  can retry.
 
-Production requires `LOOPS_API_KEY` in addition to the Supabase and billing
-provider secrets listed in `.env.example`.
+Production requires `LOOPS_API_KEY` and `RESEND_API_KEY` in addition to the
+Supabase and billing provider secrets listed in `.env.example`. Optional
+`RESEND_PAYING_SEGMENT_ID` overrides the default Paying Users segment.
 
 Before rollout, preview the existing-purchaser backfill without changing Loops:
 

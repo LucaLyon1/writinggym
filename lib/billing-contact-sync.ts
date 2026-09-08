@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { syncLoopsBillingContact } from '@/lib/loops-billing'
+import { syncResendBillingContact } from '@/lib/resend-billing'
 
 export async function syncBillingContactForUser(input: {
   status: string
@@ -16,9 +17,17 @@ export async function syncBillingContactForUser(input: {
     throw new Error(`Billing contact ${input.userId} has no email address`)
   }
 
-  return syncLoopsBillingContact({
-    email,
-    status: input.status,
-    userId: input.userId,
-  })
+  const [loops, resend] = await Promise.all([
+    syncLoopsBillingContact({
+      email,
+      status: input.status,
+      userId: input.userId,
+    }),
+    syncResendBillingContact({
+      email,
+      status: input.status,
+    }),
+  ])
+
+  return { loops, resend }
 }
