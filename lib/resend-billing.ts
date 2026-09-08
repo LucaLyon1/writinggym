@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 
+/** Fallback paid tier when status is paid but no app plan_id is available. */
 export const RESEND_PAID_PLAN_TIER = 'core'
 export const RESEND_FREE_PLAN_TIER = 'free'
 export const DEFAULT_RESEND_PAYING_SEGMENT_ID = '0b13ca48-a871-4a75-835a-84d4fa5127f5'
@@ -50,6 +51,8 @@ export type ResendBillingClient = {
 export interface ResendBillingContactInput {
   email: string
   status: string
+  /** App subscription plan_id (`core`, `premium`, `pre_release_yearly`, …). */
+  planId?: string | null
 }
 
 export type ResendBillingContactResult =
@@ -58,14 +61,25 @@ export type ResendBillingContactResult =
   | { outcome: 'created'; planTier: string }
 
 /**
- * Mirror Loops billing policy onto Resend `plan_tier`. Paid access maps to
- * `core`; terminal free states map to `free`. Transitional statuses leave
- * Resend unchanged so temporary payment problems do not bounce the contact.
+ * Paying Users is all payers. Paid access writes the subscription's app
+ * `plan_id` into Resend `plan_tier` (core, premium, pre_release_yearly, …).
+ * Terminal free states map to `free`. Transitional statuses leave Resend
+ * unchanged so temporary payment problems do not bounce the contact.
  */
-export function getResendPlanTierForBillingStatus(status: string): string | null {
+export function getResendPlanTierForBillingStatus(
+  status: string,
+  planId?: string | null
+): string | null {
   const normalizedStatus = status.trim().toLowerCase()
 
-  if (PAID_STATUSES.has(normalizedStatus)) return RESEND_PAID_PLAN_TIER
+  if (PAID_STATUSES.has(normalizedStatus)) {
+    const normalizedPlanId = planId?.trim()
+    if (!normalizedPlanId || normalizedPlanId.toLowerCase() === 'free') {
+      return RESEND_PAID_PLAN_TIER
+    }
+    return normalizedPlanId
+  }
+
   if (FREE_STATUSES.has(normalizedStatus)) return RESEND_FREE_PLAN_TIER
   return null
 }
@@ -113,10 +127,10 @@ function assertOk(label: string, error: ResendError | null | undefined): void {
 async function ensurePayingSegmentMembership(
   client: ResendBillingClient,
   email: string,
-  planTier: string,
+  isPaid: boolean,
   segmentId: string
 ): Promise<void> {
-  if (planTier === RESEND_PAID_PLAN_TIER) {
+  if (isPaid) {
     const { error } = await client.contacts.segments.add({ email, segmentId })
     if (error && !isIgnorableSegmentAddError(error)) {
       assertOk('Paying Users segment add', error)
@@ -138,9 +152,10 @@ export async function syncResendBillingContact(
   input: ResendBillingContactInput,
   client?: ResendBillingClient
 ): Promise<ResendBillingContactResult> {
-  const planTier = getResendPlanTierForBillingStatus(input.status)
+  const planTier = getResendPlanTierForBillingStatus(input.status, input.planId)
   if (!planTier) return { outcome: 'unchanged' }
 
+  const isPaid = planTier !== RESEND_FREE_PLAN_TIER
   const email = normalizeEmail(input.email)
   const segmentId = getPayingSegmentId()
   const resend = client ?? createResendClient()
@@ -154,15 +169,13 @@ export async function syncResendBillingContact(
     const createResult = await resend.contacts.create({
       email,
       properties: { plan_tier: planTier },
-      ...(planTier === RESEND_PAID_PLAN_TIER
-        ? { segments: [{ id: segmentId }] }
-        : {}),
+      ...(isPaid ? { segments: [{ id: segmentId }] } : {}),
     })
     assertOk('contact create', createResult.error)
     return { outcome: 'created', planTier }
   }
 
   assertOk('contact update', updateResult.error)
-  await ensurePayingSegmentMembership(resend, email, planTier, segmentId)
+  await ensurePayingSegmentMembership(resend, email, isPaid, segmentId)
   return { outcome: 'updated', planTier }
 }

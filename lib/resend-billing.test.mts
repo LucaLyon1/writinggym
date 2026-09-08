@@ -25,27 +25,40 @@ function err(partial: { message: string; name?: string; statusCode?: number | nu
 }
 
 describe('getResendPlanTierForBillingStatus', () => {
-  for (const status of ['active', 'trialing', ' ACTIVE ']) {
-    test(`maps ${status} to the paid plan tier`, () => {
-      assert.equal(getResendPlanTierForBillingStatus(status), RESEND_PAID_PLAN_TIER)
-    })
-  }
+  test('maps active core to plan_tier core', () => {
+    assert.equal(getResendPlanTierForBillingStatus('active', 'core'), 'core')
+  })
+
+  test('maps trialing premium to plan_tier premium', () => {
+    assert.equal(getResendPlanTierForBillingStatus('trialing', 'premium'), 'premium')
+  })
+
+  test('preserves pre_release_yearly and other paid app plan_ids', () => {
+    assert.equal(
+      getResendPlanTierForBillingStatus('active', 'pre_release_yearly'),
+      'pre_release_yearly'
+    )
+  })
+
+  test('falls back to core when paid status has no plan_id', () => {
+    assert.equal(getResendPlanTierForBillingStatus(' ACTIVE '), RESEND_PAID_PLAN_TIER)
+  })
 
   for (const status of ['canceled', 'expired', 'incomplete_expired', 'unpaid']) {
     test(`maps ${status} back to the free plan tier`, () => {
-      assert.equal(getResendPlanTierForBillingStatus(status), RESEND_FREE_PLAN_TIER)
+      assert.equal(getResendPlanTierForBillingStatus(status, 'premium'), RESEND_FREE_PLAN_TIER)
     })
   }
 
   for (const status of ['past_due', 'canceling', 'paused', 'incomplete', 'unknown']) {
     test(`does not change Resend for transitional status ${status}`, () => {
-      assert.equal(getResendPlanTierForBillingStatus(status), null)
+      assert.equal(getResendPlanTierForBillingStatus(status, 'premium'), null)
     })
   }
 })
 
 describe('syncResendBillingContact', () => {
-  test('updates plan_tier and adds the Paying Users segment for active', async () => {
+  test('updates plan_tier from app plan_id and adds Paying Users for active', async () => {
     const calls: unknown[] = []
     const client: ResendBillingClient = {
       contacts: {
@@ -72,15 +85,16 @@ describe('syncResendBillingContact', () => {
       {
         email: ' Writer@Example.com ',
         status: 'active',
+        planId: 'premium',
       },
       client
     )
 
-    assert.deepEqual(result, { outcome: 'updated', planTier: RESEND_PAID_PLAN_TIER })
+    assert.deepEqual(result, { outcome: 'updated', planTier: 'premium' })
     assert.deepEqual(calls, [
       ['update', {
         email: 'writer@example.com',
-        properties: { plan_tier: RESEND_PAID_PLAN_TIER },
+        properties: { plan_tier: 'premium' },
       }],
       ['add', {
         email: 'writer@example.com',
@@ -116,6 +130,7 @@ describe('syncResendBillingContact', () => {
       {
         email: 'writer@example.com',
         status: 'canceled',
+        planId: 'premium',
       },
       client
     )
@@ -133,7 +148,7 @@ describe('syncResendBillingContact', () => {
     ])
   })
 
-  test('creates a missing contact and attaches Paying Users when paid', async () => {
+  test('creates a missing contact with preserved plan_id and Paying Users when paid', async () => {
     const calls: unknown[] = []
     const client: ResendBillingClient = {
       contacts: {
@@ -164,19 +179,20 @@ describe('syncResendBillingContact', () => {
       {
         email: 'writer@example.com',
         status: 'trialing',
+        planId: 'pre_release_yearly',
       },
       client
     )
 
-    assert.deepEqual(result, { outcome: 'created', planTier: RESEND_PAID_PLAN_TIER })
+    assert.deepEqual(result, { outcome: 'created', planTier: 'pre_release_yearly' })
     assert.deepEqual(calls, [
       ['update', {
         email: 'writer@example.com',
-        properties: { plan_tier: RESEND_PAID_PLAN_TIER },
+        properties: { plan_tier: 'pre_release_yearly' },
       }],
       ['create', {
         email: 'writer@example.com',
-        properties: { plan_tier: RESEND_PAID_PLAN_TIER },
+        properties: { plan_tier: 'pre_release_yearly' },
         segments: [{ id: DEFAULT_RESEND_PAYING_SEGMENT_ID }],
       }],
     ])
@@ -208,10 +224,10 @@ describe('syncResendBillingContact', () => {
 
     assert.deepEqual(
       await syncResendBillingContact(
-        { email: 'writer@example.com', status: 'active' },
+        { email: 'writer@example.com', status: 'active', planId: 'core' },
         paidClient
       ),
-      { outcome: 'updated', planTier: RESEND_PAID_PLAN_TIER }
+      { outcome: 'updated', planTier: 'core' }
     )
 
     const freeClient: ResendBillingClient = {
@@ -239,7 +255,7 @@ describe('syncResendBillingContact', () => {
 
     assert.deepEqual(
       await syncResendBillingContact(
-        { email: 'writer@example.com', status: 'expired' },
+        { email: 'writer@example.com', status: 'expired', planId: 'core' },
         freeClient
       ),
       { outcome: 'updated', planTier: RESEND_FREE_PLAN_TIER }
@@ -275,6 +291,7 @@ describe('syncResendBillingContact', () => {
       {
         email: 'writer@example.com',
         status: 'past_due',
+        planId: 'premium',
       },
       client
     )
@@ -308,6 +325,7 @@ describe('syncResendBillingContact', () => {
         {
           email: 'writer@example.com',
           status: 'active',
+          planId: 'core',
         },
         client
       ),

@@ -205,7 +205,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     throw new Error(`Supabase subscription upsert failed: ${error.message}`)
   }
 
-  await syncBillingContactForUser({ userId, status: subscription.status })
+  await syncBillingContactForUser({ userId, status: subscription.status, planId })
 
   console.log(`[webhook] Subscription saved for user ${userId}, plan ${planId}, status ${subscription.status}`)
   const posthog = getPostHogClient()
@@ -238,7 +238,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const { data: existing } = await supabaseAdmin
     .from('subscriptions')
-    .select('id, user_id')
+    .select('id, user_id, plan_id')
     .eq('stripe_subscription_id', subscription.id)
     .maybeSingle()
 
@@ -278,6 +278,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   await syncBillingContactForUser({
     userId: existing.user_id,
     status: subscription.status,
+    planId: planId ?? existing.plan_id ?? null,
   })
   console.log(`[webhook] Subscription updated for user ${existing.user_id}: status=${subscription.status}`)
 }
@@ -325,7 +326,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   const { data: existing } = await supabaseAdmin
     .from('subscriptions')
-    .select('id, user_id')
+    .select('id, user_id, plan_id')
     .eq('stripe_subscription_id', stripeSubscriptionId)
     .maybeSingle()
 
@@ -354,6 +355,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   await syncBillingContactForUser({
     userId: existing.user_id,
     status: subscription.status,
+    planId: existing.plan_id,
   })
   console.log(`[webhook] Subscription renewed for user ${existing.user_id}`)
 }

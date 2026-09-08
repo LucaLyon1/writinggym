@@ -60,8 +60,9 @@ Each has 3 hand-authored twist prompts.
   receipt both upsert the provider-neutral `subscriptions` row.
 - Successful `active` or `trialing` subscriptions update the matching Loops
   contact to `userGroup: Core User`, which starts the live purchase sequence.
-  The same webhook path also sets Resend contact `plan_tier` to `core` and
-  adds the contact to the Paying Users segment.
+  The same webhook path also sets Resend contact `plan_tier` from the app
+  `plan_id` (`core`, `premium`, `pre_release_yearly`, …) and adds the contact
+  to the Paying Users segment (all payers).
 - A scheduled cancellation remains paid until Whop deactivates the membership.
   Only terminal states such as `canceled` or `expired` return the contact to
   `userGroup: Free User` and Resend `plan_tier: free` (removed from Paying
