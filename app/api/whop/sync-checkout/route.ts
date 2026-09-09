@@ -5,8 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import {
   getWhopBillingPortalUrl,
   getWhopClient,
+  isAllowedWhopProductId,
   WHOP_ACCOUNT_ID,
-  WHOP_PRODUCT_ID,
 } from '@/lib/whop'
 import {
   normalizeWhopMembership,
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const whop = getWhopClient()
     const payment = await whop.payments.retrieve(body.receiptId)
 
-    if (payment.company?.id !== WHOP_ACCOUNT_ID || payment.product?.id !== WHOP_PRODUCT_ID) {
+    if (payment.company?.id !== WHOP_ACCOUNT_ID || !isAllowedWhopProductId(payment.product?.id)) {
       return NextResponse.json({ error: 'Unexpected Whop purchase' }, { status: 403 })
     }
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       customerId: payment.user?.id ?? null,
       updatedAt: payment.updated_at,
     })
-    if (normalized.accountId !== WHOP_ACCOUNT_ID || normalized.productId !== WHOP_PRODUCT_ID) {
+    if (normalized.accountId !== WHOP_ACCOUNT_ID || !isAllowedWhopProductId(normalized.productId)) {
       return NextResponse.json({ error: 'Unexpected Whop membership' }, { status: 403 })
     }
 
