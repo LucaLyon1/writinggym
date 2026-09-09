@@ -209,16 +209,22 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   console.log(`[webhook] Subscription saved for user ${userId}, plan ${planId}, status ${subscription.status}`)
   const posthog = getPostHogClient()
+  const subscriptionProperties = {
+    plan_id: planId,
+    product,
+    status: subscription.status,
+    stripe_subscription_id: stripeSubscriptionId,
+    customer_email: session.customer_details?.email ?? null,
+  }
   posthog.capture({
     distinctId: userId,
     event: 'subscription_activated',
-    properties: {
-      plan_id: planId,
-      product,
-      status: subscription.status,
-      stripe_subscription_id: stripeSubscriptionId,
-      customer_email: session.customer_details?.email ?? null,
-    },
+    properties: subscriptionProperties,
+  })
+  posthog.capture({
+    distinctId: userId,
+    event: 'subscription_started',
+    properties: subscriptionProperties,
   })
   await posthog.shutdown()
 

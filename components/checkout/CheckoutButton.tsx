@@ -22,12 +22,14 @@ export function CheckoutButton({
   const handleCheckout = () => {
     const plan = BILLING_PLANS[planKey]
     trackWhopEvent('add_to_cart')
-    posthog.capture('checkout_initiated', {
+    const checkoutProps = {
       provider: 'whop',
       plan_key: plan.key,
       product: plan.appPlanId,
       billing_cycle: plan.billingCycle,
-    })
+    }
+    posthog.capture('checkout_initiated', checkoutProps)
+    posthog.capture('checkout_started', checkoutProps)
     if (onCheckout) {
       onCheckout(planKey)
       return
