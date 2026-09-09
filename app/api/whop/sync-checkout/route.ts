@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getBillingPlanByWhopId } from '@/lib/billing-plans'
+import { getPostHogClient } from '@/lib/posthog-server'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import {
@@ -96,14 +97,45 @@ export async function POST(request: NextRequest) {
       providerUpdatedAt: normalized.providerUpdatedAt,
     })
 
+    const ledgerId = `checkout:${payment.id}`
+    const { data: existingLedger } = await supabaseAdmin
+      .from('billing_webhook_events')
+      .select('id')
+      .eq('id', ledgerId)
+      .maybeSingle()
+
     const { error: ledgerError } = await supabaseAdmin
       .from('billing_webhook_events')
       .upsert({
-        id: `checkout:${payment.id}`,
+        id: ledgerId,
         provider: 'whop',
         event_type: 'checkout.reconciled',
       }, { onConflict: 'id', ignoreDuplicates: true })
     if (ledgerError) throw ledgerError
+
+    // Capture conversion when sync-checkout activates without relying on the webhook path.
+    if (!existingLedger) {
+      const posthog = getPostHogClient()
+      const properties = {
+        provider: 'whop',
+        plan_id: planId,
+        whop_plan_id: normalized.planId,
+        whop_membership_id: normalized.id,
+        status: normalized.status,
+        cancel_at_period_end: normalized.cancelAtPeriodEnd,
+      }
+      posthog.capture({
+        distinctId: user.id,
+        event: 'subscription_activated',
+        properties,
+      })
+      posthog.capture({
+        distinctId: user.id,
+        event: 'subscription_started',
+        properties,
+      })
+      await posthog.shutdown()
+    }
 
     return NextResponse.json({ synced: true, planId, status: normalized.status })
   } catch (error) {

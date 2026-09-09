@@ -62,20 +62,32 @@ async function syncMembership(event: MembershipEvent) {
   })
 
   const posthog = getPostHogClient()
-  posthog.capture({
-    distinctId: userId,
-    event: event.type === 'membership.activated'
-      ? 'subscription_activated'
-      : 'subscription_updated',
-    properties: {
-      provider: 'whop',
-      plan_id: planId,
-      whop_plan_id: membership.plan.id,
-      whop_membership_id: membership.id,
-      status: membership.status,
-      cancel_at_period_end: membership.cancel_at_period_end,
-    },
-  })
+  const properties = {
+    provider: 'whop',
+    plan_id: planId,
+    whop_plan_id: membership.plan.id,
+    whop_membership_id: membership.id,
+    status: membership.status,
+    cancel_at_period_end: membership.cancel_at_period_end,
+  }
+  if (event.type === 'membership.activated') {
+    posthog.capture({
+      distinctId: userId,
+      event: 'subscription_activated',
+      properties,
+    })
+    posthog.capture({
+      distinctId: userId,
+      event: 'subscription_started',
+      properties,
+    })
+  } else {
+    posthog.capture({
+      distinctId: userId,
+      event: 'subscription_updated',
+      properties,
+    })
+  }
   await posthog.shutdown()
 }
 
