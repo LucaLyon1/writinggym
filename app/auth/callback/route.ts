@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const rawNext = requestUrl.searchParams.get('next') ?? '/'
   const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/'
+  const fromSignup = requestUrl.searchParams.get('whop_from') === 'signup'
 
   if (!code) {
     return NextResponse.redirect(new URL(next, requestUrl.origin))
@@ -59,6 +60,10 @@ export async function GET(request: Request) {
   if (isNewUser) {
     redirectUrl.searchParams.set('welcome', '1')
     redirectUrl.searchParams.set('whop_registration', '1')
+    // Lead only for Google (etc.) new signups that started on the signup form.
+    if (fromSignup) {
+      redirectUrl.searchParams.set('whop_lead', '1')
+    }
   }
   return NextResponse.redirect(redirectUrl)
 }

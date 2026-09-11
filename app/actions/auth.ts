@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/server'
 export type AuthState = {
   error?: string
   success?: string
+  /** Submitted email on successful magic-link send (for Whop lead). */
+  email?: string
 }
 
 export async function sendMagicLink(
@@ -43,6 +45,7 @@ export async function sendMagicLink(
 
   return {
     success: `We sent a sign-in link to ${email}. Click the link in your inbox to continue.`,
+    email,
   }
 }
 
@@ -95,15 +98,22 @@ export async function setPassword(
   return { success: 'Password saved. You can now sign in with email + password too.' }
 }
 
-export async function signInWithGoogle(next?: string) {
+export async function signInWithGoogle(
+  next?: string,
+  options?: { fromSignup?: boolean },
+) {
   const supabase = await createClient()
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  const redirectTo =
-    next && next.startsWith('/') && !next.startsWith('//')
-      ? `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`
-      : `${siteUrl}/auth/callback`
+  const callbackUrl = new URL('/auth/callback', siteUrl)
+  if (next && next.startsWith('/') && !next.startsWith('//')) {
+    callbackUrl.searchParams.set('next', next)
+  }
+  if (options?.fromSignup) {
+    callbackUrl.searchParams.set('whop_from', 'signup')
+  }
+  const redirectTo = callbackUrl.toString()
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
