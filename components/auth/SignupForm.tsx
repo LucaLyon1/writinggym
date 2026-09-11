@@ -38,20 +38,30 @@ export function SignupForm({ next, hideHeader, onSwitchMode }: SignupFormProps) 
   const [state, formAction, isPending] = useActionState(sendMagicLink, undefined)
   const [googleError, setGoogleError] = useState<string | null>(null)
   const leadTracked = useRef(false)
+  const leadEventId = useRef<string | null>(null)
 
-  const trackLead = useCallback(() => {
+  const trackLead = useCallback((email?: string) => {
     if (leadTracked.current) return
-    trackWhopEvent('lead')
+    if (!leadEventId.current) {
+      leadEventId.current =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `lead_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+    }
+    trackWhopEvent('lead', {
+      ...(email ? { email } : {}),
+      event_id: leadEventId.current,
+    })
     leadTracked.current = true
   }, [])
 
   useEffect(() => {
-    if (state?.success) trackLead()
-  }, [state?.success, trackLead])
+    if (state?.success) trackLead(state.email)
+  }, [state?.success, state?.email, trackLead])
 
   async function handleGoogleSignIn() {
     setGoogleError(null)
-    const result = await signInWithGoogle(next)
+    const result = await signInWithGoogle(next, { fromSignup: true })
     if (result?.error) {
       setGoogleError(result.error)
     }
