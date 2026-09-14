@@ -39,10 +39,16 @@ export async function GET(request: Request) {
 
     const posthog = getPostHogClient()
     posthog.identify({ distinctId: user.id, properties: { email, username } })
+    const signupProperties = { email, username, method: 'magic_link_or_oauth' as const }
     posthog.capture({
       distinctId: user.id,
       event: 'user_signed_up',
-      properties: { email, username, method: 'magic_link_or_oauth' },
+      properties: signupProperties,
+    })
+    posthog.capture({
+      distinctId: user.id,
+      event: 'signed_up',
+      properties: signupProperties,
     })
     await posthog.shutdown()
   } else if (email) {
