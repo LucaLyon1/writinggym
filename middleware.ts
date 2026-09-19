@@ -17,13 +17,26 @@ const PUBLIC_PATHS = [
   '/api/stripe-webhook',
 ]
 
+/** Provider webhooks must skip Supabase session work (timeouts + cookie side-effects). */
+const WEBHOOK_PATHS = ['/api/whop-webhook', '/api/stripe-webhook']
+
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + '/')
   )
 }
 
+function isWebhookPath(pathname: string): boolean {
+  return WEBHOOK_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + '/')
+  )
+}
+
 export async function middleware(request: NextRequest) {
+  if (isWebhookPath(request.nextUrl.pathname)) {
+    return NextResponse.next()
+  }
+
   const { response, user, configured } = await updateSession(request)
 
   if (configured && !user && !isPublic(request.nextUrl.pathname)) {

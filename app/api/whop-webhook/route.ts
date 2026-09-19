@@ -191,10 +191,19 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid signature'
     console.error('[whop webhook] Signature verification failed:', message)
+    console.error(
+      '[whop webhook] Hint: WHOP_WEBHOOK_SECRET must be the raw dashboard secret (ws_…); getWhopClient base64-encodes it before verify'
+    )
     return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 })
   }
 
   if (event.company_id && event.company_id !== WHOP_ACCOUNT_ID) {
+    console.error('[whop webhook] company_id mismatch', {
+      expected: WHOP_ACCOUNT_ID,
+      actual: event.company_id,
+      eventId: event.id,
+      eventType: event.type,
+    })
     return NextResponse.json({ error: 'Unexpected Whop account' }, { status: 403 })
   }
 
