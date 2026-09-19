@@ -3,7 +3,12 @@ import type { UnwrapWebhookEvent } from '@whop/sdk/resources/webhooks'
 import { getBillingPlanByWhopId } from '@/lib/billing-plans'
 import { getPostHogClient } from '@/lib/posthog-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getWhopBillingPortalUrl, getWhopClient, WHOP_ACCOUNT_ID } from '@/lib/whop'
+import {
+  getWhopBillingPortalUrl,
+  getWhopClient,
+  verifyWhopWebhook,
+  WHOP_ACCOUNT_ID,
+} from '@/lib/whop'
 import {
   normalizeWhopMembership,
   syncWhopSubscription,
@@ -185,16 +190,32 @@ export async function POST(request: NextRequest) {
   let event: UnwrapWebhookEvent
 
   try {
-    event = getWhopClient().webhooks.unwrap(body, {
-      headers: Object.fromEntries(request.headers.entries()),
-    })
+    event = verifyWhopWebhook(body, request.headers)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid signature'
     console.error('[whop webhook] Signature verification failed:', message)
+    console.error(
+      '[whop webhook] Hint: WHOP_WEBHOOK_SECRET must be the raw dashboard Secret (ws_…)'
+    )
     return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 })
   }
 
-  if (event.company_id && event.company_id !== WHOP_ACCOUNT_ID) {
+  // Newer Whop payloads may pin account_id; API version 2026-08-13 still uses company_id.
+  const accountId =
+    'account_id' in event
+      ? ((event as UnwrapWebhookEvent & { account_id?: string | null }).account_id ?? null)
+      : null
+  const companyId = event.company_id ?? null
+  const presentIds = [companyId, accountId].filter(
+    (id): id is string => typeof id === 'string' && id.length > 0
+  )
+  if (presentIds.length > 0 && !presentIds.includes(WHOP_ACCOUNT_ID)) {
+    console.error('[whop webhook] account mismatch', {
+      expected: WHOP_ACCOUNT_ID,
+      actual: { company_id: companyId, account_id: accountId },
+      eventId: event.id,
+      eventType: event.type,
+    })
     return NextResponse.json({ error: 'Unexpected Whop account' }, { status: 403 })
   }
 
