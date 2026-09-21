@@ -16,6 +16,7 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
   const isExcluded =
     !isFreeUser ||
     pathname.startsWith('/pricing') ||
+    pathname.startsWith('/checkout') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup')
 
@@ -58,3 +59,4 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
     </div>
   )
 }
+
