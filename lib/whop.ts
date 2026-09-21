@@ -1,4 +1,6 @@
 import { Whop } from '@whop/sdk'
+import type { UnwrapWebhookEvent } from '@whop/sdk/resources/webhooks'
+import { Webhook } from 'standardwebhooks'
 
 export const WHOP_ACCOUNT_ID = process.env.WHOP_ACCOUNT_ID ?? 'biz_tGIL6R2J3Z0k5p'
 export const WHOP_PRODUCT_ID = process.env.WHOP_PRODUCT_ID ?? 'prod_OFqlk4hW26pBI'
@@ -42,20 +44,47 @@ export function getWhopBillingPortalUrl(memberId: string | null | undefined): st
   return `https://whop.com/billing/manage/${memberId}/`
 }
 
+function headersToRecord(headers: Headers | Record<string, string>): Record<string, string> {
+  if (headers instanceof Headers) {
+    return Object.fromEntries(headers.entries())
+  }
+  return headers
+}
+
+/**
+ * Verify a Whop webhook with standardwebhooks.
+ *
+ * - `ws_…` secrets: HMAC key is the raw UTF-8 secret string (`format: 'raw'`).
+ *   Equivalent to the old `Buffer.from(secret).toString('base64')` + default Webhook
+ *   path used by the SDK unwrap helper — do NOT hex-decode after stripping `ws_`.
+ * - `whsec_…` secrets: library strips the prefix and base64-decodes.
+ * - Anything else: treat as already-base64 key material (legacy mistaken env).
+ */
+export function verifyWhopWebhook(
+  body: string,
+  headers: Headers | Record<string, string>
+): UnwrapWebhookEvent {
+  const secret = process.env.WHOP_WEBHOOK_SECRET
+  if (!secret) {
+    throw new Error('WHOP_WEBHOOK_SECRET is not configured')
+  }
+
+  const wh = secret.startsWith('ws_')
+    ? new Webhook(secret, { format: 'raw' })
+    : new Webhook(secret)
+
+  wh.verify(body, headersToRecord(headers))
+  return JSON.parse(body) as UnwrapWebhookEvent
+}
+
 export function getWhopClient(): Whop {
   const apiKey = process.env.WHOP_API_KEY
   if (!apiKey) {
     throw new Error('WHOP_API_KEY is not configured')
   }
 
-  const rawWebhookSecret = process.env.WHOP_WEBHOOK_SECRET
-  const webhookKey = rawWebhookSecret
-    ? Buffer.from(rawWebhookSecret).toString('base64')
-    : null
-
   return new Whop({
     apiKey,
-    webhookKey,
     version: '2026-08-13',
   })
 }
