@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null) as {
     planKey?: unknown
     attemptId?: unknown
+    stateId?: unknown
   } | null
 
   if (!body || !isBillingPlanKey(body.planKey)) {
@@ -47,6 +48,9 @@ export async function POST(request: NextRequest) {
   const attemptId = typeof body.attemptId === 'string' && body.attemptId.length <= 255
     ? body.attemptId
     : crypto.randomUUID()
+  const stateId = typeof body.stateId === 'string' && body.stateId.length > 0 && body.stateId.length <= 255
+    ? body.stateId
+    : null
 
   try {
     const checkout = await getWhopClient().checkoutConfigurations.create({
@@ -59,6 +63,7 @@ export async function POST(request: NextRequest) {
         app_plan_id: plan.appPlanId,
         billing_cycle: plan.billingCycle,
         app_email: user.email ?? null,
+        ...(stateId ? { state_id: stateId } : {}),
       },
       'Idempotency-Key': attemptId,
     })
