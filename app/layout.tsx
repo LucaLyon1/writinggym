@@ -97,8 +97,9 @@ export default async function RootLayout({
   const { isAuthenticated, isFreeUser, mustChooseAfterTrial } = await getAuthState()
 
   return (
-    <html lang="en" className={`light ${GeistMono.variable} ${cormorantGaramond.variable}`}>
+    <html lang="en" translate="no" className={`light notranslate ${GeistMono.variable} ${cormorantGaramond.variable}`}>
       <head>
+        <meta name="google" content="notranslate" />
         <Script
           id="cookieyes"
           type="text/javascript"
