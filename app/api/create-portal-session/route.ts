@@ -24,7 +24,10 @@ export async function POST() {
       .from('subscriptions')
       .select('billing_provider, manage_url, stripe_customer_id')
       .eq('user_id', user.id)
-      .in('status', ['active', 'trialing'])
+      // past_due users must reach the portal too, so they can fix a failed card.
+      .in('status', ['active', 'trialing', 'past_due'])
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .maybeSingle()
 
     if (!subscription) {

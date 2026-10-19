@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUserEntitlements } from '@/lib/plan'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ManageSubscriptionButton } from '@/components/checkout/ManageSubscriptionButton'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
 import { logout } from '@/app/actions/auth'
@@ -19,18 +20,28 @@ export default async function SettingsPage() {
     redirect('/signup?next=/profile/settings')
   }
 
-  const [entitlements, profileResult] = await Promise.all([
+  const [entitlements, profileResult, pastDueResult] = await Promise.all([
     getUserEntitlements(user.id),
     supabase
       .from('profiles')
       .select('username')
       .eq('id', user.id)
       .single(),
+    supabaseAdmin
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'past_due')
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const { data: profile } = profileResult
   const avatarUrl = user.user_metadata?.avatar_url as string | undefined
   const hasPaidPlan = entitlements.plan_id !== 'free'
+  // A failed renewal drops entitlements to free, but the subscription can still be
+  // recovered by updating the card, so point the user at billing, not new plans.
+  const isPastDue = !hasPaidPlan && Boolean(pastDueResult.data)
 
   return (
     <div className="analysis-view">
@@ -105,7 +116,16 @@ export default async function SettingsPage() {
         <div className="ea-right-card">
           <h3 className="ea-right-card-heading">Billing</h3>
           <div className="settings-billing-actions">
-            {hasPaidPlan ? (
+            {isPastDue ? (
+              <>
+                <p className="settings-avatar-hint">
+                  Your last payment didn&apos;t go through. Update your payment method to keep your plan.
+                </p>
+                <ManageSubscriptionButton className="settings-save-btn">
+                  Update payment method
+                </ManageSubscriptionButton>
+              </>
+            ) : hasPaidPlan ? (
               <ManageSubscriptionButton className="settings-save-btn">
                 Manage billing
               </ManageSubscriptionButton>
