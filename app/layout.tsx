@@ -6,6 +6,7 @@ import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
 import { AuthModalProvider } from "@/components/auth/AuthModal";
 import { FirstVisitAuthModal } from "@/components/auth/FirstVisitAuthModal";
+import { AuthLinkErrorHandler } from "@/components/auth/AuthLinkErrorHandler";
 import { PostTrialPaywall } from "@/components/auth/PostTrialPaywall";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
@@ -129,6 +130,7 @@ export default async function RootLayout({
           <SidebarBackdrop />
           <PostHogIdentify />
           {!isAuthenticated && <FirstVisitAuthModal />}
+          <AuthLinkErrorHandler isAuthenticated={isAuthenticated} />
           <FreeUserGate isFreeUser={isFreeUser} />
           <PostTrialPaywall show={mustChooseAfterTrial} />
           {children}
