@@ -13,6 +13,14 @@ import {
   normalizeWhopMembership,
   syncWhopSubscription,
 } from '@/lib/whop-subscription-sync'
+import { syncBillingContactForUser } from '@/lib/billing-contact-sync'
+import {
+  handleWhopRefund,
+  isStaleReactivation,
+  REFUND_REVOKED_STATUS,
+  type SubscriptionsTable,
+  type WhopRefundPayment,
+} from '@/lib/whop-refund'
 
 type MembershipEvent = Extract<
   UnwrapWebhookEvent,
@@ -49,6 +57,24 @@ async function syncMembership(event: MembershipEvent) {
       planId,
     })
     return
+  }
+
+  if (event.type === 'membership.cancel_at_period_end_changed') {
+    const { data: existing, error: existingError } = await supabaseAdmin
+      .from('subscriptions')
+      .select('status')
+      .eq('billing_provider', 'whop')
+      .eq('external_subscription_id', membership.id)
+      .maybeSingle()
+    if (existingError) throw existingError
+    if (isStaleReactivation(existing?.status, membership.status)) {
+      console.warn('[whop webhook] Ignoring stale reactivation of a revoked membership', {
+        membershipId: membership.id,
+        existingStatus: existing?.status,
+        incomingStatus: membership.status,
+      })
+      return
+    }
   }
 
   await syncWhopSubscription({
@@ -180,6 +206,41 @@ async function handleSuccessfulPayment(
   })
 }
 
+async function handleRefund(
+  event: Extract<UnwrapWebhookEvent, { type: 'refund.created' | 'refund.updated' }>
+) {
+  const outcome = await handleWhopRefund(event.data, {
+    subscriptions: supabaseAdmin.from('subscriptions') as unknown as SubscriptionsTable,
+    retrievePayment: async (id) =>
+      (await getWhopClient().payments.retrieve(id)) as unknown as WhopRefundPayment,
+    onRevoked: async ({ userId, planId, membershipId, paymentId, refundId }) => {
+      // Same downstream path as membership.deactivated: Resend/Loops drop to free.
+      await syncBillingContactForUser({ userId, status: REFUND_REVOKED_STATUS, planId })
+      const posthog = getPostHogClient()
+      posthog.capture({
+        distinctId: userId,
+        event: 'subscription_canceled',
+        properties: {
+          provider: 'whop',
+          reason: 'refund',
+          plan_id: planId,
+          whop_membership_id: membershipId,
+          whop_payment_id: paymentId,
+          whop_refund_id: refundId,
+          status: REFUND_REVOKED_STATUS,
+        },
+      })
+      await posthog.shutdown()
+    },
+  })
+  if (outcome.action === 'ignored') {
+    console.info('[whop webhook] Refund did not revoke access', {
+      refundId: event.data.id,
+      reason: outcome.reason,
+    })
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.WHOP_WEBHOOK_SECRET || !process.env.WHOP_API_KEY) {
     console.error('[whop webhook] Whop secrets are not configured')
@@ -238,6 +299,10 @@ export async function POST(request: NextRequest) {
         break
       case 'payment.failed':
         await handleFailedPayment(event)
+        break
+      case 'refund.created':
+      case 'refund.updated':
+        await handleRefund(event)
         break
       default:
         break
