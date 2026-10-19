@@ -39,7 +39,11 @@ export default function AssessmentPage() {
 
   function pickPrompt() {
     setMode('prompted')
-    setPrompt(PROMPTS[Math.floor(Math.random() * PROMPTS.length)])
+    // Never hand back the prompt already on screen, or the shuffle button looks broken.
+    setPrompt((current) => {
+      const options = PROMPTS.filter((p) => p !== current)
+      return options[Math.floor(Math.random() * options.length)]
+    })
   }
 
   async function handleAnalyse() {
