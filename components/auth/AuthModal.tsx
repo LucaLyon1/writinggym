@@ -14,10 +14,10 @@ import { SignupForm } from './SignupForm'
 import { LoginForm } from './LoginForm'
 
 export type AuthMode = 'signup' | 'login'
-export type AuthModalSource = 'nav' | 'first_visit'
+export type AuthModalSource = 'nav' | 'first_visit' | 'auth_link_error'
 
 interface AuthModalContextValue {
-  open: (mode?: AuthMode, source?: AuthModalSource) => void
+  open: (mode?: AuthMode, source?: AuthModalSource, notice?: string) => void
   close: () => void
 }
 
@@ -35,13 +35,15 @@ type DismissMethod = 'close_button' | 'backdrop' | 'escape'
 
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<AuthMode | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const pathname = usePathname()
   const isOpen = mode !== null
   const sourceRef = useRef<AuthModalSource | null>(null)
 
   const open = useCallback(
-    (next: AuthMode = 'signup', source: AuthModalSource = 'nav') => {
+    (next: AuthMode = 'signup', source: AuthModalSource = 'nav', message?: string) => {
       sourceRef.current = source
+      setNotice(message ?? null)
       setMode(next)
       posthog.capture('auth_modal_opened', { initial_mode: next, source })
     },
@@ -53,6 +55,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
       if (mode === null) return
       posthog.capture('auth_modal_dismissed', { mode, method })
       sourceRef.current = null
+      setNotice(null)
       setMode(null)
     },
     [mode]
@@ -125,6 +128,12 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
                 </>
               )}
             </header>
+
+            {notice && (
+              <p className="auth-error" role="alert">
+                {notice}
+              </p>
+            )}
 
             {mode === 'signup' ? (
               <SignupForm
