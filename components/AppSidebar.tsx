@@ -11,7 +11,7 @@ const NAV_LINKS = [
   { href: '/exercises', label: 'Exercises', exact: false },
   { href: '/playground', label: 'Playground', exact: false },
   { href: '/community', label: 'Community', exact: false },
-  { href: '/profile', label: 'Settings', exact: false },
+  { href: '/profile', label: 'Profile', exact: false },
 ]
 
 export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactNode } = {}) {
