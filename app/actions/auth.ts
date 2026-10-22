@@ -98,6 +98,35 @@ export async function setPassword(
   return { success: 'Password saved. You can now sign in with email + password too.' }
 }
 
+export async function updateEmail(
+  _prevState: { error?: string; success?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string; success?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'You must be signed in to change your email.' }
+  }
+
+  const email = (formData.get('email') as string | null)?.trim() ?? ''
+  if (!email || !email.includes('@')) {
+    return { error: 'Enter a valid email address.' }
+  }
+  if (email === user.email) {
+    return { error: 'That is already your email.' }
+  }
+
+  const { error } = await supabase.auth.updateUser({ email })
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/profile')
+  return { success: `Check ${email} to confirm the change.` }
+}
+
 export async function signInWithGoogle(
   next?: string,
   options?: { fromSignup?: boolean },

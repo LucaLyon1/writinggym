@@ -941,6 +941,37 @@ body {
     background: var(--accent-pale);
 }
 
+.sidebar-nav-link.is-disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.sidebar-nav-link.is-disabled:hover {
+    background: none;
+    color: var(--ink-muted);
+}
+
+.sidebar-nav-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.58rem;
+    letter-spacing: 0.04em;
+    vertical-align: 0.1em;
+}
+
+.sidebar-nav-badge--new {
+    background: var(--accent);
+    color: #fff;
+}
+
+.sidebar-nav-badge--soon {
+    background: var(--paper-deep);
+    color: var(--ink-muted);
+    border: 1px solid var(--line);
+}
+
 .sidebar-nav-footer {
     margin: 0 -1.25rem -2rem;
     border-top: 1px solid var(--line);

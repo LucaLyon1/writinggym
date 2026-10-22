@@ -5,6 +5,7 @@ import { getUserEntitlements } from '@/lib/plan'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ManageSubscriptionButton } from '@/components/checkout/ManageSubscriptionButton'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
+import { SettingsEmailForm } from '@/components/profile/SettingsEmailForm'
 import { logout } from '@/app/actions/auth'
 import { SidebarNav } from '@/components/AppSidebar'
 import { ProfileSidebar } from '@/components/profile/ProfileSidebar'
@@ -110,7 +111,7 @@ export default async function SettingsPage() {
       <aside className="ea-right-col">
         <div className="ea-right-card">
           <h3 className="ea-right-card-heading">Email</h3>
-          <p className="settings-email-display">{user.email}</p>
+          <SettingsEmailForm currentEmail={user.email ?? ''} />
         </div>
 
         <div className="ea-right-card">
