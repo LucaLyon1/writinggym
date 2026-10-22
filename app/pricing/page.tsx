@@ -4,6 +4,7 @@ import { PricingPlans } from '@/components/checkout/PricingPlans'
 import { createClient } from '@/lib/supabase/server'
 import { isWithinFreeTrial } from '@/lib/trial'
 import { AppFooter } from '@/components/AppFooter'
+import { WhopViewContent } from '@/components/checkout/WhopViewContent'
 
 interface FaqItem {
   q: string
@@ -84,6 +85,7 @@ export default async function PricingPage() {
 
   return (
     <div className="plans-root">
+      <WhopViewContent />
       <div className="plans-inner">
         <header className="plans-header">
           <h1 className="plans-title">
