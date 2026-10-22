@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import posthog from 'posthog-js'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
 import { logout } from '@/app/actions/auth'
+import { paywallFeatureFromPath } from '@/lib/paywall-analytics'
 
 interface FreeUserGateProps {
   isFreeUser: boolean
@@ -30,7 +31,17 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
     } else {
       document.body.setAttribute('data-gated', 'true')
       document.body.style.overflow = 'hidden'
-      posthog.capture('free_user_gate_shown', { pathname })
+      const properties = {
+        source: 'free_user_gate',
+        pathname,
+        feature: paywallFeatureFromPath(pathname),
+        plans_shown: ['core', 'premium'],
+        default_billing_cycle: 'yearly',
+      }
+      // `paywall_shown` is the canonical funnel step; `free_user_gate_shown`
+      // stays for existing insights (same dual-capture pattern as checkout).
+      posthog.capture('paywall_shown', properties)
+      posthog.capture('free_user_gate_shown', properties)
     }
     return () => {
       document.body.removeAttribute('data-gated')
@@ -47,7 +58,7 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
           Upgrade now to keep<br /><em>practicing your writing</em>
         </h2>
         <div className="gate-plans">
-          <PricingPlans currentPlanId={null} />
+          <PricingPlans currentPlanId={null} source="free_user_gate" />
         </div>
         <form action={logout} className="gate-logout">
           <button
