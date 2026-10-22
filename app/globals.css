@@ -953,6 +953,7 @@ body {
 
 .sidebar-nav-badge {
     display: inline-block;
+    float: right;
     margin-left: 0.5rem;
     padding: 0.1rem 0.4rem;
     border-radius: 999px;
@@ -10032,6 +10033,9 @@ body[data-gated] > *:not(.gate-overlay) {
         font-size: 0.7rem;
         border-radius: 999px;
         border-top: none;
+    }
+    .ea-left-sidebar .sidebar-nav-badge {
+        float: none;
     }
     .ea-left-sidebar .sidebar-nav-copy,
     .ea-left-sidebar .sidebar-nav-footer,
