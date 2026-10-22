@@ -146,7 +146,7 @@ export function WhopForumPreview({
                     {!profile.totalPassages ? (
                       <div className="profile-empty">
                         <p>You haven&apos;t completed any passages yet.</p>
-                        <Link href="/" className="profile-empty-link">
+                        <Link href="/exercises" className="profile-empty-link">
                           Browse passages and start writing
                         </Link>
                       </div>

@@ -41,7 +41,7 @@ test('protected pages redirect anonymous visitors and preserve the destination',
   assert.equal(location.searchParams.get('next'), '/profile?tab=writing')
 })
 
-for (const path of ['/', '/pricing', '/auth/callback', '/api/stripe-webhook', '/api/whop-webhook']) {
+for (const path of ['/', '/exercises', '/pricing', '/auth/callback', '/api/stripe-webhook', '/api/whop-webhook']) {
   test(`${path} reaches its handler without a user session`, async () => {
     const response = await middleware(new NextRequest(`http://localhost${path}`))
     assert.equal(response.status, 200)

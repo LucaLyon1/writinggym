@@ -10,6 +10,9 @@ export async function AuthNav() {
     return (
       <nav className="auth-nav">
         <Link href="/" className="auth-nav-link">
+          Drills
+        </Link>
+        <Link href="/exercises" className="auth-nav-link">
           Exercises
         </Link>
         <Link href="/playground" className="auth-nav-link">
@@ -25,6 +28,9 @@ export async function AuthNav() {
   return (
     <nav className="auth-nav">
       <Link href="/" className="auth-nav-link">
+        Drills
+      </Link>
+      <Link href="/exercises" className="auth-nav-link">
         Exercises
       </Link>
       <Link href="/playground" className="auth-nav-link">

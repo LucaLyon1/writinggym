@@ -9,10 +9,17 @@ import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
 import { logout } from '@/app/actions/auth'
 import { SidebarNav } from '@/components/AppSidebar'
 import { ProfileSidebar } from '@/components/profile/ProfileSidebar'
+import { DrillProgressPanel } from '@/components/profile/DrillProgressPanel'
 
 type PassageCompletion = Tables<'passage_completions'>
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
+  const { tab } = await searchParams
+  const showDrills = tab === 'drills'
   const supabase = await createClient()
   const {
     data: { user },
@@ -20,7 +27,7 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/signup?next=/profile')
+    redirect(`/signup?next=${encodeURIComponent(showDrills ? '/profile?tab=drills' : '/profile')}`)
   }
 
   const [profileResult, statsResult, firstPageResult] = await Promise.all([
@@ -118,6 +125,24 @@ export default async function ProfilePage() {
             </div>
           </div>
         </div>
+        <nav className="profile-tabs profile-filter-pills" aria-label="Profile sections">
+          <Link href="/profile" className={`profile-filter-pill${showDrills ? '' : ' is-active'}`} aria-current={showDrills ? undefined : 'page'}>
+            Your writing
+          </Link>
+          <Link href="/profile?tab=drills" className={`profile-filter-pill${showDrills ? ' is-active' : ''}`} aria-current={showDrills ? 'page' : undefined}>
+            Drill progress
+          </Link>
+        </nav>
+        {showDrills ? (
+          <section className="ea-stage">
+            <header className="ea-stage-head">
+              <h2 className="ea-stage-title">Drill progress</h2>
+            </header>
+            <div className="ea-stage-body profile-stage-body">
+              <DrillProgressPanel />
+            </div>
+          </section>
+        ) : (
         <section className="ea-stage">
           {!totalCount ? (
             <>
@@ -127,7 +152,7 @@ export default async function ProfilePage() {
               <div className="ea-stage-body profile-stage-body">
                 <div className="profile-empty">
                   <p>You haven&apos;t completed any passages yet.</p>
-                  <Link href="/" className="profile-empty-link">
+                  <Link href="/exercises" className="profile-empty-link">
                     Browse passages and start writing
                   </Link>
                 </div>
@@ -139,6 +164,7 @@ export default async function ProfilePage() {
             />
           )}
         </section>
+        )}
       </main>
       <aside className="ea-right-col">
         <CompletionHeatmap

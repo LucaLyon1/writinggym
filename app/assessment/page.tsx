@@ -164,7 +164,7 @@ export default function AssessmentPage() {
             <button className="assess-reset-btn" onClick={handleReset}>
               ← Write a new sample
             </button>
-            <Link href="/" className="assess-browse-link">
+            <Link href="/exercises" className="assess-browse-link">
               Browse the full library
             </Link>
           </div>

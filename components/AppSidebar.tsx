@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { trialDaysLeft } from '@/lib/trial'
 
 const NAV_LINKS = [
-  { href: '/', label: 'Exercises', exact: true },
+  { href: '/', label: 'Drills', exact: true },
+  { href: '/exercises', label: 'Exercises', exact: false },
   { href: '/playground', label: 'Playground', exact: false },
   { href: '/community', label: 'Community', exact: false },
   { href: '/profile', label: 'Settings', exact: false },
@@ -32,8 +33,8 @@ export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactN
       <nav className="sidebar-nav-links">
         {NAV_LINKS.map(({ href, label, exact }) => {
           const isActive = exact
-            ? pathname === '/' || pathname.startsWith('/extract/')
-            : pathname.startsWith(href)
+            ? pathname === href
+            : pathname.startsWith(href) || (href === '/exercises' && pathname.startsWith('/extract/'))
 
           return (
             <Link

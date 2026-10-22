@@ -4,6 +4,8 @@ import { updateSession } from '@/lib/supabase/middleware'
 /** Public paths anonymous users can reach directly. Everything else redirects to /signup. */
 const PUBLIC_PATHS = [
   '/',
+  '/exercises',
+  '/drills',
   '/login',
   '/signup',
   '/pricing',

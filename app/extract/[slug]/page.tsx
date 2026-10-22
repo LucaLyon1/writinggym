@@ -36,7 +36,7 @@ export default function ExtractPage() {
 
   useEffect(() => {
     if (slug && !passage) {
-      router.replace('/')
+      router.replace('/exercises')
     }
   }, [slug, passage, router])
 
@@ -48,7 +48,7 @@ export default function ExtractPage() {
     <AnalysisView
       key={passage.id}
       passage={passage}
-      onBack={() => router.push('/')}
+      onBack={() => router.push('/exercises')}
       initialUserText={initialUserText}
     />
   )

@@ -114,7 +114,7 @@ export default async function RootLayout({
       </head>
       <body>
         <WhopRegistrationTracker />
-        <AuthModalProvider>
+        <AuthModalProvider isAuthenticated={isAuthenticated}>
           <SidebarProvider>
           <header className="auth-header">
             <div className="auth-header-left">

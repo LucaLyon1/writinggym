@@ -18,7 +18,7 @@ export default function NotFound() {
           past the draft. It happens to the best writers.
         </p>
         <div className="nf-actions">
-          <Link href="/" className="nf-btn nf-btn-primary">
+          <Link href="/exercises" className="nf-btn nf-btn-primary">
             Back to the library
           </Link>
           <Link href="/assessment" className="nf-btn nf-btn-outline">

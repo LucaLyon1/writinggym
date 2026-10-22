@@ -18,7 +18,10 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/checkout') ||
     pathname.startsWith('/login') ||
-    pathname.startsWith('/signup')
+    pathname.startsWith('/signup') ||
+    // Drills (the home page) are free for everyone.
+    pathname === '/' ||
+    pathname.startsWith('/drills')
 
   useEffect(() => {
     if (isExcluded) {

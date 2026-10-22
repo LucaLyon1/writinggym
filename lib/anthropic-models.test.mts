@@ -9,6 +9,8 @@ const apiRoutes = [
   'app/api/example/route.ts',
   'app/api/playground/route.ts',
   'app/api/playground-feedback/route.ts',
+  'app/api/drills/route.ts',
+  'app/api/drills/hint/route.ts',
 ]
 
 const retiredModel = 'claude-sonnet-4-20250514'

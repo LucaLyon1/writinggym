@@ -14,9 +14,10 @@ import { SignupForm } from './SignupForm'
 import { LoginForm } from './LoginForm'
 
 export type AuthMode = 'signup' | 'login'
-export type AuthModalSource = 'nav' | 'first_visit' | 'auth_link_error'
+export type AuthModalSource = 'nav' | 'first_visit' | 'auth_link_error' | 'drills'
 
 interface AuthModalContextValue {
+  isAuthenticated: boolean
   open: (mode?: AuthMode, source?: AuthModalSource, notice?: string) => void
   close: () => void
 }
@@ -33,7 +34,13 @@ export function useAuthModal(): AuthModalContextValue {
 
 type DismissMethod = 'close_button' | 'backdrop' | 'escape'
 
-export function AuthModalProvider({ children }: { children: React.ReactNode }) {
+export function AuthModalProvider({
+  children,
+  isAuthenticated,
+}: {
+  children: React.ReactNode
+  isAuthenticated: boolean
+}) {
   const [mode, setMode] = useState<AuthMode | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const pathname = usePathname()
@@ -84,7 +91,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthModalContext.Provider value={{ open, close }}>
+    <AuthModalContext.Provider value={{ isAuthenticated, open, close }}>
       {children}
       {isOpen && (
         <div

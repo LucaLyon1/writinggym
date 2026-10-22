@@ -240,7 +240,7 @@ export function ExploreList({
     return (
       <p className="explore-empty">
         No public rewrites yet. Be the first to{' '}
-        <Link href="/" className="explore-empty-link">share yours</Link>.
+        <Link href="/exercises" className="explore-empty-link">share yours</Link>.
       </p>
     )
   }
