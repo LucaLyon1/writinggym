@@ -6,6 +6,7 @@ import posthog from 'posthog-js'
 import { CheckoutButton } from './CheckoutButton'
 import { WhopCheckoutModal } from './WhopCheckoutModal'
 import { isBillingPlanKey, type BillingPlanKey } from '@/lib/billing-plans'
+import type { CheckoutSource } from '@/lib/paywall-analytics'
 
 type BillingCycle = 'yearly' | 'monthly'
 
@@ -141,9 +142,16 @@ interface PricingPlansProps {
   userEmail?: string | null
   /** If true, render the Free card with a CTA that records the post-trial choice. */
   mustChooseAfterTrial?: boolean
+  /** Analytics source for checkout and billing-cycle events. */
+  source?: CheckoutSource
 }
 
-export function PricingPlans({ currentPlanId, userEmail, mustChooseAfterTrial }: PricingPlansProps) {
+export function PricingPlans({
+  currentPlanId,
+  userEmail,
+  mustChooseAfterTrial,
+  source = 'pricing_page',
+}: PricingPlansProps) {
   const [showCanceled, setShowCanceled] = useState(false)
   const [billing, setBilling] = useState<BillingCycle>('yearly')
   const [savingFreeChoice, setSavingFreeChoice] = useState(false)
@@ -255,7 +263,7 @@ export function PricingPlans({ currentPlanId, userEmail, mustChooseAfterTrial }:
         <button
           type="button"
           className={`plans-toggle-label${billing === 'yearly' ? ' plans-toggle-label-active' : ''}`}
-          onClick={() => { setBilling('yearly'); posthog.capture('billing_cycle_toggled', { cycle: 'yearly' }) }}
+          onClick={() => { setBilling('yearly'); posthog.capture('billing_cycle_toggled', { cycle: 'yearly', source }) }}
           aria-pressed={billing === 'yearly'}
         >
           Yearly
@@ -271,7 +279,7 @@ export function PricingPlans({ currentPlanId, userEmail, mustChooseAfterTrial }:
           onClick={() => {
             const next = billing === 'yearly' ? 'monthly' : 'yearly'
             setBilling(next)
-            posthog.capture('billing_cycle_toggled', { cycle: next })
+            posthog.capture('billing_cycle_toggled', { cycle: next, source })
           }}
         >
           <span className="plans-toggle-thumb" aria-hidden />
@@ -279,7 +287,7 @@ export function PricingPlans({ currentPlanId, userEmail, mustChooseAfterTrial }:
         <button
           type="button"
           className={`plans-toggle-label${billing === 'monthly' ? ' plans-toggle-label-active' : ''}`}
-          onClick={() => { setBilling('monthly'); posthog.capture('billing_cycle_toggled', { cycle: 'monthly' }) }}
+          onClick={() => { setBilling('monthly'); posthog.capture('billing_cycle_toggled', { cycle: 'monthly', source }) }}
           aria-pressed={billing === 'monthly'}
         >
           Monthly
@@ -368,6 +376,7 @@ export function PricingPlans({ currentPlanId, userEmail, mustChooseAfterTrial }:
                   planKey={plan.billingPlanKey}
                   className={`plans-btn ${plan.isDiscounted ? 'plans-btn-primary' : 'plans-btn-outline'}`}
                   onCheckout={openCheckout}
+                  source={source}
                 >
                   {plan.cta}
                 </CheckoutButton>

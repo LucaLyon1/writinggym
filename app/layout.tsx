@@ -41,6 +41,8 @@ export const metadata: Metadata = {
 
 interface AuthState {
   isAuthenticated: boolean
+  userId: string | null
+  userEmail: string | null
   isFreeUser: boolean
   mustChooseAfterTrial: boolean
 }
@@ -50,7 +52,7 @@ async function getAuthState(): Promise<AuthState> {
   const supabase = await createClient()
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { isAuthenticated: false, isFreeUser: false, mustChooseAfterTrial: false }
+    if (!user) return { isAuthenticated: false, userId: null, userEmail: null, isFreeUser: false, mustChooseAfterTrial: false }
 
     const withinTrial = isWithinFreeTrial(user.created_at)
 
@@ -70,7 +72,7 @@ async function getAuthState(): Promise<AuthState> {
 
     if (subError) {
       console.error('[FreeUserGate] subscriptions query error:', subError)
-      return { isAuthenticated: true, isFreeUser: !withinTrial, mustChooseAfterTrial: false }
+      return { isAuthenticated: true, userId: user.id, userEmail: user.email ?? null, isFreeUser: !withinTrial, mustChooseAfterTrial: false }
     }
 
     const isFreeUser = !sub && !withinTrial
@@ -81,12 +83,14 @@ async function getAuthState(): Promise<AuthState> {
 
     return {
       isAuthenticated: true,
+      userId: user.id,
+      userEmail: user.email ?? null,
       isFreeUser,
       mustChooseAfterTrial: !sub && !withinTrial && !hasChosen,
     }
   } catch (e) {
     console.error('[FreeUserGate] unexpected error:', e)
-    return { isAuthenticated: false, isFreeUser: true, mustChooseAfterTrial: false }
+    return { isAuthenticated: false, userId: null, userEmail: null, isFreeUser: true, mustChooseAfterTrial: false }
   }
 }
 
@@ -95,7 +99,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isFreeUser, mustChooseAfterTrial } = await getAuthState()
+  const { isAuthenticated, userId, userEmail, isFreeUser, mustChooseAfterTrial } = await getAuthState()
 
   return (
     <html lang="en" translate="no" className={`light notranslate ${GeistMono.variable} ${cormorantGaramond.variable}`}>
@@ -128,7 +132,7 @@ export default async function RootLayout({
             <AuthNav />
           </header>
           <SidebarBackdrop />
-          <PostHogIdentify />
+          <PostHogIdentify userId={userId} email={userEmail} />
           {!isAuthenticated && <FirstVisitAuthModal />}
           <AuthLinkErrorHandler isAuthenticated={isAuthenticated} />
           <FreeUserGate isFreeUser={isFreeUser} />

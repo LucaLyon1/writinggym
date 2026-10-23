@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CheckoutButton } from '@/components/checkout/CheckoutButton'
+import posthog from 'posthog-js'
 import type { BillingPlanKey } from '@/lib/billing-plans'
+import { paywallFeatureFromPath } from '@/lib/paywall-analytics'
 
 interface Props {
   show: boolean
@@ -39,9 +41,21 @@ const FEATURES = [
 export function PostTrialPaywall({ show }: Props) {
   const [billing, setBilling] = useState<BillingCycle>('yearly')
   const pathname = usePathname()
+  const visible = show && pathname !== '/pricing'
+
+  useEffect(() => {
+    if (!visible) return
+    posthog.capture('paywall_shown', {
+      source: 'post_trial_paywall',
+      pathname,
+      feature: paywallFeatureFromPath(pathname),
+      plans_shown: ['core'],
+      default_billing_cycle: 'yearly',
+    })
+  }, [visible, pathname])
 
   // Hide on /pricing so the user can pick the Free option there.
-  if (!show || pathname === '/pricing') return null
+  if (!visible) return null
 
   const plan = CORE_PLANS[billing]
 
@@ -57,7 +71,10 @@ export function PostTrialPaywall({ show }: Props) {
           <button
             type="button"
             className={`post-trial-billing-btn${billing === 'yearly' ? ' post-trial-billing-btn-active' : ''}`}
-            onClick={() => setBilling('yearly')}
+            onClick={() => {
+              setBilling('yearly')
+              posthog.capture('billing_cycle_toggled', { cycle: 'yearly', source: 'post_trial_paywall' })
+            }}
             aria-pressed={billing === 'yearly'}
           >
             Yearly
@@ -66,7 +83,10 @@ export function PostTrialPaywall({ show }: Props) {
           <button
             type="button"
             className={`post-trial-billing-btn${billing === 'monthly' ? ' post-trial-billing-btn-active' : ''}`}
-            onClick={() => setBilling('monthly')}
+            onClick={() => {
+              setBilling('monthly')
+              posthog.capture('billing_cycle_toggled', { cycle: 'monthly', source: 'post_trial_paywall' })
+            }}
             aria-pressed={billing === 'monthly'}
           >
             Monthly
@@ -95,6 +115,7 @@ export function PostTrialPaywall({ show }: Props) {
           <CheckoutButton
             planKey={plan.billingPlanKey}
             className="post-trial-cta"
+            source="post_trial_paywall"
           >
             Get ProseLab Core
           </CheckoutButton>

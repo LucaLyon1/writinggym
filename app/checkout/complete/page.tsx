@@ -1,20 +1,29 @@
 import Link from 'next/link'
 import { RefreshLayoutAfterPurchase } from '@/app/pricing/success/RefreshLayoutAfterPurchase'
 import { BILLING_PLANS, isBillingPlanKey } from '@/lib/billing-plans'
+import { whopReceiptIdFromParams } from '@/lib/paywall-analytics'
 import styles from '../checkout.module.css'
 
 export default async function CheckoutCompletePage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string; status?: string; receipt?: string }>
+  searchParams: Promise<{
+    plan?: string
+    status?: string
+    receipt?: string
+    receipt_id?: string
+    payment_id?: string
+  }>
 }) {
   const params = await searchParams
   const plan = isBillingPlanKey(params.plan) ? BILLING_PLANS[params.plan] : null
   const failed = params.status === 'error'
+  // Whop Elements returns `receipt_id`/`payment_id`; the old embed used `receipt`.
+  const whopReceiptId = whopReceiptIdFromParams(params)
 
   return (
     <main className={styles.page}>
-      {!failed && <RefreshLayoutAfterPurchase whopReceiptId={params.receipt} />}
+      {!failed && <RefreshLayoutAfterPurchase whopReceiptId={whopReceiptId} />}
       <div className={`${styles.shell} ${styles.complete}`}>
         <p className={styles.eyebrow}>{failed ? 'Checkout interrupted' : 'You’re in'}</p>
         <h1>
