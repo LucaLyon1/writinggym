@@ -9,6 +9,7 @@ import { SettingsEmailForm } from '@/components/profile/SettingsEmailForm'
 import { logout } from '@/app/actions/auth'
 import { SidebarNav } from '@/components/AppSidebar'
 import { ProfileSidebar } from '@/components/profile/ProfileSidebar'
+import { MANAGEABLE_STATUSES, resolveBillingPortalTarget } from '@/lib/billing-portal'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -21,7 +22,7 @@ export default async function SettingsPage() {
     redirect('/signup?next=/profile/settings')
   }
 
-  const [entitlements, profileResult, pastDueResult] = await Promise.all([
+  const [entitlements, profileResult, subscriptionResult] = await Promise.all([
     getUserEntitlements(user.id),
     supabase
       .from('profiles')
@@ -30,9 +31,10 @@ export default async function SettingsPage() {
       .single(),
     supabaseAdmin
       .from('subscriptions')
-      .select('id')
+      .select('status, billing_provider, manage_url, stripe_customer_id')
       .eq('user_id', user.id)
-      .eq('status', 'past_due')
+      .in('status', [...MANAGEABLE_STATUSES])
+      .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
   ])
@@ -42,7 +44,13 @@ export default async function SettingsPage() {
   const hasPaidPlan = entitlements.plan_id !== 'free'
   // A failed renewal drops entitlements to free, but the subscription can still be
   // recovered by updating the card, so point the user at billing, not new plans.
-  const isPastDue = !hasPaidPlan && Boolean(pastDueResult.data)
+  const subscription = subscriptionResult.data
+  const isPastDue = !hasPaidPlan && subscription?.status === 'past_due'
+  // Comp/manual plans have nothing to manage externally, so explain that
+  // instead of showing a button that can only fail.
+  const billingTarget = subscription ? resolveBillingPortalTarget(subscription) : null
+  const noExternalBillingMessage =
+    billingTarget?.kind === 'none' ? billingTarget.message : null
 
   return (
     <div className="analysis-view">
@@ -126,6 +134,8 @@ export default async function SettingsPage() {
                   Update payment method
                 </ManageSubscriptionButton>
               </>
+            ) : hasPaidPlan && noExternalBillingMessage ? (
+              <p className="settings-avatar-hint">{noExternalBillingMessage}</p>
             ) : hasPaidPlan ? (
               <ManageSubscriptionButton className="settings-save-btn">
                 Manage billing
