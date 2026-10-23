@@ -3,6 +3,7 @@
 import posthog from 'posthog-js'
 import { BILLING_PLANS, type BillingPlanKey } from '@/lib/billing-plans'
 import { trackWhopEvent } from '@/lib/whop-pixel'
+import type { CheckoutSource } from '@/lib/paywall-analytics'
 
 interface CheckoutButtonProps {
   planKey: BillingPlanKey
@@ -10,6 +11,8 @@ interface CheckoutButtonProps {
   className?: string
   variant?: 'primary' | 'outline'
   onCheckout?: (planKey: BillingPlanKey) => void
+  /** Where the checkout started, e.g. a paywall or the pricing page. */
+  source?: CheckoutSource
 }
 
 export function CheckoutButton({
@@ -18,15 +21,17 @@ export function CheckoutButton({
   className = 'plans-btn plans-btn-primary',
   variant = 'primary',
   onCheckout,
+  source = 'pricing_page',
 }: CheckoutButtonProps) {
   const handleCheckout = () => {
     const plan = BILLING_PLANS[planKey]
-    trackWhopEvent('add_to_cart')
+    trackWhopEvent('add_to_cart', { value: plan.priceUsd, currency: 'USD' })
     const checkoutProps = {
       provider: 'whop',
       plan_key: plan.key,
       product: plan.appPlanId,
       billing_cycle: plan.billingCycle,
+      source,
     }
     posthog.capture('checkout_initiated', checkoutProps)
     posthog.capture('checkout_started', checkoutProps)

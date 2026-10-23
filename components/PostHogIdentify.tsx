@@ -4,7 +4,22 @@ import { useEffect } from 'react'
 import posthog from 'posthog-js'
 import { createClient } from '@/lib/supabase/client'
 
-export function PostHogIdentify() {
+interface PostHogIdentifyProps {
+  /** Supabase user id from the server render, so identity is set before sibling effects capture. */
+  userId?: string | null
+  email?: string | null
+}
+
+export function PostHogIdentify({ userId, email }: PostHogIdentifyProps = {}) {
+  // Runs before the paywall effects rendered after this component, so
+  // `paywall_shown` lands on the signed-in user, not on whoever this browser
+  // was identified as before an account switch.
+  useEffect(() => {
+    if (userId && posthog.get_distinct_id() !== userId) {
+      posthog.identify(userId, email ? { email } : undefined)
+    }
+  }, [userId, email])
+
   useEffect(() => {
     const supabase = createClient()
 

@@ -19,7 +19,7 @@ export async function AuthNav() {
           Playground
         </Link>
         <Link href="/profile" className="auth-nav-btn">
-          Profile
+          My Profile
         </Link>
       </nav>
     )

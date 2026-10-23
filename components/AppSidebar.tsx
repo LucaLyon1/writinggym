@@ -6,12 +6,20 @@ import { useEffect, useState, memo, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { trialDaysLeft } from '@/lib/trial'
 
-const NAV_LINKS = [
-  { href: '/', label: 'Drills', exact: true },
+type NavLink = {
+  href: string
+  label: string
+  exact: boolean
+  badge?: 'new' | 'soon'
+  disabled?: boolean
+}
+
+const NAV_LINKS: NavLink[] = [
+  { href: '/', label: 'Drills', exact: true, badge: 'new' },
   { href: '/exercises', label: 'Exercises', exact: false },
   { href: '/playground', label: 'Playground', exact: false },
-  { href: '/community', label: 'Community', exact: false },
-  { href: '/profile', label: 'Profile', exact: false },
+  { href: '/community', label: 'Community', exact: false, badge: 'soon', disabled: true },
+  { href: '/profile', label: 'My Profile', exact: false },
 ]
 
 export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactNode } = {}) {
@@ -31,7 +39,20 @@ export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactN
   return (
     <div className="sidebar-nav">
       <nav className="sidebar-nav-links">
-        {NAV_LINKS.map(({ href, label, exact }) => {
+        {NAV_LINKS.map(({ href, label, exact, badge, disabled }) => {
+          const badgeEl = badge && (
+            <span className={`sidebar-nav-badge sidebar-nav-badge--${badge}`}>{badge}</span>
+          )
+
+          if (disabled) {
+            return (
+              <span key={href} className="sidebar-nav-link is-disabled" aria-disabled="true">
+                {label}
+                {badgeEl}
+              </span>
+            )
+          }
+
           const isActive = exact
             ? pathname === href
             : pathname.startsWith(href) || (href === '/exercises' && pathname.startsWith('/extract/'))
@@ -43,6 +64,7 @@ export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactN
               className={`sidebar-nav-link${isActive ? ' is-active' : ''}`}
             >
               {label}
+              {badgeEl}
             </Link>
           )
         })}

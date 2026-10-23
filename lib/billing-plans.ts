@@ -10,6 +10,8 @@ export interface BillingPlanConfig {
   billingCycle: 'monthly' | 'yearly'
   label: string
   whopPlanId: string
+  /** List price charged per billing period on Whop (USD), for pixel values. */
+  priceUsd: number
 }
 
 export const BILLING_PLANS: Record<BillingPlanKey, BillingPlanConfig> = {
@@ -19,6 +21,7 @@ export const BILLING_PLANS: Record<BillingPlanKey, BillingPlanConfig> = {
     billingCycle: 'monthly',
     label: 'ProseLab Core — Monthly',
     whopPlanId: 'plan_8DqqLDO3hxKAh',
+    priceUsd: 9.99,
   },
   'core-yearly': {
     key: 'core-yearly',
@@ -26,6 +29,7 @@ export const BILLING_PLANS: Record<BillingPlanKey, BillingPlanConfig> = {
     billingCycle: 'yearly',
     label: 'ProseLab Core — Yearly',
     whopPlanId: 'plan_1E7RwuJBhlZBZ',
+    priceUsd: 99,
   },
   'premium-monthly': {
     key: 'premium-monthly',
@@ -33,6 +37,7 @@ export const BILLING_PLANS: Record<BillingPlanKey, BillingPlanConfig> = {
     billingCycle: 'monthly',
     label: 'ProseLab Premium — Monthly',
     whopPlanId: 'plan_LHuMredoSf6M1',
+    priceUsd: 9.99,
   },
   'premium-yearly': {
     key: 'premium-yearly',
@@ -40,6 +45,7 @@ export const BILLING_PLANS: Record<BillingPlanKey, BillingPlanConfig> = {
     billingCycle: 'yearly',
     label: 'ProseLab Premium — Yearly',
     whopPlanId: 'plan_6J4pmbiBtZAD0',
+    priceUsd: 99,
   },
 }
 
