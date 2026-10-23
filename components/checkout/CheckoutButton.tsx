@@ -25,7 +25,7 @@ export function CheckoutButton({
 }: CheckoutButtonProps) {
   const handleCheckout = () => {
     const plan = BILLING_PLANS[planKey]
-    trackWhopEvent('add_to_cart')
+    trackWhopEvent('add_to_cart', { value: plan.priceUsd, currency: 'USD' })
     const checkoutProps = {
       provider: 'whop',
       plan_key: plan.key,

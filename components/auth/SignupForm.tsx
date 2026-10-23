@@ -3,7 +3,7 @@
 import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { sendMagicLink, signInWithGoogle } from '@/app/actions/auth'
-import { trackWhopEvent } from '@/lib/whop-pixel'
+import { trackWhopEvent, whopLeadEventId } from '@/lib/whop-pixel'
 
 function GoogleIcon() {
   return (
@@ -40,23 +40,26 @@ export function SignupForm({ next, hideHeader, onSwitchMode }: SignupFormProps) 
   const leadTracked = useRef(false)
   const leadEventId = useRef<string | null>(null)
 
-  const trackLead = useCallback((email?: string) => {
+  const trackLead = useCallback(async (email?: string) => {
     if (leadTracked.current) return
+    leadTracked.current = true
     if (!leadEventId.current) {
-      leadEventId.current =
-        typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
+      // Stable per email so resubmits (or the auth modal plus /signup)
+      // collapse into one lead in Whop.
+      leadEventId.current = email
+        ? await whopLeadEventId(email)
+        : typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? `lead_${crypto.randomUUID()}`
           : `lead_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
     }
     trackWhopEvent('lead', {
       ...(email ? { email } : {}),
       event_id: leadEventId.current,
     })
-    leadTracked.current = true
   }, [])
 
   useEffect(() => {
-    if (state?.success) trackLead(state.email)
+    if (state?.success) void trackLead(state.email)
   }, [state?.success, state?.email, trackLead])
 
   async function handleGoogleSignIn() {
