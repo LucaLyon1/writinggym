@@ -237,10 +237,9 @@ export default function DrillsPage() {
   }
 
   function gateClick(e: MouseEvent<HTMLElement>) {
-    if (isAuthenticated !== false || !(e.target as Element).closest('button')) return
+    if (!(e.target as Element).closest('button') || requireAccount()) return
     e.preventDefault()
     e.stopPropagation()
-    openAuth('signup', 'drills')
   }
   const [tab, setTab] = useState<Tab>('puzzle')
   const [drill, setDrill] = useState<Drill>(FIRST_DRILL)

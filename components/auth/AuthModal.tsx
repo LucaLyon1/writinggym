@@ -37,10 +37,10 @@ type DismissMethod = 'close_button' | 'backdrop' | 'escape'
 
 export function AuthModalProvider({
   children,
-  isAuthenticated: isAuthenticatedPromise,
+  isAuthenticatedPromise,
 }: {
   children: React.ReactNode
-  isAuthenticated: Promise<boolean>
+  isAuthenticatedPromise: Promise<boolean>
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [mode, setMode] = useState<AuthMode | null>(null)
@@ -73,13 +73,7 @@ export function AuthModalProvider({
   const close = useCallback(() => dismiss('close_button'), [dismiss])
 
   useEffect(() => {
-    let current = true
-    isAuthenticatedPromise.then((value) => {
-      if (current) setIsAuthenticated(value)
-    })
-    return () => {
-      current = false
-    }
+    isAuthenticatedPromise.then(setIsAuthenticated)
   }, [isAuthenticatedPromise])
 
   useEffect(() => {

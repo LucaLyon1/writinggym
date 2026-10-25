@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { getAuthState } from '@/lib/auth-state'
+import { getUser } from '@/lib/auth-state'
 import { AuthNavAnonButtons } from './AuthNavAnonButtons'
 
 export function AuthNav() {
@@ -23,9 +23,7 @@ export function AuthNav() {
 }
 
 async function AuthNavAccount() {
-  const { isAuthenticated } = await getAuthState()
-
-  if (isAuthenticated) {
+  if (await getUser()) {
     return (
       <Link href="/profile" className="auth-nav-btn">
         My Profile

@@ -11,7 +11,7 @@ import { AuthLinkErrorHandler } from "@/components/auth/AuthLinkErrorHandler";
 import { PostTrialPaywall } from "@/components/auth/PostTrialPaywall";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
-import { getAuthState } from "@/lib/auth-state";
+import { getAuthState, getUser } from "@/lib/auth-state";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
 import { SidebarProvider } from "@/components/SidebarContext";
 import { MobileSidebarToggle } from "@/components/MobileSidebarToggle";
@@ -77,7 +77,7 @@ export default function RootLayout({
       </head>
       <body>
         <WhopRegistrationTracker />
-        <AuthModalProvider isAuthenticated={getAuthState().then((s) => s.isAuthenticated)}>
+        <AuthModalProvider isAuthenticatedPromise={getUser().then((user) => user !== null)}>
           <SidebarProvider>
           <header className="auth-header">
             <div className="auth-header-left">
