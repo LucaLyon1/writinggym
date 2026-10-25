@@ -1,30 +1,9 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthState } from '@/lib/auth-state'
 import { AuthNavAnonButtons } from './AuthNavAnonButtons'
 
-export async function AuthNav() {
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
-
-  if (data.user) {
-    return (
-      <nav className="auth-nav">
-        <Link href="/" className="auth-nav-link">
-          Drills
-        </Link>
-        <Link href="/exercises" className="auth-nav-link">
-          Exercises
-        </Link>
-        <Link href="/playground" className="auth-nav-link">
-          Playground
-        </Link>
-        <Link href="/profile" className="auth-nav-btn">
-          My Profile
-        </Link>
-      </nav>
-    )
-  }
-
+export function AuthNav() {
   return (
     <nav className="auth-nav">
       <Link href="/" className="auth-nav-link">
@@ -36,7 +15,23 @@ export async function AuthNav() {
       <Link href="/playground" className="auth-nav-link">
         Playground
       </Link>
-      <AuthNavAnonButtons />
+      <Suspense fallback={null}>
+        <AuthNavAccount />
+      </Suspense>
     </nav>
   )
+}
+
+async function AuthNavAccount() {
+  const { isAuthenticated } = await getAuthState()
+
+  if (isAuthenticated) {
+    return (
+      <Link href="/profile" className="auth-nav-btn">
+        My Profile
+      </Link>
+    )
+  }
+
+  return <AuthNavAnonButtons />
 }

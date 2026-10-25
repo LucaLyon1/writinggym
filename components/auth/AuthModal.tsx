@@ -17,7 +17,8 @@ export type AuthMode = 'signup' | 'login'
 export type AuthModalSource = 'nav' | 'first_visit' | 'auth_link_error' | 'drills'
 
 interface AuthModalContextValue {
-  isAuthenticated: boolean
+  /** `null` until the server's auth check streams in. */
+  isAuthenticated: boolean | null
   open: (mode?: AuthMode, source?: AuthModalSource, notice?: string) => void
   close: () => void
 }
@@ -36,11 +37,12 @@ type DismissMethod = 'close_button' | 'backdrop' | 'escape'
 
 export function AuthModalProvider({
   children,
-  isAuthenticated,
+  isAuthenticated: isAuthenticatedPromise,
 }: {
   children: React.ReactNode
-  isAuthenticated: boolean
+  isAuthenticated: Promise<boolean>
 }) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [mode, setMode] = useState<AuthMode | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const pathname = usePathname()
@@ -69,6 +71,16 @@ export function AuthModalProvider({
   )
 
   const close = useCallback(() => dismiss('close_button'), [dismiss])
+
+  useEffect(() => {
+    let current = true
+    isAuthenticatedPromise.then((value) => {
+      if (current) setIsAuthenticated(value)
+    })
+    return () => {
+      current = false
+    }
+  }, [isAuthenticatedPromise])
 
   useEffect(() => {
     if (!isOpen) return
