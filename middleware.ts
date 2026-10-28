@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { DEV_LOGGED_OUT_COOKIE, DEV_LOGIN_PATH } from '@/lib/dev-auth'
 
 /** Public paths anonymous users can reach directly. Everything else redirects to /signup. */
 const PUBLIC_PATHS = [
@@ -40,6 +41,16 @@ export async function middleware(request: NextRequest) {
   }
 
   const { response, user, configured } = await updateSession(request)
+
+  // Dev-only: /dev/login re-enables demo auto-login after a logout.
+  if (process.env.NODE_ENV === 'development' && request.nextUrl.pathname === DEV_LOGIN_PATH) {
+    const next = request.nextUrl.searchParams.get('next')
+    const destination = new URL(next?.startsWith('/') ? next : '/', request.url)
+    const redirect = NextResponse.redirect(destination)
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie))
+    redirect.cookies.delete(DEV_LOGGED_OUT_COOKIE)
+    return redirect
+  }
 
   if (configured && !user && !isPublic(request.nextUrl.pathname)) {
     const signupUrl = new URL('/signup', request.url)
