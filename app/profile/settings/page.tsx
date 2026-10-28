@@ -110,6 +110,12 @@ export default async function SettingsPage() {
                 </div>
               </div>
 
+              <div className="settings-section">
+                <h3 className="settings-section-heading">Email</h3>
+                <div className="settings-field-body">
+                  <SettingsEmailForm currentEmail={user.email ?? ''} />
+                </div>
+              </div>
 
             </div>
           </div>
@@ -117,11 +123,6 @@ export default async function SettingsPage() {
       </main>
 
       <aside className="ea-right-col">
-        <div className="ea-right-card">
-          <h3 className="ea-right-card-heading">Email</h3>
-          <SettingsEmailForm currentEmail={user.email ?? ''} />
-        </div>
-
         <div className="ea-right-card">
           <h3 className="ea-right-card-heading">Billing</h3>
           <div className="settings-billing-actions">
