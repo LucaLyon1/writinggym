@@ -91,7 +91,7 @@ export default async function ProfilePage({
   return (
     <div className="analysis-view">
     <div className="ea-root">
-    <div className="ea-page-layout">
+    <div className="ea-page-layout profile-layout">
       <ProfileSidebar>
         <span className="sidebar-label">Account</span>
         <Link href="/profile" className="cat-btn active">

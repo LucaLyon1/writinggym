@@ -11443,3 +11443,78 @@ body[data-gated] > *:not(.gate-overlay) {
         transition: none !important;
     }
 }
+
+/* ── Profile: phone and tablet (≤1024px) ───────────────────────
+   Desktop keeps the three-column layout untouched. Below 1024px the
+   stats and streak card lead, the month calendar shrinks to small
+   fixed-size cells, and the page leaves room at the bottom so the
+   floating chat and cookie buttons never sit on top of content. */
+@media (max-width: 1024px) {
+    .profile-layout {
+        display: flex;
+        flex-direction: column;
+    }
+    .profile-layout > .ea-right-col {
+        order: -1;
+        padding: 0.75rem 0.75rem 0;
+        gap: 0.75rem;
+    }
+    .profile-layout > .ea-center-col {
+        padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Streak card first, then the stat grid and calendar. */
+    .profile-layout .streak-badges {
+        order: -1;
+    }
+    .profile-layout .heatmap-section {
+        display: flex;
+        flex-direction: column;
+    }
+    .profile-layout .heatmap-stats {
+        order: -1;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.5rem;
+        padding: 0 0 0.85rem;
+        margin-bottom: 0.85rem;
+        border-top: none;
+        border-bottom: 1px solid var(--line);
+    }
+    .profile-layout .heatmap-stat {
+        padding: 0.65rem 0.75rem;
+        background: #F5F0E9;
+        border-radius: 8px;
+    }
+    .profile-layout .heatmap-stat-value {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        line-height: 1.1;
+    }
+    .profile-layout .heatmap-stat-label {
+        font-size: 0.6rem;
+        color: var(--ink-muted);
+    }
+
+    /* Compact calendar: small fixed-size cells instead of full-width boxes. */
+    .profile-layout .heatmap-calendar {
+        margin-bottom: 0;
+    }
+    .profile-layout .heatmap-dow-row,
+    .profile-layout .heatmap-days {
+        grid-template-columns: repeat(7, 2.25rem);
+        justify-content: center;
+        gap: 4px;
+    }
+    .profile-layout .heatmap-day {
+        aspect-ratio: auto;
+        height: 2.25rem;
+        border-radius: 5px;
+        font-size: 0.62rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .profile-layout .heatmap-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
