@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
@@ -163,6 +164,11 @@ export async function signInWithGoogle(
 export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
+  if (process.env.NODE_ENV === 'development') {
+    // Keep dev auto-login from immediately signing the demo user back in.
+    const { DEV_LOGGED_OUT_COOKIE } = await import('@/lib/dev-auth')
+    ;(await cookies()).set(DEV_LOGGED_OUT_COOKIE, '1', { path: '/', httpOnly: true, sameSite: 'lax' })
+  }
   revalidatePath('/', 'layout')
   redirect('/login')
 }

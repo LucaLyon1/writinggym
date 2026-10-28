@@ -33,7 +33,12 @@ export async function updateSession(request: NextRequest) {
   })
 
   // Refresh session – must run immediately after createServerClient
-  const { data: { user } } = await supabase.auth.getUser()
+  let { data: { user } } = await supabase.auth.getUser()
+
+  if (!user && process.env.NODE_ENV === 'development') {
+    const { shouldAutoLogin, signInDemoUser } = await import('@/lib/dev-auth')
+    if (shouldAutoLogin(request)) user = await signInDemoUser(supabase)
+  }
 
   return { response: supabaseResponse, user, configured: true }
 }

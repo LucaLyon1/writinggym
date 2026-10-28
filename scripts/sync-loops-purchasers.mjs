@@ -63,6 +63,11 @@ for (const subscription of subscriptions) {
     )
     if (userError) throw userError
     if (!data.user?.email) throw new Error('Purchaser has no email address')
+    // Comp account seeded by lib/dev-auth.ts for local development.
+    if (data.user.user_metadata?.dev_demo) {
+      console.log(`skipped dev demo | ${label}`)
+      continue
+    }
 
     await loops.updateContact({
       email: data.user.email,
