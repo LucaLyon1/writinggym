@@ -226,18 +226,20 @@ export default function DrillsPage() {
   const { open: sidebarOpen } = useSidebar()
   const { isAuthenticated, open: openAuth } = useAuthModal()
 
-  /** Anonymous visitors can look around, but playing asks them to sign up first. */
+  /**
+   * Anonymous visitors can look around, but playing asks them to sign up first.
+   * Until the auth check arrives (`null`), let the click through: the coach API still sends anonymous players to sign up.
+   */
   function requireAccount(): boolean {
-    if (isAuthenticated) return true
+    if (isAuthenticated !== false) return true
     openAuth('signup', 'drills')
     return false
   }
 
   function gateClick(e: MouseEvent<HTMLElement>) {
-    if (isAuthenticated || !(e.target as Element).closest('button')) return
+    if (!(e.target as Element).closest('button') || requireAccount()) return
     e.preventDefault()
     e.stopPropagation()
-    openAuth('signup', 'drills')
   }
   const [tab, setTab] = useState<Tab>('puzzle')
   const [drill, setDrill] = useState<Drill>(FIRST_DRILL)

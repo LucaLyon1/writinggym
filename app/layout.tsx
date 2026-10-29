@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { GeistMono } from "geist/font/mono";
@@ -10,8 +11,7 @@ import { AuthLinkErrorHandler } from "@/components/auth/AuthLinkErrorHandler";
 import { PostTrialPaywall } from "@/components/auth/PostTrialPaywall";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
-import { createClient } from "@/lib/supabase/server";
-import { isWithinFreeTrial } from "@/lib/trial";
+import { getAuthState, getUser } from "@/lib/auth-state";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
 import { SidebarProvider } from "@/components/SidebarContext";
 import { MobileSidebarToggle } from "@/components/MobileSidebarToggle";
@@ -39,68 +39,27 @@ export const metadata: Metadata = {
   manifest: "/favicon/site.webmanifest",
 };
 
-interface AuthState {
-  isAuthenticated: boolean
-  userId: string | null
-  userEmail: string | null
-  isFreeUser: boolean
-  mustChooseAfterTrial: boolean
+/** Auth-dependent overlays and trackers. Streams in after the shell, so the first paint does not wait on Supabase. */
+async function AuthChrome() {
+  const { isAuthenticated, userId, userEmail, isFreeUser, mustChooseAfterTrial } = await getAuthState()
+
+  return (
+    <>
+      <PostHogIdentify userId={userId} email={userEmail} />
+      {!isAuthenticated && <FirstVisitAuthModal />}
+      <AuthLinkErrorHandler isAuthenticated={isAuthenticated} />
+      <FreeUserGate isFreeUser={isFreeUser} />
+      <PostTrialPaywall show={mustChooseAfterTrial} />
+      {isAuthenticated && <CrispChat />}
+    </>
+  )
 }
 
-async function getAuthState(): Promise<AuthState> {
-  // Let Next's dynamic-rendering signal from cookies reach the framework.
-  const supabase = await createClient()
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { isAuthenticated: false, userId: null, userEmail: null, isFreeUser: false, mustChooseAfterTrial: false }
-
-    const withinTrial = isWithinFreeTrial(user.created_at)
-
-    const [{ data: sub, error: subError }, { data: profile, error: profileError }] = await Promise.all([
-      supabase
-        .from('subscriptions')
-        .select('status')
-        .eq('user_id', user.id)
-        .in('status', ['active', 'trialing'])
-        .maybeSingle(),
-      supabase
-        .from('profiles')
-        .select('post_trial_choice_at')
-        .eq('id', user.id)
-        .maybeSingle(),
-    ])
-
-    if (subError) {
-      console.error('[FreeUserGate] subscriptions query error:', subError)
-      return { isAuthenticated: true, userId: user.id, userEmail: user.email ?? null, isFreeUser: !withinTrial, mustChooseAfterTrial: false }
-    }
-
-    const isFreeUser = !sub && !withinTrial
-    const hasChosen = !!profile?.post_trial_choice_at
-    if (profileError) {
-      console.error('[PostTrialPaywall] profile query error:', profileError)
-    }
-
-    return {
-      isAuthenticated: true,
-      userId: user.id,
-      userEmail: user.email ?? null,
-      isFreeUser,
-      mustChooseAfterTrial: !sub && !withinTrial && !hasChosen,
-    }
-  } catch (e) {
-    console.error('[FreeUserGate] unexpected error:', e)
-    return { isAuthenticated: false, userId: null, userEmail: null, isFreeUser: true, mustChooseAfterTrial: false }
-  }
-}
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, userId, userEmail, isFreeUser, mustChooseAfterTrial } = await getAuthState()
-
   return (
     <html lang="en" translate="no" className={`light notranslate ${GeistMono.variable} ${cormorantGaramond.variable}`}>
       <head>
@@ -118,7 +77,7 @@ export default async function RootLayout({
       </head>
       <body>
         <WhopRegistrationTracker />
-        <AuthModalProvider isAuthenticated={isAuthenticated}>
+        <AuthModalProvider isAuthenticatedPromise={getUser().then((user) => user !== null)}>
           <SidebarProvider>
           <header className="auth-header">
             <div className="auth-header-left">
@@ -132,13 +91,10 @@ export default async function RootLayout({
             <AuthNav />
           </header>
           <SidebarBackdrop />
-          <PostHogIdentify userId={userId} email={userEmail} />
-          {!isAuthenticated && <FirstVisitAuthModal />}
-          <AuthLinkErrorHandler isAuthenticated={isAuthenticated} />
-          <FreeUserGate isFreeUser={isFreeUser} />
-          <PostTrialPaywall show={mustChooseAfterTrial} />
+          <Suspense fallback={null}>
+            <AuthChrome />
+          </Suspense>
           {children}
-          {isAuthenticated && <CrispChat />}
           </SidebarProvider>
         </AuthModalProvider>
         <Script
