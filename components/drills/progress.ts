@@ -4,6 +4,7 @@
  */
 import type { SolvedMap } from '@/lib/drills'
 import { NO_DAILY, type DailyRecord } from '@/lib/drills-daily'
+import { parseDrillDays, recordDrillDay, type DrillDays } from '@/lib/drill-activity'
 
 export interface DrillProgress {
   solved: SolvedMap
@@ -12,10 +13,12 @@ export interface DrillProgress {
   muted: boolean
   /** The daily puzzle: last day finished and the run of days. */
   daily: DailyRecord
+  /** Drills finished per local day, for the profile heatmap. Recorded since Oct 2026; older saves have none. */
+  days: DrillDays
 }
 
 const KEY = 'proselab.drills.progress.v2'
-export const EMPTY_PROGRESS: DrillProgress = { solved: {}, streak: 0, bestStreak: 0, muted: false, daily: NO_DAILY }
+export const EMPTY_PROGRESS: DrillProgress = { solved: {}, streak: 0, bestStreak: 0, muted: false, daily: NO_DAILY, days: {} }
 const EMPTY = EMPTY_PROGRESS
 
 export function loadProgress(): DrillProgress {
@@ -47,6 +50,7 @@ export function parseProgress(raw: string | null): DrillProgress {
       bestStreak: Number(data.bestStreak) || 0,
       muted: data.muted === true,
       daily: parseDaily(data.daily),
+      days: parseDrillDays(data.days),
     }
   } catch {
     return EMPTY
@@ -71,13 +75,18 @@ export function saveProgress(progress: DrillProgress) {
   }
 }
 
-/** Records a finished puzzle. Only clean solves earn a star and grow the streak. */
-export function recordPuzzle(p: DrillProgress, techniqueId: string, subjectId: string, clean: boolean): DrillProgress {
-  if (!clean) return { ...p, streak: 0 }
+/**
+ * Records a puzzle finished on `day` (the writer's local "YYYY-MM-DD").
+ * Every finished puzzle counts for the day; only clean solves earn a star and grow the streak.
+ */
+export function recordPuzzle(p: DrillProgress, techniqueId: string, subjectId: string, clean: boolean, day: string): DrillProgress {
+  const days = recordDrillDay(p.days, day)
+  if (!clean) return { ...p, streak: 0, days }
   const subjects = p.solved[techniqueId] ?? []
   const streak = p.streak + 1
   return {
     ...p,
+    days,
     solved: { ...p.solved, [techniqueId]: subjects.includes(subjectId) ? subjects : [...subjects, subjectId] },
     streak,
     bestStreak: Math.max(p.bestStreak, streak),
