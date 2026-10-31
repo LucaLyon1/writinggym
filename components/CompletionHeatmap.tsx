@@ -44,9 +44,11 @@ type Props = {
   longestStreak?: number
   totalWordsWritten?: number
   totalPassages?: number
+  /** Drills finished per local "YYYY-MM-DD" day, added to the writing on that day. */
+  drillDays?: Record<string, number>
 }
 
-export function CompletionHeatmap({ children, completions, currentStreak, longestStreak, totalWordsWritten, totalPassages }: Props) {
+export function CompletionHeatmap({ children, completions, currentStreak, longestStreak, totalWordsWritten, totalPassages, drillDays }: Props) {
   const today = new Date()
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -61,6 +63,8 @@ export function CompletionHeatmap({ children, completions, currentStreak, longes
     }
     return map
   }, [completions])
+
+  const countFor = (date: string) => (countByDate.get(date) ?? 0) + (drillDays?.[date] ?? 0)
 
   const grid = useMemo(
     () => getMonthGrid(viewYear, viewMonth),
@@ -77,11 +81,11 @@ export function CompletionHeatmap({ children, completions, currentStreak, longes
 
   const monthTotal = grid.reduce((sum, cell) => {
     if (!cell.date) return sum
-    return sum + (countByDate.get(cell.date) ?? 0)
+    return sum + countFor(cell.date)
   }, 0)
 
   const activeDays = grid.filter(
-    (cell) => cell.date && (countByDate.get(cell.date) ?? 0) > 0
+    (cell) => cell.date && countFor(cell.date) > 0
   ).length
 
   const isEarliestMonth = viewYear === 2026 && viewMonth === 2
@@ -147,15 +151,20 @@ export function CompletionHeatmap({ children, completions, currentStreak, longes
             if (!cell.date) {
               return <span key={i} className="heatmap-day heatmap-day-empty" />
             }
-            const count = countByDate.get(cell.date) ?? 0
-            const level = getLevel(count)
+            const prompts = countByDate.get(cell.date) ?? 0
+            const drills = drillDays?.[cell.date] ?? 0
+            const level = getLevel(prompts + drills)
             const isFuture = cell.date > todayStr
             const isToday = cell.date === todayStr
             return (
               <span
                 key={i}
                 className={`heatmap-day heatmap-day-${level}${isToday ? ' heatmap-day-today' : ''}${isFuture ? ' heatmap-day-future' : ''}`}
-                title={isFuture ? undefined : `${count} prompt${count !== 1 ? 's' : ''} answered`}
+                title={
+                  isFuture
+                    ? undefined
+                    : `${prompts} prompt${prompts !== 1 ? 's' : ''} answered${drills ? ` · ${drills} drill${drills !== 1 ? 's' : ''}` : ''}`
+                }
               >
                 {cell.day}
               </span>

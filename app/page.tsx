@@ -341,7 +341,7 @@ export default function DrillsPage() {
     setRecordedKey(puzzleKey)
     // Looking at a solution costs the star, like keeping a flawed move.
     const clean = moves.every((m) => m.status === 'passed') && !Object.values(hintLevels).some((l) => l >= 2)
-    const solved = recordPuzzle(progress, drill.techniqueId, drill.subjectId, clean)
+    const solved = recordPuzzle(progress, drill.techniqueId, drill.subjectId, clean, dayKey())
     // Finishing the daily puzzle counts for the day, clean or not: the habit is the point.
     const updated = isDaily && today ? { ...solved, daily: recordDaily(solved.daily, today) } : solved
     saveProgress(updated)

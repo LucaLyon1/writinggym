@@ -2,8 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { Tables } from '@/types/database.types'
-import { CompletionHeatmap } from '@/components/CompletionHeatmap'
-import { StreakBadges } from '@/components/StreakBadges'
+import { ProfileActivity } from '@/components/profile/ProfileActivity'
 import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
 import { logout } from '@/app/actions/auth'
@@ -167,14 +166,13 @@ export default async function ProfilePage({
         )}
       </main>
       <aside className="ea-right-col">
-        <CompletionHeatmap
+        <ProfileActivity
           completions={statsCompletions ?? []}
           currentStreak={currentStreak}
           longestStreak={longestStreak}
           totalWordsWritten={totalWordsWritten}
           totalPassages={totalCount}
         />
-        <StreakBadges currentStreak={currentStreak} />
       </aside>
     </div>
     </div>
