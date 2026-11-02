@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import Link from "next/link";
 import {
@@ -49,13 +49,16 @@ export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
   );
   const [showPassword, setShowPassword] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  const [googlePending, startGoogleTransition] = useTransition();
 
-  async function handleGoogleSignIn() {
+  function handleGoogleSignIn() {
     setGoogleError(null);
-    const result = await signInWithGoogle(next);
-    if (result?.error) {
-      setGoogleError(result.error);
-    }
+    startGoogleTransition(async () => {
+      const result = await signInWithGoogle(next);
+      if (result?.error) {
+        setGoogleError(result.error);
+      }
+    });
   }
 
   return (
@@ -74,7 +77,7 @@ export function LoginForm({ next, hideHeader, onSwitchMode }: LoginFormProps) {
           type="button"
           onClick={handleGoogleSignIn}
           className="auth-google-btn"
-          disabled={magicPending}
+          disabled={magicPending || googlePending}
         >
           <GoogleIcon />
           Sign in with Google

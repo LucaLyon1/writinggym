@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { sendMagicLink, signInWithGoogle } from '@/app/actions/auth'
 import { trackWhopEvent, whopLeadEventId } from '@/lib/whop-pixel'
@@ -37,6 +37,7 @@ interface SignupFormProps {
 export function SignupForm({ next, hideHeader, onSwitchMode }: SignupFormProps) {
   const [state, formAction, isPending] = useActionState(sendMagicLink, undefined)
   const [googleError, setGoogleError] = useState<string | null>(null)
+  const [googlePending, startGoogleTransition] = useTransition()
   const leadTracked = useRef(false)
   const leadEventId = useRef<string | null>(null)
 
@@ -62,12 +63,14 @@ export function SignupForm({ next, hideHeader, onSwitchMode }: SignupFormProps) 
     if (state?.success) void trackLead(state.email)
   }, [state?.success, state?.email, trackLead])
 
-  async function handleGoogleSignIn() {
+  function handleGoogleSignIn() {
     setGoogleError(null)
-    const result = await signInWithGoogle(next, { fromSignup: true })
-    if (result?.error) {
-      setGoogleError(result.error)
-    }
+    startGoogleTransition(async () => {
+      const result = await signInWithGoogle(next, { fromSignup: true })
+      if (result?.error) {
+        setGoogleError(result.error)
+      }
+    })
   }
 
   return (
@@ -86,7 +89,7 @@ export function SignupForm({ next, hideHeader, onSwitchMode }: SignupFormProps) 
           type="button"
           onClick={handleGoogleSignIn}
           className="auth-google-btn"
-          disabled={isPending}
+          disabled={isPending || googlePending}
         >
           <GoogleIcon />
           Sign up with Google
