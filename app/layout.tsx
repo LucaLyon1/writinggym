@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
+import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
@@ -17,16 +18,6 @@ import { SidebarProvider } from "@/components/SidebarContext";
 import { MobileSidebarToggle } from "@/components/MobileSidebarToggle";
 import { SidebarBackdrop } from "@/components/SidebarBackdrop";
 import { WhopRegistrationTracker } from "@/components/WhopRegistrationTracker";
-
-// Import Cormorant Garamond font from Google Fonts (local or CDN)
-import { Cormorant_Garamond } from "next/font/google";
-
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-cormorant-garamond",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "ProseLab",
@@ -102,7 +93,7 @@ export default async function RootLayout({
   const { isAuthenticated, userId, userEmail, isFreeUser, mustChooseAfterTrial } = await getAuthState()
 
   return (
-    <html lang="en" translate="no" className={`light notranslate ${GeistMono.variable} ${cormorantGaramond.variable}`}>
+    <html lang="en" translate="no" className={`light notranslate ${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
         <meta name="google" content="notranslate" />
         <Script

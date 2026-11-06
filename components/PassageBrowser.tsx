@@ -40,14 +40,12 @@ export function PassageBrowser({ onSelect }: Props) {
             <div className="browser-body">
                 {/* Sidebar */}
                 <aside className="browser-sidebar">
-                    <p className="sidebar-label">Categories</p>
 
                     <button
                         className={`cat-btn ${activeCategory === "all" ? "active" : ""}`}
                         onClick={() => setActiveCategory("all")}
                     >
                         <span className="cat-btn-label">All passages</span>
-                        <span className="cat-btn-count">{passages.length}</span>
                     </button>
 
                     {categories.map((cat) => (
@@ -57,7 +55,6 @@ export function PassageBrowser({ onSelect }: Props) {
                             onClick={() => setActiveCategory(cat.id)}
                         >
                             <span className="cat-btn-label">{cat.label}</span>
-                            <span className="cat-btn-count">{countByCategory(cat.id)}</span>
                         </button>
                     ))}
                 </aside>

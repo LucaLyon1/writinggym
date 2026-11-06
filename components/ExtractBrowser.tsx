@@ -80,7 +80,6 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
     <div className="browser-root browser-embedded">
       <div className={`browser-body ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <nav className="browser-sidebar">
-          <span className="sidebar-label">Categories</span>
           <button
             className={`cat-btn ${!activeCategoryId ? 'active' : ''}`}
             onClick={() => {
@@ -89,7 +88,6 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
             }}
           >
             <span className="cat-btn-label">All Passages</span>
-            <span className="cat-btn-count">{passages.length}</span>
           </button>
           {categories.map((cat) => (
             <button
@@ -101,7 +99,6 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
               }}
             >
               <span className="cat-btn-label">{cat.label}</span>
-              <span className="cat-btn-count">{passageCounts[cat.id] || 0}</span>
             </button>
           ))}
 
@@ -180,14 +177,12 @@ export function ExtractBrowser({ onSelect, hero }: ExtractBrowserProps) {
                     {truncate(passage.text, 120)}
                   </p>
                   <div className="tile-tags">
-                    {passage.tags.map((tagId) => {
-                      const t = tags.find((x) => x.id === tagId)
-                      return t ? (
-                        <span key={tagId} className="tile-tag">
-                          {t.label}
-                        </span>
-                      ) : null
-                    })}
+                    <span className="tile-tag">
+                      {passage.tags
+                        .map((tagId) => tags.find((x) => x.id === tagId)?.label)
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
                   </div>
                   <div className="tile-footer">
                     <span className={`tile-difficulty tile-difficulty-${passage.difficulty}`}>

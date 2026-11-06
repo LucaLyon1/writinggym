@@ -92,6 +92,15 @@ function Stars({ count }: { count: number }) {
   )
 }
 
+function SoundIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M11 5 6 9H2v6h4l5 4V5z" />
+      {muted ? <path d="m16 9 5 6m0-6-5 6" /> : <path d="M15.5 8.5a5 5 0 0 1 0 7" />}
+    </svg>
+  )
+}
+
 function Badge({ move }: { move: Move }) {
   if (move.revealed) {
     return (
@@ -611,7 +620,7 @@ export default function DrillsPage() {
   const teachingNew = teaching !== hint?.why ? teaching : undefined
   const hintButton = !stepOpen ? null : hintLevel === 0 ? (
     <button type="button" className="dr-btn dr-btn-ghost dr-hint-btn" onClick={() => void showHint()} disabled={hintLoading} title="A hint caps this move at Good">
-      💡 Hint
+      Hint
     </button>
   ) : hintLevel === 1 ? (
     <button type="button" className="dr-btn dr-btn-ghost dr-hint-btn" onClick={showSolution} title="Seeing a solution costs this puzzle its star">
@@ -755,10 +764,9 @@ export default function DrillsPage() {
   const stepCard = isLesson && viewIndex < steps.length ? (
     <section className="dr-stepcard" key={`${puzzleKey}-${stepIndex}`} ref={stepRef}>
       <div className="dr-step-head">
-        <span className="dr-move-count">{KIND_LABELS[kindOf(step)]} · {stepIndex + 1} of {steps.length}</span>
+        <h2 className="dr-step-goal">{step.goal}</h2>
         {hintButton}
       </div>
-      <h2 className="dr-step-goal">{step.goal}</h2>
       {hintBox}
       {step.kind === 'choose' && (
         <ChooseWidget step={step} state={quizState} attempt={puzzleKey} onAnswer={(i, text) => playQuiz((first) => judgeChoose(step, i, first), text)} />
@@ -804,14 +812,10 @@ export default function DrillsPage() {
     <div className="dr-center">
       <header className="dr-head">
         <div className="dr-head-top">
-          <span className="dr-kicker">
-            {isDaily ? 'Daily puzzle · ' : ''}
-            {FAMILY_LABELS[technique.family]} · {LEVEL_NAMES[technique.level]}
-          </span>
           <div className="dr-head-tools">
-            <span className="dr-streak" title="Clean puzzles in a row">🔥 {progress.streak}</span>
+            <span className="dr-streak" title="Clean puzzles in a row">Streak {progress.streak}</span>
             <button type="button" className="dr-icon-btn" onClick={toggleMute} aria-label={progress.muted ? 'Unmute sounds' : 'Mute sounds'}>
-              {progress.muted ? '🔇' : '🔊'}
+              <SoundIcon muted={progress.muted} />
             </button>
             <button
               type="button"
@@ -962,15 +966,13 @@ export default function DrillsPage() {
           <main className="ea-center-col dr-scroll" onClickCapture={gateClick}>{tab === 'puzzle' ? puzzle : tab === 'path' ? path : library}</main>
           <aside className="ea-right-col" aria-label="Moves and coach notes">
             <section className="dr-panel">
-              <h3 className="dr-panel-title">{isLesson ? 'Steps' : 'Moves'}</h3>
-              <ol className="dr-movelist">
+              <ol className="dr-movelist" aria-label={isLesson ? 'Steps' : 'Moves'}>
                 {steps.map((s, i) => {
                   const pendingHere = i === moveIndex && last && !isCommitted(last) ? last : undefined
                   const played = committed[i] ?? pendingHere
                   const current = isLesson ? i === stepIndex && viewIndex < steps.length : i === moveIndex && !complete
                   return (
                     <li key={i} className={`dr-movelist-item${current ? ' is-current' : ''}`}>
-                      <span className="dr-movelist-num">{i + 1}</span>
                       <span className="dr-movelist-goal">{s.goal}</span>
                       {played ? <Badge move={played} /> : <span className="dr-badge is-empty" />}
                     </li>

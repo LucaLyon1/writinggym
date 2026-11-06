@@ -21,9 +21,6 @@ export function StreakBadges({ currentStreak }: Props) {
     <div className="streak-badges">
       {currentBadge && (
         <div className="streak-badges-current">
-          <span className="streak-badges-emoji" aria-hidden>
-            {currentBadge.emoji}
-          </span>
           <div className="streak-badges-info">
             <span className="streak-badges-label">{currentBadge.label}</span>
             <span className="streak-badges-sublabel">{currentStreak} day streak</span>
@@ -32,9 +29,6 @@ export function StreakBadges({ currentStreak }: Props) {
       )}
       {nextBadge && daysUntilNext != null && (
         <div className="streak-badges-next-row">
-          <span className="streak-badges-next-emoji" aria-hidden>
-            {nextBadge.emoji}
-          </span>
           <span className="streak-badges-next">
             {nextBadge.label} in {daysUntilNext} day{daysUntilNext !== 1 ? 's' : ''}
           </span>

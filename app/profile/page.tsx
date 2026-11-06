@@ -93,7 +93,6 @@ export default async function ProfilePage({
     <div className="ea-root">
     <div className="ea-page-layout">
       <ProfileSidebar>
-        <span className="sidebar-label">Account</span>
         <Link href="/profile" className="cat-btn active">
           <span className="cat-btn-label">Profile</span>
         </Link>

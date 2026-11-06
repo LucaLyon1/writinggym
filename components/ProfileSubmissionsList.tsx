@@ -115,7 +115,6 @@ function SubmissionCard({
       </h2>
       {c.user_text && (
         <div className="profile-card-user-text">
-          <span className="profile-card-label">Your rewrite</span>
           <p className="profile-card-text">{c.user_text}</p>
         </div>
       )}

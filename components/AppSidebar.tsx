@@ -75,9 +75,6 @@ export const SidebarNav = memo(function SidebarNav({ footer }: { footer?: ReactN
           Upgrade <span className="sidebar-upgrade-days">({daysLeft} day{daysLeft === 1 ? '' : 's'} left)</span>
         </Link>
       )}
-      <div className="sidebar-nav-footer">
-        <span className="sidebar-nav-copy">&copy; 2026 ProseLab</span>
-      </div>
     </div>
   )
 })
