@@ -74,7 +74,7 @@ function AnnotatedText({
                 opacity: dimmed ? 0.35 : 1,
                 cursor: 'help',
                 transition: 'all 0.2s ease',
-                borderRadius: '2px',
+                borderRadius: 0,
                 padding: '1px 2px',
                 outline: isHovered ? `1px solid ${config.border}` : 'none',
               }}
@@ -270,7 +270,7 @@ function TutorialCard({ activeTab }: { activeTab: Tab }) {
     activeTab === 'analyse'
       ? [
           'Hover any highlighted phrase to read why it works.',
-          'Filter the dimensions with the pills above the extract.',
+          'Filter the dimensions with the buttons above the extract.',
           'When you’re ready, take the exercise and write your own version.',
         ]
       : activeTab === 'write'
@@ -286,15 +286,11 @@ function TutorialCard({ activeTab }: { activeTab: Tab }) {
         ]
   return (
     <div className="ea-right-card ea-tutorial-card">
-      <h3 className="ea-right-card-heading">How this page works</h3>
-      <ol className="ea-tutorial-list">
+      <ul className="ea-tutorial-list" aria-label="How this page works">
         {steps.map((s, i) => (
-          <li key={i} className="ea-tutorial-item">
-            <span className="ea-tutorial-num">{i + 1}</span>
-            <span className="ea-tutorial-text">{s}</span>
-          </li>
+          <li key={i} className="ea-tutorial-item">{s}</li>
         ))}
-      </ol>
+      </ul>
     </div>
   )
 }
@@ -367,16 +363,11 @@ function ExtractInfoCard({
         </div>
       )}
       {(categoryLabel || difficulty) && (
-        <div className="ea-extract-info-tags">
-          {categoryLabel && (
-            <span className="gym-category-badge">{categoryLabel}</span>
-          )}
-          {difficulty && (
-            <span className={`tile-difficulty tile-difficulty-${difficulty}`}>
-              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-            </span>
-          )}
-        </div>
+        <p className="ea-extract-info-meta">
+          {[categoryLabel, difficulty && difficulty.charAt(0).toUpperCase() + difficulty.slice(1)]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
       )}
     </div>
   )
@@ -997,7 +988,6 @@ export function ExtractAnalysis({
       </div>
       <footer className="ea-stage-foot ea-stage-foot-analyse">
         <div className="ea-stage-foot-summary">
-          <span className="ea-stage-foot-summary-label">What&rsquo;s happening here</span>
           <div className="ea-stage-foot-summary-list">
             {analysis.summary.map((sentence, i) => (
               <p key={i} className="ea-stage-foot-summary-item">{sentence}</p>
