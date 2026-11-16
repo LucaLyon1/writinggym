@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isNewlyCreatedAuthUser } from '@/lib/auth-new-user'
 import { addContactToAudience } from '@/lib/resend'
 import { generateUsernameFromEmail } from '@/lib/username'
 import { getPostHogClient } from '@/lib/posthog-server'
@@ -30,11 +31,17 @@ export async function GET(request: Request) {
     .eq('id', user.id)
     .maybeSingle()
 
-  const isNewUser = !profile?.username
+  // Older accounts often have no username; only a freshly created auth user
+  // is a genuine signup.
+  const isNewUser = isNewlyCreatedAuthUser(user.created_at)
+  let username = profile?.username ?? null
+
+  if (!username && email) {
+    username = generateUsernameFromEmail(email)
+    await supabase.from('profiles').update({ username }).eq('id', user.id)
+  }
 
   if (isNewUser && email) {
-    const username = generateUsernameFromEmail(email)
-    await supabase.from('profiles').update({ username }).eq('id', user.id)
     addContactToAudience(email)
 
     const posthog = getPostHogClient()
