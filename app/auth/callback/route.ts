@@ -3,7 +3,7 @@ import { isNewlyCreatedAuthUser } from '@/lib/auth-new-user'
 import { addContactToAudience } from '@/lib/resend'
 import { generateUsernameFromEmail } from '@/lib/username'
 import { getPostHogClient } from '@/lib/posthog-server'
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -25,49 +25,54 @@ export async function GET(request: Request) {
   const user = data.user
   const email = user.email ?? ''
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username')
-    .eq('id', user.id)
-    .maybeSingle()
-
   // Older accounts often have no username; only a freshly created auth user
   // is a genuine signup.
   const isNewUser = isNewlyCreatedAuthUser(user.created_at)
-  let username = profile?.username ?? null
 
-  if (!username && email) {
-    username = generateUsernameFromEmail(email)
-    await supabase.from('profiles').update({ username }).eq('id', user.id)
-  }
+  // The browser counts this redirect in the landing page's first paint, so the
+  // profile and analytics work runs after the response.
+  after(async () => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle()
 
-  if (isNewUser && email) {
-    addContactToAudience(email)
+    let username = profile?.username ?? null
 
-    const posthog = getPostHogClient()
-    posthog.identify({ distinctId: user.id, properties: { email, username } })
-    const signupProperties = { email, username, method: 'magic_link_or_oauth' as const }
-    posthog.capture({
-      distinctId: user.id,
-      event: 'user_signed_up',
-      properties: signupProperties,
-    })
-    posthog.capture({
-      distinctId: user.id,
-      event: 'signed_up',
-      properties: signupProperties,
-    })
-    await posthog.shutdown()
-  } else if (email) {
-    const posthog = getPostHogClient()
-    posthog.identify({ distinctId: user.id, properties: { email } })
-    posthog.capture({
-      distinctId: user.id,
-      event: 'user_logged_in',
-      properties: { email, method: 'magic_link_or_oauth' },
-    })
-    await posthog.shutdown()
-  }
+    if (!username && email) {
+      username = generateUsernameFromEmail(email)
+      await supabase.from('profiles').update({ username }).eq('id', user.id)
+    }
+
+    if (isNewUser && email) {
+      await addContactToAudience(email)
+
+      const posthog = getPostHogClient()
+      posthog.identify({ distinctId: user.id, properties: { email, username } })
+      const signupProperties = { email, username, method: 'magic_link_or_oauth' as const }
+      posthog.capture({
+        distinctId: user.id,
+        event: 'user_signed_up',
+        properties: signupProperties,
+      })
+      posthog.capture({
+        distinctId: user.id,
+        event: 'signed_up',
+        properties: signupProperties,
+      })
+      await posthog.shutdown()
+    } else if (email) {
+      const posthog = getPostHogClient()
+      posthog.identify({ distinctId: user.id, properties: { email } })
+      posthog.capture({
+        distinctId: user.id,
+        event: 'user_logged_in',
+        properties: { email, method: 'magic_link_or_oauth' },
+      })
+      await posthog.shutdown()
+    }
+  })
 
   const redirectUrl = new URL(next, requestUrl.origin)
   if (isNewUser) {
