@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { UnwrapWebhookEvent } from '@whop/sdk/resources/webhooks'
 import { getBillingPlanByWhopId } from '@/lib/billing-plans'
-import { getPostHogClient } from '@/lib/posthog-server'
+import {
+  buildMembershipEvents,
+  buildPurchaseEvents,
+  deterministicUuid,
+  resolvePurchaseIdentity,
+} from '@/lib/billing-analytics'
+import { captureServerEvents } from '@/lib/posthog-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import {
   getWhopBillingPortalUrl,
@@ -77,6 +83,22 @@ async function syncMembership(event: MembershipEvent) {
     }
   }
 
+  // Capture before the database/contact sync so a later failure (for example
+  // the Loops contact sync) cannot drop the analytics event. Deterministic
+  // uuids mean Whop retries do not double count.
+  await captureServerEvents(buildMembershipEvents({
+    userId,
+    webhookEventId: event.id,
+    type: event.type,
+    appPlanId: planId,
+    whopPlanId: membership.plan.id,
+    membershipId: membership.id,
+    status: membership.status,
+    cancelAtPeriodEnd: membership.cancel_at_period_end,
+    interval: getBillingPlanByWhopId(membership.plan.id)?.billingCycle ?? null,
+    occurredAt: membership.updated_at ?? event.timestamp,
+  }))
+
   await syncWhopSubscription({
     userId,
     planId,
@@ -91,35 +113,6 @@ async function syncMembership(event: MembershipEvent) {
     canceledAt: membership.canceled_at,
     providerUpdatedAt: membership.updated_at,
   })
-
-  const posthog = getPostHogClient()
-  const properties = {
-    provider: 'whop',
-    plan_id: planId,
-    whop_plan_id: membership.plan.id,
-    whop_membership_id: membership.id,
-    status: membership.status,
-    cancel_at_period_end: membership.cancel_at_period_end,
-  }
-  if (event.type === 'membership.activated') {
-    posthog.capture({
-      distinctId: userId,
-      event: 'subscription_activated',
-      properties,
-    })
-    posthog.capture({
-      distinctId: userId,
-      event: 'subscription_started',
-      properties,
-    })
-  } else {
-    posthog.capture({
-      distinctId: userId,
-      event: 'subscription_updated',
-      properties,
-    })
-  }
-  await posthog.shutdown()
 }
 
 async function handleFailedPayment(
@@ -139,25 +132,74 @@ async function handleFailedPayment(
   if (error) throw error
   if (!subscription) return
 
-  const posthog = getPostHogClient()
-  posthog.capture({
+  await captureServerEvents([{
     distinctId: subscription.user_id,
     event: 'subscription_payment_failed',
+    uuid: deterministicUuid(`subscription_payment_failed:${event.id}`),
     properties: {
       provider: 'whop',
       plan_id: subscription.plan_id,
       whop_membership_id: membershipId,
       whop_payment_id: event.data.id,
       failure_message: event.data.failure_message,
+      $set: { subscription_status: 'past_due' },
     },
-  })
-  await posthog.shutdown()
+  }])
+}
+
+/**
+ * Send `purchase_completed` (and `subscription_renewed` for renewals) to
+ * PostHog for a successful Whop payment. Runs before the entitlement sync and
+ * never throws, so analytics cannot fail or be lost behind the webhook.
+ */
+async function trackSuccessfulPayment(
+  payment: Extract<UnwrapWebhookEvent, { type: 'payment.succeeded' }>['data']
+) {
+  try {
+    const configured = payment.plan?.id ? getBillingPlanByWhopId(payment.plan.id) : null
+    const identity = await resolvePurchaseIdentity(
+      {
+        metadataUserId: metadataString(payment.metadata, 'supabase_user_id'),
+        metadataPlanId: metadataString(payment.metadata, 'app_plan_id'),
+        configuredPlanId: configured?.appPlanId ?? null,
+        membershipId: payment.membership?.id ?? null,
+      },
+      async (membershipId) => {
+        const { data, error } = await supabaseAdmin
+          .from('subscriptions')
+          .select('user_id, plan_id')
+          .eq('billing_provider', 'whop')
+          .eq('external_subscription_id', membershipId)
+          .maybeSingle()
+        if (error) throw error
+        return data
+      }
+    )
+    if (!identity.userId) {
+      console.warn('[whop webhook] Purchase not sent to PostHog: no app user for payment', {
+        paymentId: payment.id,
+        membershipId: payment.membership?.id,
+      })
+      return
+    }
+    await captureServerEvents(buildPurchaseEvents({
+      userId: identity.userId,
+      payment,
+      appPlanId: identity.appPlanId,
+      interval: configured?.billingCycle ?? null,
+      source: 'whop_webhook',
+    }))
+  } catch (error) {
+    console.error('[whop webhook] Failed to track purchase in PostHog:', error)
+  }
 }
 
 async function handleSuccessfulPayment(
   event: Extract<UnwrapWebhookEvent, { type: 'payment.succeeded' }>
 ) {
   const payment = event.data
+  await trackSuccessfulPayment(payment)
+
   const userId = metadataString(payment.metadata, 'supabase_user_id')
   if (!userId || !payment.membership?.id) {
     console.error('[whop webhook] Successful payment is missing app identity metadata', {
@@ -216,10 +258,10 @@ async function handleRefund(
     onRevoked: async ({ userId, planId, membershipId, paymentId, refundId }) => {
       // Same downstream path as membership.deactivated: Resend/Loops drop to free.
       await syncBillingContactForUser({ userId, status: REFUND_REVOKED_STATUS, planId })
-      const posthog = getPostHogClient()
-      posthog.capture({
+      await captureServerEvents([{
         distinctId: userId,
         event: 'subscription_canceled',
+        uuid: deterministicUuid(`subscription_canceled:refund:${refundId}`),
         properties: {
           provider: 'whop',
           reason: 'refund',
@@ -228,9 +270,9 @@ async function handleRefund(
           whop_payment_id: paymentId,
           whop_refund_id: refundId,
           status: REFUND_REVOKED_STATUS,
+          $set: { subscription_status: REFUND_REVOKED_STATUS, is_paying_customer: false },
         },
-      })
-      await posthog.shutdown()
+      }])
     },
   })
   if (outcome.action === 'ignored') {
