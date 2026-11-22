@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getBillingPlanByWhopId } from '@/lib/billing-plans'
-import { getPostHogClient } from '@/lib/posthog-server'
+import {
+  buildPurchaseEvents,
+  deterministicUuid,
+  type ServerAnalyticsEvent,
+} from '@/lib/billing-analytics'
+import { captureServerEvents } from '@/lib/posthog-server'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import {
@@ -113,28 +118,41 @@ export async function POST(request: NextRequest) {
       }, { onConflict: 'id', ignoreDuplicates: true })
     if (ledgerError) throw ledgerError
 
-    // Capture conversion when sync-checkout activates without relying on the webhook path.
+    // Capture conversion when sync-checkout activates without relying on the
+    // webhook path. `purchase_completed` shares a deterministic uuid with the
+    // webhook's copy, so PostHog keeps one event whichever path lands first.
+    // captureServerEvents never throws, so analytics cannot fail the sync.
+    const properties = {
+      provider: 'whop',
+      plan_id: planId,
+      whop_plan_id: normalized.planId,
+      whop_membership_id: normalized.id,
+      status: normalized.status,
+      cancel_at_period_end: normalized.cancelAtPeriodEnd,
+    }
     if (!existingLedger) {
-      const posthog = getPostHogClient()
-      const properties = {
-        provider: 'whop',
-        plan_id: planId,
-        whop_plan_id: normalized.planId,
-        whop_membership_id: normalized.id,
-        status: normalized.status,
-        cancel_at_period_end: normalized.cancelAtPeriodEnd,
-      }
-      posthog.capture({
-        distinctId: user.id,
-        event: 'subscription_activated',
-        properties,
-      })
-      posthog.capture({
-        distinctId: user.id,
-        event: 'subscription_started',
-        properties,
-      })
-      await posthog.shutdown()
+      const events: ServerAnalyticsEvent[] = [
+        ...buildPurchaseEvents({
+          userId: user.id,
+          payment,
+          appPlanId: planId,
+          interval: configuredPlan?.billingCycle ?? null,
+          source: 'checkout_sync',
+        }),
+        {
+          distinctId: user.id,
+          event: 'subscription_activated',
+          properties,
+          uuid: deterministicUuid(`subscription_activated:checkout:${payment.id}`),
+        },
+        {
+          distinctId: user.id,
+          event: 'subscription_started',
+          properties,
+          uuid: deterministicUuid(`subscription_started:checkout:${payment.id}`),
+        },
+      ]
+      await captureServerEvents(events)
     }
 
     return NextResponse.json({ synced: true, planId, status: normalized.status })
