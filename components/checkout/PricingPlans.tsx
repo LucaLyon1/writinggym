@@ -137,6 +137,28 @@ const VIP_PLAN: PricingPlan = {
   isUnavailable: true,
 }
 
+/**
+ * Black Friday yearly cards. The $79 figure must match the Whop promo code in
+ * lib/black-friday.ts: a flat $20 off the $99 yearly price on both plans.
+ */
+const BLACK_FRIDAY_CORE_YEARLY: PricingPlan = {
+  ...CORE_PLANS.yearly,
+  price: '$6.58',
+  originalPrice: '$8.25',
+  priceNote: 'Billed $79 for the year — $20 off, renews at $79',
+  isDiscounted: true,
+  badge: 'Black Friday',
+}
+
+const BLACK_FRIDAY_PREMIUM_YEARLY: PricingPlan = {
+  ...PREMIUM_PLANS.yearly,
+  price: '$6.58',
+  originalPrice: '$16.50',
+  priceNote: 'Billed $79 for the year — $20 off, renews at $79',
+  isDiscounted: true,
+  badge: 'Black Friday',
+}
+
 interface PricingPlansProps {
   currentPlanId?: string | null
   userEmail?: string | null
@@ -144,6 +166,8 @@ interface PricingPlansProps {
   mustChooseAfterTrial?: boolean
   /** Analytics source for checkout and billing-cycle events. */
   source?: CheckoutSource
+  /** Render the Black Friday yearly price while the offer window is open. */
+  blackFriday?: boolean
 }
 
 export function PricingPlans({
@@ -151,6 +175,7 @@ export function PricingPlans({
   userEmail,
   mustChooseAfterTrial,
   source = 'pricing_page',
+  blackFriday = false,
 }: PricingPlansProps) {
   const [showCanceled, setShowCanceled] = useState(false)
   const [billing, setBilling] = useState<BillingCycle>('yearly')
@@ -158,8 +183,8 @@ export function PricingPlans({
   const [checkoutPlanKey, setCheckoutPlanKey] = useState<BillingPlanKey | null>(null)
   const [checkoutStateId, setCheckoutStateId] = useState<string | undefined>()
 
-  const corePlan = CORE_PLANS[billing]
-  const premiumPlan = PREMIUM_PLANS[billing]
+  const corePlan = blackFriday && billing === 'yearly' ? BLACK_FRIDAY_CORE_YEARLY : CORE_PLANS[billing]
+  const premiumPlan = blackFriday && billing === 'yearly' ? BLACK_FRIDAY_PREMIUM_YEARLY : PREMIUM_PLANS[billing]
   const plans = [corePlan, premiumPlan, VIP_PLAN]
 
   const isCurrentPlan = (planId: string) => {
@@ -267,7 +292,7 @@ export function PricingPlans({
           aria-pressed={billing === 'yearly'}
         >
           Yearly
-          <span className="plans-toggle-badge">Save 17%</span>
+          <span className="plans-toggle-badge">{blackFriday ? 'Save 34%' : 'Save 17%'}</span>
         </button>
         <button
           type="button"

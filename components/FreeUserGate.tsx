@@ -4,14 +4,17 @@ import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import posthog from 'posthog-js'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
+import { BlackFridayBanner } from '@/components/BlackFridayBanner'
 import { logout } from '@/app/actions/auth'
 import { paywallFeatureFromPath } from '@/lib/paywall-analytics'
 
 interface FreeUserGateProps {
   isFreeUser: boolean
+  /** True while the Black Friday yearly offer is live. */
+  blackFriday?: boolean
 }
 
-export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
+export function FreeUserGate({ isFreeUser, blackFriday = false }: FreeUserGateProps) {
   const pathname = usePathname()
 
   const isExcluded =
@@ -57,8 +60,9 @@ export function FreeUserGate({ isFreeUser }: FreeUserGateProps) {
         <h2 id="gate-title" className="gate-title">
           Upgrade now to keep<br /><em>practicing your writing</em>
         </h2>
+        {blackFriday && <BlackFridayBanner />}
         <div className="gate-plans">
-          <PricingPlans currentPlanId={null} source="free_user_gate" />
+          <PricingPlans currentPlanId={null} source="free_user_gate" blackFriday={blackFriday} />
         </div>
         <form action={logout} className="gate-logout">
           <button

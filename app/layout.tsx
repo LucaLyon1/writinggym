@@ -12,6 +12,7 @@ import { PostTrialPaywall } from "@/components/auth/PostTrialPaywall";
 import { CrispChat } from "@/components/CrispChat";
 import { FreeUserGate } from "@/components/FreeUserGate";
 import { getAuthState, getUser } from "@/lib/auth-state";
+import { isBlackFridayActive } from "@/lib/black-friday";
 import { PostHogIdentify } from "@/components/PostHogIdentify";
 import { SidebarProvider } from "@/components/SidebarContext";
 import { MobileSidebarToggle } from "@/components/MobileSidebarToggle";
@@ -48,7 +49,7 @@ async function AuthChrome() {
       <PostHogIdentify userId={userId} email={userEmail} />
       {!isAuthenticated && <FirstVisitAuthModal />}
       <AuthLinkErrorHandler isAuthenticated={isAuthenticated} />
-      <FreeUserGate isFreeUser={isFreeUser} />
+      <FreeUserGate isFreeUser={isFreeUser} blackFriday={isBlackFridayActive()} />
       <PostTrialPaywall show={mustChooseAfterTrial} />
       {isAuthenticated && <CrispChat />}
     </>
