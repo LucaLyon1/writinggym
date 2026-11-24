@@ -20,7 +20,7 @@
 export const BLACK_FRIDAY_PROMO_CODE = 'BLACKFRIDAY26'
 
 /** Thursday 26 November 2026, 18:00 UTC. Goes live the evening before Black Friday. */
-export const BLACK_FRIDAY_STARTS_AT = Date.parse('2026-11-20T00:00:00Z') // TEMP for preview verification, reverted next commit
+export const BLACK_FRIDAY_STARTS_AT = Date.parse('2026-11-26T18:00:00Z')
 
 /** Monday 30 November 2026, 23:59:59 UTC. Europe/London is UTC in November. */
 export const BLACK_FRIDAY_ENDS_AT = Date.parse('2026-11-30T23:59:59Z')
