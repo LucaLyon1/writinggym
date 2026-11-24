@@ -5,6 +5,7 @@ import { loadWhop } from '@whop/elements'
 import { Checkout, CheckoutElement, WhopElements } from '@whop/elements-react'
 import type { Appearance } from '@whop/elements'
 import type { BillingPlanKey } from '@/lib/billing-plans'
+import { getBlackFridayPromoCode } from '@/lib/black-friday'
 import styles from './checkout.module.css'
 
 interface CheckoutSession {
@@ -22,9 +23,10 @@ interface Props {
   stateId?: string
 }
 
-const RETURN26_PROMO_CODE = 'RETURN26'
-// Sunday 23 August 2026, 23:59:59.999 Europe/London (BST).
-const RETURN26_EXPIRES_AT = Date.parse('2026-08-23T22:59:59.999Z')
+/**
+ * Legacy RETURN26 promo retired in August 2026; promotions now live in
+ * lib/black-friday.ts so the checkout and the in-app price copy share one window.
+ */
 
 /** Best-effort match for legacy accent #a2442e / background #f8f2e8 / radius 12. */
 const CHECKOUT_APPEARANCE: Appearance = {
@@ -102,7 +104,7 @@ export function WhopCheckoutClient({ email, planKey, planId, planLabel, stateId 
   }
 
   const returnUrl = `${window.location.origin}/checkout/complete?plan=${encodeURIComponent(planKey)}`
-  const promoCode = Date.now() <= RETURN26_EXPIRES_AT ? RETURN26_PROMO_CODE : undefined
+  const promoCode = getBlackFridayPromoCode(planKey)
   const useConfiguration = session.mode === 'session' && Boolean(session.sessionId)
   const loadingFallback = (
     <div className={styles.message}>

@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { PricingPlans } from '@/components/checkout/PricingPlans'
 import { createClient } from '@/lib/supabase/server'
 import { isWithinFreeTrial } from '@/lib/trial'
+import { isBlackFridayActive } from '@/lib/black-friday'
+import { BlackFridayBanner } from '@/components/BlackFridayBanner'
 import { AppFooter } from '@/components/AppFooter'
 import { WhopViewContent } from '@/components/checkout/WhopViewContent'
 
@@ -82,11 +84,13 @@ async function getPricingState(): Promise<{
 
 export default async function PricingPage() {
   const { currentPlanId, mustChooseAfterTrial, userEmail } = await getPricingState()
+  const blackFriday = isBlackFridayActive()
 
   return (
     <div className="plans-root">
       <WhopViewContent />
       <div className="plans-inner">
+        {blackFriday && <BlackFridayBanner />}
         <header className="plans-header">
           <h1 className="plans-title">
             Choose your
@@ -103,6 +107,7 @@ export default async function PricingPage() {
           currentPlanId={currentPlanId}
           userEmail={userEmail}
           mustChooseAfterTrial={mustChooseAfterTrial}
+          blackFriday={blackFriday}
         />
 
         <p className="plans-note">
