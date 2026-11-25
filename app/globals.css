@@ -10021,6 +10021,21 @@ body[data-gated] > *:not(.gate-overlay) {
         overflow-y: auto;
     }
 
+    /* The sticky bar is a stacking context (z-index 50), which would trap the
+       drawer below the global backdrop (105). Lift the bar above it while open. */
+    .ea-left-sidebar.is-open {
+        z-index: 106;
+    }
+
+    /* …and re-dim the bar itself so it matches the backdrop beside the drawer. */
+    .ea-left-sidebar.is-open::after {
+        content: '';
+        position: absolute;
+        inset: 0 0 -1px;
+        background: rgba(0, 0, 0, 0.32);
+        pointer-events: none;
+    }
+
     .ea-left-sidebar.is-open .sidebar-nav {
         transform: translateX(0);
     }
