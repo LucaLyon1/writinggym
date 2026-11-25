@@ -1002,6 +1002,23 @@ body {
     color: var(--ink-faint);
 }
 
+.sidebar-nav-footer {
+    margin: 0 -1.25rem -2rem;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    min-height: calc(2rem + 1.5rem);
+}
+
+.sidebar-nav-copy {
+    display: block;
+    padding: 0 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+}
+
 .ea-center-col {
     padding: 1.25rem 1rem;
     display: flex;
@@ -4514,8 +4531,8 @@ body {
         background: var(--paper-deep);
     }
 
-    .browser-sidebar .sidebar-upgrade-btn,
-    .profile-left-sidebar .sidebar-upgrade-btn {
+    .browser-sidebar .sidebar-nav-footer,
+    .profile-left-sidebar .sidebar-nav-footer {
         margin-bottom: -1.5rem;
     }
 
@@ -4727,7 +4744,7 @@ body {
 /* ── Sidebar: upgrade button ── */
 .sidebar-upgrade-btn {
     display: block;
-    margin: 0 -1.25rem -2rem;
+    margin: 0 -1.25rem;
     padding: 0.7rem 2rem;
     border-top: 1px solid var(--line);
     background: var(--accent);
@@ -9971,6 +9988,7 @@ body[data-gated] > *:not(.gate-overlay) {
     .ea-left-sidebar .sidebar-nav-badge {
         float: none;
     }
+    .ea-left-sidebar .sidebar-nav-footer,
     .ea-left-sidebar .sidebar-upgrade-btn {
         display: none;
     }
@@ -9997,47 +10015,62 @@ body[data-gated] > *:not(.gate-overlay) {
     }
 }
 
-/* Extract / Playground: the app nav inside the horizontal section bar becomes a
-   slide-in drawer on mobile, opened by the global hamburger toggle. The page
-   tabs (Analyse / Exercise / …) stay in the always-visible top bar. */
+/* Drills / Extract / Playground on mobile: the whole left sidebar becomes the
+   slide-in drawer opened by the global hamburger toggle (no horizontal bar).
+   Page sections sit at the top, the app nav is bottom-aligned as on desktop,
+   and the copyright footer closes it off. */
 @media (max-width: 900px) {
-    .ea-left-sidebar .sidebar-nav {
+    .ea-left-sidebar,
+    .page-three-col > .ea-left-sidebar {
         position: fixed;
         top: var(--auth-header-height);
         left: 0;
         bottom: 0;
         width: min(280px, 80vw);
+        height: auto;
         z-index: 108;
-        margin-top: 0;
         display: flex;
         flex-direction: column;
-        gap: 0;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        gap: 1rem;
         padding: 1rem 1.25rem 1.5rem;
         background: var(--paper-warm);
         border-right: 1px solid var(--line);
+        border-bottom: none;
         box-shadow: 2px 0 24px rgba(0, 0, 0, 0.08);
         transform: translateX(-100%);
         transition: transform 0.22s ease;
+        overflow-x: hidden;
         overflow-y: auto;
     }
 
-    /* The sticky bar is a stacking context (z-index 50), which would trap the
-       drawer below the global backdrop (105). Lift the bar above it while open. */
-    .ea-left-sidebar.is-open {
-        z-index: 106;
-    }
-
-    /* …and re-dim the bar itself so it matches the backdrop beside the drawer. */
-    .ea-left-sidebar.is-open::after {
-        content: '';
-        position: absolute;
-        inset: 0 0 -1px;
-        background: rgba(0, 0, 0, 0.32);
-        pointer-events: none;
-    }
-
-    .ea-left-sidebar.is-open .sidebar-nav {
+    .ea-left-sidebar.is-open,
+    .page-three-col > .ea-left-sidebar.is-open {
         transform: translateX(0);
+    }
+
+    .ea-left-sidebar .ea-left-back {
+        align-self: flex-start;
+    }
+
+    .ea-left-sidebar .ea-left-nav {
+        flex: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+    }
+
+    .ea-left-sidebar .ea-left-nav-btn {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .ea-left-sidebar .sidebar-nav {
+        margin-top: auto;
+        padding-top: 0;
+        flex-direction: column;
+        gap: 0;
     }
 
     .ea-left-sidebar .sidebar-nav-links {
@@ -10055,9 +10088,24 @@ body[data-gated] > *:not(.gate-overlay) {
         border-radius: 0;
     }
 
+    .ea-left-sidebar .sidebar-nav-badge {
+        float: right;
+    }
+
     .ea-left-sidebar .sidebar-upgrade-btn {
         display: block;
-        margin-bottom: -1.5rem;
+        margin: 0 -1.25rem;
+        padding: 0.7rem 1.25rem;
+    }
+
+    .ea-left-sidebar .sidebar-nav-footer {
+        display: flex;
+        margin: 0 -1.25rem -1.5rem;
+    }
+
+    .ea-left-sidebar .sidebar-nav-copy {
+        display: block;
+        padding: 0 1.25rem;
     }
 }
 
