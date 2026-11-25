@@ -89,8 +89,8 @@ export default async function PricingPage() {
   return (
     <div className="plans-root">
       <WhopViewContent />
+      {blackFriday && <BlackFridayBanner variant="page" />}
       <div className="plans-inner">
-        {blackFriday && <BlackFridayBanner />}
         <header className="plans-header">
           <h1 className="plans-title">
             Choose your
