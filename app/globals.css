@@ -6564,6 +6564,28 @@ button.profile-manage-subscription:disabled {
     color: var(--plans-ink);
 }
 
+/*
+ * Page-level variant: sits as the first child of .plans-root, so it spans the
+ * full viewport under the app header instead of being inset by .plans-inner's
+ * padding. The modal variant in the free-user gate keeps the inset look above.
+ */
+.plans-root > .plans-banner {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 0.7rem 1.5rem;
+    border-bottom: 1px solid rgba(26, 23, 20, 0.1);
+}
+
+@media (max-width: 720px) {
+    .plans-root > .plans-banner {
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.6rem 1rem;
+        text-align: center;
+        font-size: 0.66rem;
+    }
+}
+
 .plans-card-applied {
     display: flex;
     align-items: flex-start;
