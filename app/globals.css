@@ -4953,6 +4953,7 @@ body {
 
 .profile-username-display {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.6rem;
 }
@@ -5489,22 +5490,22 @@ body {
 .streak-badges {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.9rem;
     padding: 1rem;
     background: #ECE6DE;
     border: 1px solid var(--line);
     border-radius: 0;
 }
 
+.streak-badge-icon {
+    display: block;
+    flex-shrink: 0;
+}
+
 .streak-badges-current {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-}
-
-.streak-badges-emoji {
-    font-size: 1.75rem;
-    line-height: 1;
+    gap: 0.75rem;
 }
 
 .streak-badges-info {
@@ -5515,35 +5516,152 @@ body {
 
 .streak-badges-label {
     font-family: var(--font-display);
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 700;
     color: var(--ink);
 }
 
 .streak-badges-sublabel {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
     color: var(--ink-muted);
 }
 
-.streak-badges-next-row {
+.streak-badges-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.streak-badges-progress-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+}
+
+.streak-badges-bar {
+    height: 6px;
+    background: var(--paper-deep);
+    overflow: hidden;
+}
+
+.streak-badges-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+}
+
+.streak-badges-ladder {
+    list-style: none;
+    margin: 0;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 0.25rem;
+}
+
+.streak-badges-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.streak-badges-step-days {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    color: var(--ink-faint);
+}
+
+.streak-badges-step.is-earned .streak-badges-step-days {
+    color: var(--ink-muted);
+}
+
+.streak-badges-step.is-next .streak-badge-icon circle {
+    stroke: var(--accent);
+}
+
+.streak-badges-step.is-next .streak-badges-step-days {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.streak-badges-toggle {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.45rem;
-    padding-top: 0.5rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
     border-top: 1px solid var(--line);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    cursor: pointer;
 }
 
-.streak-badges-next-emoji {
-    font-size: 1rem;
-    line-height: 1;
-    opacity: 0.5;
+.streak-badges-toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
 }
 
-.streak-badges-next {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    color: var(--ink-faint);
+.streak-badges-switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 32px;
+    height: 18px;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    transition: background 0.15s;
+}
+
+.streak-badges-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    background: var(--paper);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s;
+}
+
+.streak-badges-toggle input:checked + .streak-badges-switch {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.streak-badges-toggle input:checked + .streak-badges-switch::after {
+    transform: translateX(14px);
+}
+
+.streak-badges-toggle input:focus-visible + .streak-badges-switch {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Current streak level beside the profile name. */
+.profile-name-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0.6rem 0.15rem 0.2rem;
+    border: 1px solid var(--line);
+    background: var(--paper-warm);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    white-space: nowrap;
 }
 
 .profile-empty {
