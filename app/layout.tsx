@@ -4,6 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { Gelasio } from "next/font/google";
 import "./globals.css";
 import { AuthNav } from "@/components/auth/AuthNav";
 import { AuthModalProvider } from "@/components/auth/AuthModal";
@@ -19,6 +20,17 @@ import { SidebarProvider } from "@/components/SidebarContext";
 import { MobileSidebarToggle } from "@/components/MobileSidebarToggle";
 import { SidebarBackdrop } from "@/components/SidebarBackdrop";
 import { WhopRegistrationTracker } from "@/components/WhopRegistrationTracker";
+
+/**
+ * Brand serif. Gelasio is metric-compatible with Georgia and openly licensed
+ * (SIL OFL), so we can serve it; Georgia itself may not be self-hosted.
+ */
+const gelasio = Gelasio({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-gelasio",
+});
 
 export const metadata: Metadata = {
   title: "ProseLab",
@@ -53,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" translate="no" className={`light notranslate ${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en" translate="no" className={`light notranslate ${GeistSans.variable} ${GeistMono.variable} ${gelasio.variable}`}>
       <head>
         <meta name="google" content="notranslate" />
         <Script
@@ -75,7 +87,7 @@ export default function RootLayout({
             <div className="auth-header-left">
               <MobileSidebarToggle />
               <Link href="/" className="auth-header-logo">
-                <span style={{ fontFamily: "Georgia, serif", fontWeight: 700 }}>
+                <span style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
                   Proselab
                 </span>
               </Link>

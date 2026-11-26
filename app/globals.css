@@ -1,33 +1,3 @@
-/* ─── Brand serif (Georgia, self-hosted, same files as the landing site) ─── */
-@font-face {
-    font-family: "Georgia Brand";
-    src: url("/fonts/Georgia.ttf") format("truetype");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-@font-face {
-    font-family: "Georgia Brand";
-    src: url("/fonts/Georgia_Italic.ttf") format("truetype");
-    font-weight: 400;
-    font-style: italic;
-    font-display: swap;
-}
-@font-face {
-    font-family: "Georgia Brand";
-    src: url("/fonts/Georgia_Bold.ttf") format("truetype");
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-@font-face {
-    font-family: "Georgia Brand";
-    src: url("/fonts/Georgia_Bold_Italic.ttf") format("truetype");
-    font-weight: 700;
-    font-style: italic;
-    font-display: swap;
-}
-
 /* ─── Tokens ─────────────────────────────────────────────── */
 :root {
     --ink: #1a1613;
@@ -42,10 +12,11 @@
     --accent-pale: #f0e0da;
     --line: rgba(26, 22, 19, 0.12);
 
-    /* Georgia for headings and literary text, Geist for interface text.
+    /* Gelasio (open-licence Georgia match, loaded via next/font in
+       app/layout.tsx) for headings and literary text, Geist for interface text.
        --font-mono is kept as a name for UI labels but now resolves to Geist
        sans, matching the landing site; --font-code is the real monospace. */
-    --font-display: "Georgia Brand", Georgia, "Times New Roman", serif;
+    --font-display: var(--font-gelasio), Georgia, "Times New Roman", serif;
     --font-brand: var(--font-display);
     --font-prose: var(--font-display);
     --font-body: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
