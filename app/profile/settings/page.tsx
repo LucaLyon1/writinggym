@@ -57,7 +57,6 @@ export default async function SettingsPage() {
     <div className="ea-root">
     <div className="ea-page-layout">
       <ProfileSidebar>
-        <span className="sidebar-label">Account</span>
         <Link href="/profile" className="cat-btn">
           <span className="cat-btn-label">Profile</span>
         </Link>

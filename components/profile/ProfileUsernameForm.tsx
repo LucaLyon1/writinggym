@@ -1,9 +1,9 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, type ReactNode } from 'react'
 import { updateUsername } from '@/app/actions/profile'
 
-export function ProfileUsernameForm({ initialUsername }: { initialUsername: string }) {
+export function ProfileUsernameForm({ initialUsername, badge }: { initialUsername: string; badge?: ReactNode }) {
   const [isEditing, setIsEditing] = useState(false)
   const [state, formAction, isPending] = useActionState(async (
     previous: Awaited<ReturnType<typeof updateUsername>> | undefined,
@@ -20,6 +20,7 @@ export function ProfileUsernameForm({ initialUsername }: { initialUsername: stri
         <h1 className="profile-username-heading">
           {initialUsername || <span className="profile-username-empty">Set a username</span>}
         </h1>
+        {badge}
         <button
           type="button"
           className="profile-username-edit-btn"

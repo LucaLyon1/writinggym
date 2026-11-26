@@ -104,7 +104,6 @@ export function WhopForumPreview({
       <div className="ea-root">
         <div className="ea-page-layout">
           <ProfileSidebar>
-            <span className="sidebar-label">Community</span>
             {SECTIONS.map((item) => (
               <button
                 key={item.id}

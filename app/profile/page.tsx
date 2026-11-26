@@ -5,6 +5,7 @@ import type { Tables } from '@/types/database.types'
 import { ProfileActivity } from '@/components/profile/ProfileActivity'
 import { ProfileSubmissionsList } from '@/components/ProfileSubmissionsList'
 import { ProfileUsernameForm } from '@/components/profile/ProfileUsernameForm'
+import { ProfileNameBadge } from '@/components/profile/ProfileNameBadge'
 import { logout } from '@/app/actions/auth'
 import { SidebarNav } from '@/components/AppSidebar'
 import { ProfileSidebar } from '@/components/profile/ProfileSidebar'
@@ -92,7 +93,6 @@ export default async function ProfilePage({
     <div className="ea-root">
     <div className="ea-page-layout">
       <ProfileSidebar>
-        <span className="sidebar-label">Account</span>
         <Link href="/profile" className="cat-btn active">
           <span className="cat-btn-label">Profile</span>
         </Link>
@@ -120,7 +120,16 @@ export default async function ProfilePage({
           </div>
           <div className="profile-bio-info">
             <div className="profile-bio-name">
-              <ProfileUsernameForm initialUsername={profile?.username ?? ''} />
+              <ProfileUsernameForm
+                initialUsername={profile?.username ?? ''}
+                badge={
+                  <ProfileNameBadge
+                    completions={statsCompletions ?? []}
+                    currentStreak={currentStreak}
+                    longestStreak={longestStreak}
+                  />
+                }
+              />
             </div>
           </div>
         </div>
