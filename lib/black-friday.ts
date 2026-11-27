@@ -45,3 +45,21 @@ export function getBlackFridayPromoCode(
   if (!planKey.endsWith('-yearly')) return undefined
   return isBlackFridayActive(now) ? BLACK_FRIDAY_PROMO_CODE : undefined
 }
+
+/** Flat USD amount the Whop promo takes off a yearly list price. */
+export const BLACK_FRIDAY_DISCOUNT_USD = 20
+
+export function blackFridayYearlyPriceUsd(listPriceUsd: number): number {
+  return listPriceUsd - BLACK_FRIDAY_DISCOUNT_USD
+}
+
+/** Monthly equivalent of a yearly USD amount, rounded to the nearest cent. */
+export function yearlyToMonthlyUsd(yearlyUsd: number): number {
+  return Math.round((yearlyUsd / 12) * 100) / 100
+}
+
+/** Format a USD amount for pricing display: $79, $8.25, $6.58. */
+export function formatUsd(amount: number): string {
+  const rounded = Math.round(amount * 100) / 100
+  return Number.isInteger(rounded) ? `$${rounded}` : `$${rounded.toFixed(2)}`
+}
