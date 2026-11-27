@@ -10,7 +10,7 @@ export function AuthNav() {
         Drills
       </Link>
       <Link href="/exercises" className="auth-nav-link">
-        Exercises
+        Extracts
       </Link>
       <Link href="/playground" className="auth-nav-link">
         Playground

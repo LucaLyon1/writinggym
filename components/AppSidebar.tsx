@@ -16,7 +16,7 @@ type NavLink = {
 
 const NAV_LINKS: NavLink[] = [
   { href: '/', label: 'Drills', exact: true, badge: 'new' },
-  { href: '/exercises', label: 'Exercises', exact: false },
+  { href: '/exercises', label: 'Extracts', exact: false },
   { href: '/playground', label: 'Playground', exact: false },
   { href: '/community', label: 'Community', exact: false, badge: 'soon', disabled: true },
   { href: '/profile', label: 'My Profile', exact: false },
