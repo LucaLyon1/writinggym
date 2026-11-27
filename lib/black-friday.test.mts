@@ -26,6 +26,13 @@ test('the window is closed after Cyber Monday', () => {
   assert.equal(isBlackFridayActive(BLACK_FRIDAY_ENDS_AT + 1), false)
 })
 
+test('the window closes at 23:59:00Z, when the Whop promo expires', () => {
+  assert.equal(BLACK_FRIDAY_ENDS_AT, Date.parse('2026-11-30T23:59:00Z'))
+  assert.equal(isBlackFridayActive(Date.parse('2026-11-30T23:59:00Z')), true)
+  assert.equal(isBlackFridayActive(Date.parse('2026-11-30T23:59:01Z')), false)
+  assert.equal(isBlackFridayActive(Date.parse('2026-11-30T23:59:59Z')), false)
+})
+
 test('yearly plans carry the code while the window is open', () => {
   const during = BLACK_FRIDAY_STARTS_AT + 60_000
   assert.equal(getBlackFridayPromoCode('core-yearly', during), BLACK_FRIDAY_PROMO_CODE)

@@ -46,14 +46,15 @@ export const metadata: Metadata = {
 /** Auth-dependent overlays and trackers. Streams in after the shell, so the first paint does not wait on Supabase. */
 async function AuthChrome() {
   const { isAuthenticated, userId, userEmail, isFreeUser, mustChooseAfterTrial } = await getAuthState()
+  const blackFriday = isBlackFridayActive()
 
   return (
     <>
       <PostHogIdentify userId={userId} email={userEmail} />
       {!isAuthenticated && <FirstVisitAuthModal />}
       <AuthLinkErrorHandler isAuthenticated={isAuthenticated} />
-      <FreeUserGate isFreeUser={isFreeUser} blackFriday={isBlackFridayActive()} />
-      <PostTrialPaywall show={mustChooseAfterTrial} />
+      <FreeUserGate isFreeUser={isFreeUser} blackFriday={blackFriday} />
+      <PostTrialPaywall show={mustChooseAfterTrial} blackFriday={blackFriday} />
       {isAuthenticated && <CrispChat />}
     </>
   )

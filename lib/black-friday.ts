@@ -13,7 +13,7 @@
  *   variants  plan_1E7RwuJBhlZBZ (Core yearly), plan_6J4pmbiBtZAD0 (Premium yearly)
  *   duration  forever, so renewals stay at $79 and the "your rate stays while
  *             you stay subscribed" promise on /pricing holds
- *   expires   2026-11-30T23:59:59Z, the last minute of Cyber Monday in London
+ *   expires   2026-11-30T23:59:00Z, matching the Whop promo expiry
  *   limits    one per customer
  */
 
@@ -26,8 +26,8 @@ export const BLACK_FRIDAY_PROMO_CODE = 'BLACKFRIDAY26'
  */
 export const BLACK_FRIDAY_STARTS_AT = Date.parse('2026-11-25T00:00:00Z')
 
-/** Monday 30 November 2026, 23:59:59 UTC. Europe/London is UTC in November. */
-export const BLACK_FRIDAY_ENDS_AT = Date.parse('2026-11-30T23:59:59Z')
+/** Monday 30 November 2026, 23:59:00 UTC, matching the Whop promo expiry. Europe/London is UTC in November. */
+export const BLACK_FRIDAY_ENDS_AT = Date.parse('2026-11-30T23:59:00Z')
 
 export function isBlackFridayActive(now: number = Date.now()): boolean {
   return now >= BLACK_FRIDAY_STARTS_AT && now <= BLACK_FRIDAY_ENDS_AT
