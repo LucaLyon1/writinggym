@@ -69,7 +69,6 @@ const PREMIUM_FEATURES = [
   'Full extract library — always',
   'Follow-up chat after every analysis',
   'Early access to new features',
-  'Exclusive founder-member Discord access',
   'Cancel anytime',
 ]
 
@@ -128,7 +127,7 @@ const PREMIUM_PLANS: Record<BillingCycle, PricingPlan> = {
 const VIP_PLAN: PricingPlan = {
   id: 'vip',
   label: 'ProseLab VIP',
-  price: '$199',
+  price: '$399',
   priceUnit: ' one-time',
   priceNote: 'Lifetime access — coming soon',
   features: [
