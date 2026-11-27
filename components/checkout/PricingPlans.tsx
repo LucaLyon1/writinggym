@@ -5,7 +5,13 @@ import Link from 'next/link'
 import posthog from 'posthog-js'
 import { CheckoutButton } from './CheckoutButton'
 import { WhopCheckoutModal } from './WhopCheckoutModal'
-import { isBillingPlanKey, type BillingPlanKey } from '@/lib/billing-plans'
+import { BILLING_PLANS, isBillingPlanKey, type BillingPlanKey } from '@/lib/billing-plans'
+import {
+  BLACK_FRIDAY_DISCOUNT_USD,
+  blackFridayYearlyPriceUsd,
+  formatUsd,
+  yearlyToMonthlyUsd,
+} from '@/lib/black-friday'
 import type { CheckoutSource } from '@/lib/paywall-analytics'
 
 type BillingCycle = 'yearly' | 'monthly'
@@ -138,26 +144,32 @@ const VIP_PLAN: PricingPlan = {
 }
 
 /**
- * Black Friday yearly cards. The $79 figure must match the Whop promo code in
- * lib/black-friday.ts: a flat $20 off the $99 yearly price on both plans.
+ * Black Friday yearly cards. The sale price is a flat $20 off the real yearly
+ * list price in billing-plans (currently $99 → $79 on both Core and Premium).
+ * The struck-through was-price is the monthly equivalent of that list price
+ * ($8.25), not a higher launch price.
  */
-const BLACK_FRIDAY_CORE_YEARLY: PricingPlan = {
-  ...CORE_PLANS.yearly,
-  price: '$6.58',
-  originalPrice: '$8.25',
-  priceNote: 'Billed $79 for the year — $20 off, renews at $79',
-  isDiscounted: true,
-  badge: 'Black Friday',
+function blackFridayYearlyPlan(base: PricingPlan, listYearlyUsd: number): PricingPlan {
+  const saleYearly = blackFridayYearlyPriceUsd(listYearlyUsd)
+  return {
+    ...base,
+    price: formatUsd(yearlyToMonthlyUsd(saleYearly)),
+    originalPrice: formatUsd(yearlyToMonthlyUsd(listYearlyUsd)),
+    priceNote: `Billed ${formatUsd(saleYearly)} for the year — ${formatUsd(BLACK_FRIDAY_DISCOUNT_USD)} off, renews at ${formatUsd(saleYearly)}`,
+    isDiscounted: true,
+    badge: 'Black Friday',
+  }
 }
 
-const BLACK_FRIDAY_PREMIUM_YEARLY: PricingPlan = {
-  ...PREMIUM_PLANS.yearly,
-  price: '$6.58',
-  originalPrice: '$16.50',
-  priceNote: 'Billed $79 for the year — $20 off, renews at $79',
-  isDiscounted: true,
-  badge: 'Black Friday',
-}
+const BLACK_FRIDAY_CORE_YEARLY = blackFridayYearlyPlan(
+  CORE_PLANS.yearly,
+  BILLING_PLANS['core-yearly'].priceUsd,
+)
+
+const BLACK_FRIDAY_PREMIUM_YEARLY = blackFridayYearlyPlan(
+  PREMIUM_PLANS.yearly,
+  BILLING_PLANS['premium-yearly'].priceUsd,
+)
 
 interface PricingPlansProps {
   currentPlanId?: string | null

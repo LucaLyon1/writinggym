@@ -13,15 +13,7 @@ interface FaqItem {
   a: ReactNode
 }
 
-const FAQS: FaqItem[] = [
-  {
-    q: 'What is "pre-release pricing"?',
-    a: 'ProseLab is in pre-release. Sign up now to lock in early-bird pricing — 20% below the launch rate — for as long as you stay subscribed.',
-  },
-  {
-    q: 'Will my price go up after launch?',
-    a: "No. As long as you remain subscribed without a gap, your rate stays at the early-bird price. If you cancel and resubscribe later, you'll pay the then-current launch price.",
-  },
+const SHARED_FAQS: FaqItem[] = [
   {
     q: 'Can I cancel anytime?',
     a: 'Yes — cancel in one click from your account. You keep access through the end of the current billing period.',
@@ -47,6 +39,32 @@ const FAQS: FaqItem[] = [
     ),
   },
 ]
+
+function getFaqs(blackFriday: boolean): FaqItem[] {
+  const offerFaqs: FaqItem[] = blackFriday
+    ? [
+        {
+          q: 'What is the Black Friday offer?',
+          a: 'Yearly Core and Premium are $79 for the year — $20 off the usual $99, which is about 20% off. Your rate stays at $79 for as long as you remain subscribed. The offer ends Monday 30 November.',
+        },
+        {
+          q: 'Will my price go up after the offer ends?',
+          a: "No. If you subscribe during Black Friday, your rate stays at $79 a year for as long as you remain subscribed without a gap. If you cancel and resubscribe later, you'll pay the then-current price.",
+        },
+      ]
+    : [
+        {
+          q: 'What is "pre-release pricing"?',
+          a: 'ProseLab is in pre-release. Sign up now to lock in early-bird pricing for as long as you stay subscribed.',
+        },
+        {
+          q: 'Will my price go up after launch?',
+          a: "No. As long as you remain subscribed without a gap, your rate stays at the early-bird price. If you cancel and resubscribe later, you'll pay the then-current launch price.",
+        },
+      ]
+
+  return [...offerFaqs, ...SHARED_FAQS]
+}
 
 async function getPricingState(): Promise<{
   currentPlanId: string | null
@@ -118,7 +136,7 @@ export default async function PricingPage() {
       <section className="plans-faq" aria-label="Frequently asked questions">
         <h2 className="plans-faq-eyebrow">FAQs</h2>
         <div className="plans-faq-list">
-          {FAQS.map((item) => (
+          {getFaqs(blackFriday).map((item) => (
             <details key={item.q} className="plans-faq-item">
               <summary className="plans-faq-question">
                 <span className="plans-faq-q-text">{item.q}</span>
